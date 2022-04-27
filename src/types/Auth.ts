@@ -1,6 +1,10 @@
+export type UserRole = "admin" | "user";
+
+
+
 export type Auth = {
    displayName: string;
    uid: string;
    photoUrl: string;
-   name: string;
+   role: UserRole
 }

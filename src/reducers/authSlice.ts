@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Auth } from "../types/Auth";
 
-const initialAuth: Auth | null = null;
+const initialAuth: Auth | null | {} = null;
 
 const authSlice = createSlice({
     name: 'auth',
