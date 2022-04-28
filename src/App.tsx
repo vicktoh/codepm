@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Flex, Heading, Image, Text } from '@chakra-ui/react';
+import { Box, Flex, Image, Text } from '@chakra-ui/react';
 import { useAppSelector } from './reducers/types';
 import { firebaseAuth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth'
@@ -8,6 +8,8 @@ import { useDispatch } from 'react-redux';
 import { setAuth } from './reducers/authSlice';
 import { useLoadingAnimation } from './hooks/useLoadingAnimation';
 import { LoginPage } from './pages/LoginPage';
+import { MainNavigation } from './navigation/MainNavigation';
+import { BrowserRouter } from 'react-router-dom';
 const codeLogo = require('./assets/images/logo.png');
 
 
@@ -30,7 +32,7 @@ function App() {
           dispatch(setAuth(newAuth));
         }
         else{
-          dispatch(setAuth({}))
+          dispatch(setAuth(null))
         }
         setLoading(false);
 
@@ -58,10 +60,10 @@ function App() {
   }
 
   return (
-    <Flex width="100vw" height="100vh" alignItems="center" justifyContent="center">
-      <Heading>CODE's Project management tool</Heading>
-      <Text>This is an inital setup of for continous integration and continous deployment</Text>
-    </Flex>
+    <BrowserRouter>
+    <MainNavigation />
+    </BrowserRouter>
+    
       
       
     
