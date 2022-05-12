@@ -45,6 +45,7 @@ export const SideNav: FC<SideNavProps> = ({ auth: { displayName, photoUrl}})=> {
          <HStack as = {Button} onClick={onLogout} to = "/" spacing={2} mt='auto' alignSelf="center" mb={10}>
          <Icon as = {BsPower} />
                <Text>Logout</Text>
+               
          </HStack>
 
       </Flex>

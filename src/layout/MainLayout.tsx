@@ -52,7 +52,7 @@ export const MainLayout: FC = () => {
                 my="auto"
                 direction="row"
                 width="100%"
-                maxWidth="90rem"
+                maxWidth="82rem"
                 mx="auto"
                 pr={[0, null, null, 10]}
             >

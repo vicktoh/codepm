@@ -10,6 +10,8 @@ import { useLoadingAnimation } from './hooks/useLoadingAnimation';
 import { LoginPage } from './pages/LoginPage';
 import { MainNavigation } from './navigation/MainNavigation';
 import { BrowserRouter } from 'react-router-dom';
+import { listenOnProfile } from './services/profileServices';
+import { setProfile } from './reducers/profileSlice';
 const codeLogo = require('./assets/images/logo.png');
 
 
@@ -42,6 +44,21 @@ function App() {
     }
   }, [auth, dispatch]);
 
+  useEffect(() => {
+    const  fetchProfile =() =>{
+      if(auth){
+        return listenOnProfile(auth.uid, profile =>{
+          dispatch(setProfile(profile))
+        })
+      }
+      return null
+    }
+    
+    let unsub =  fetchProfile();
+
+    return () => { if(unsub) unsub()}
+    
+  }, [auth, dispatch])
   if(isLoading && !auth){
     return (
       <Flex width="100vw" height="100vh" alignItems="center" justifyContent="center">
