@@ -40,10 +40,12 @@ export const MobileNav: FC = () => {
                     {`Hello ${auth?.displayName || ''}`}
                 </Heading>
                 <Avatar
+                as = {Link}
                     ml="auto"
                     name={auth?.displayName || 'Unknown user'}
                     src={auth?.photoUrl || ''}
                     size="sm"
+                    to="/profile"
                 />
             </Flex>
             <Drawer isOpen={isOpen} onClose={onClose} size="xs" placement='left'>
