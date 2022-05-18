@@ -26,3 +26,13 @@ export const useLogout = () => {
 
   return onLogout;
 }
+
+export const useGlassEffect = (border: boolean = false, borderRadius: string[] | string = ['none', '2xl'] )=>{
+  return {
+      border: border ? '1px solid white' : '',
+      background: 'rgba(255, 255, 255, .32)',
+      borderRadius,
+      backdropFilter: 'blur(5.8px)',
+      boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+  };
+}

@@ -5,9 +5,11 @@ import { SideNav } from '../components/SideNav';
 import { useAppSelector } from '../reducers/types';
 import homeLogo from '../assets/images/homelogo.svg';
 import { MobileNav } from '../components/MobileNav';
+import { useGlassEffect } from '../hooks/useLoadingAnimation';
 export const MainLayout: FC = () => {
     const { auth } = useAppSelector(({ auth }) => ({ auth }));
-    const isMobile = useBreakpointValue({base: true, md: false, lg: false})
+    const isMobile = useBreakpointValue({base: true, md: false, lg: false});
+    const glassEffect = useGlassEffect(true);
     if (!auth) {
         return (
             <Flex
@@ -42,11 +44,7 @@ export const MainLayout: FC = () => {
                 opacity={0.8}
             />
             <Flex
-                border="1px solid white"
-                background="rgba(255, 255, 255, .32)"
-                borderRadius= {["none", "2xl"]}
-                backdropFilter= "blur(5.8px)"
-                boxShadow= "0 4px 30px rgba(0, 0, 0, 0.1)"
+                {...glassEffect}
                 zIndex={1}
                 height={{base: "100vh", md: "95vh", lg: "95vh"}}
                 my="auto"
