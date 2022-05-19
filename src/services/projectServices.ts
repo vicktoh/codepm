@@ -2,12 +2,20 @@ import {
     collection,
     deleteDoc,
     doc,
+    getDoc,
     onSnapshot,
     setDoc,
     Timestamp,
     updateDoc,
 } from 'firebase/firestore';
-import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import {
+    deleteObject,
+    getDownloadURL,
+    getStorage,
+    ref,
+    uploadBytes,
+} from 'firebase/storage';
+import { Project, ProjectDocument } from '../types/Project';
 import { ProposalType } from '../types/ProposalType';
 import { db, firebaseApp } from './firebase';
 
@@ -70,7 +78,6 @@ export const editProposal = async (
     }
 };
 
-
 export const deleteProposal = async (proposal: ProposalType) => {
     if (!proposal.id) return;
     const docRef = doc(db, `proposals/${proposal.id}`);
@@ -79,3 +86,68 @@ export const deleteProposal = async (proposal: ProposalType) => {
     await deleteDoc(docRef);
     await deleteObject(storageRef);
 };
+
+// projects
+
+export const listenOnProjects =  (callback: (data: Project[]) => void) => {
+    const collectionRef = collection(db, 'projects');
+    return onSnapshot(collectionRef, (projectSnapshot) => {
+        const projects: Project[] = [];
+        projectSnapshot.forEach((snapshot) => {
+             const project = snapshot.data() as Project;
+             project.dateAdded = (project.dateAdded as Timestamp).toDate();
+             project.id = snapshot.id;
+             projects.push(project);
+        });
+        callback(projects);
+    });
+};
+
+
+
+export const deleteProject = async (project: Project) => {
+    const docRef =doc(db, `projects/${project.id}`);
+    await deleteDoc(docRef);
+
+    // Todo Clean up cloud function to remove residue of workplans and documents in storage
+}
+
+export const addProject = async (project: Omit<Project, "id" | "dateAdded">) => {
+    const projectCollection = collection(db, 'projects');
+    const projectRef = doc(projectCollection);
+    const projectToAdd: Project = {
+        id: projectRef.id,
+        ...project,
+        dateAdded: Timestamp.now()
+    };
+
+    await setDoc(projectRef, projectToAdd);
+
+}
+
+export const editProject = async(project: Partial<Project>) => {
+    if(!project.id) return ;
+    const projectRef = doc(db,`projects/${project.id}`);
+    await updateDoc(projectRef, {...project});
+}
+export const getProject = async(projectId: string) =>{
+    const docRef = doc(db, `projects/${projectId}`);
+    const docSnapshot = await getDoc(docRef);
+    const project = docSnapshot.data() as Project;
+    project.id = docSnapshot.id;
+    project.dateAdded = (project.dateAdded as Timestamp).toDate();
+    return project;
+}
+
+
+export const addDocument = async(newdoc: ProjectDocument, project: Project) => {
+    const documents: ProjectDocument []= [...(project?.documents || []), newdoc] ;
+    const documentRef = doc(db, `projects/${project.id}`);
+    await updateDoc(documentRef, { documents });
+
+    return {...project, documents }
+}
+export const editDocument = async(documents: ProjectDocument [], project: Project) =>{
+    const documentRef = doc(db, `projects/${project.id}`);
+    await updateDoc(documentRef, { documents });
+}

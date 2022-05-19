@@ -8,7 +8,7 @@ import { MobileNav } from '../components/MobileNav';
 import { useGlassEffect } from '../hooks/useLoadingAnimation';
 export const MainLayout: FC = () => {
     const { auth } = useAppSelector(({ auth }) => ({ auth }));
-    const isMobile = useBreakpointValue({base: true, md: false, lg: false});
+    const isMobile = useBreakpointValue({base: true, md: true, lg: false});
     const glassEffect = useGlassEffect(true);
     if (!auth) {
         return (
@@ -50,16 +50,17 @@ export const MainLayout: FC = () => {
                 my="auto"
                 direction="row"
                 width="100%"
-                maxWidth="82rem"
+                maxWidth="90rem"
                 mx="auto"
                 pr={[0, null, null, 10]}
             >
                 <SideNav auth={auth} />
                 <Box
-                    marginLeft={{base:0, md: "18rem", lg: "18rem"}}
+                    marginLeft={{base:0, md: 0, lg: "18rem"}}
                   height={{base: "100vh", md: "95vh", lg: "95vh"}}
                     my="auto"
                     width="100%"
+                    overflowY={'auto'}
                     
                 >
                    {isMobile ? <MobileNav /> : null}

@@ -1,5 +1,6 @@
 import { extendTheme } from "@chakra-ui/react";
-
+import Text from './Text';
+import Heading from "./Heading";
 
 
 const colors = {
@@ -30,4 +31,4 @@ const fonts = {
 }
 
 
-export const theme = extendTheme({colors, fonts})
+export const theme = extendTheme({colors, fonts, components: { Text, Heading}})

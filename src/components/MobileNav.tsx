@@ -30,7 +30,7 @@ export const MobileNav: FC = () => {
     const onLogout = useLogout();
     return (
         <>
-            <Flex px={3} bg="white" width="100%" alignItems="center" py={3}>
+            <Flex position="sticky" marginTop={0}  px={3} bg="white" width="100%" alignItems="center" py={3}>
                 <IconButton
                     onClick={onToggle}
                     icon={<AiOutlineMenu />}

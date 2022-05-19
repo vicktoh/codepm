@@ -4,6 +4,8 @@ import { ChatPage } from '../pages/ChatPage';
 import { Dashboard } from '../pages/Dashboard';
 import { LogsPage } from '../pages/LogsPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { Projects } from '../pages/Projects';
+import { ProjectDetails } from '../pages/ProjectDetails';
 import { Proposals } from '../pages/Proposals';
 import { RequisitionPage } from '../pages/RequisitionPage';
 import { TasksPage } from '../pages/TasksPage';
@@ -24,8 +26,12 @@ export const MainNavigation = ()=> {
             <Route path="/dashboard"  element= {<Dashboard/>}>
                <Route index element={<TasksPage/>} />
                <Route path = "proposals" element={<Proposals />} />
+                  
                <Route path = "media" element={<TasksPage/>} />
-               <Route path = "projects" element={<TasksPage/>} />
+               <Route path = "projects">
+                  <Route index  element={<Projects/>} />
+                  <Route path = ":projectId"  element= {<ProjectDetails/>} />
+               </Route>
             </Route>
             <Route path='tasks' element= {<TasksPage/>} />
             <Route path='chat' element= {<ChatPage/>} />

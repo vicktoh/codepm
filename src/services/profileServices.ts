@@ -1,7 +1,8 @@
 import { db, firebaseApp } from "./firebase";
-import { doc,  onSnapshot,  setDoc, updateDoc } from "firebase/firestore";
+import { collection, doc,  getDocs,  onSnapshot,  query,  setDoc, updateDoc } from "firebase/firestore";
 import {getStorage, uploadBytesResumable, ref, getDownloadURL} from 'firebase/storage';
 import { Profile } from "../types/Profile";
+import { User } from "../types/User";
 
 
 
@@ -42,4 +43,22 @@ export const listenOnProfile = (userId: string, success: (data: Profile)=>void) 
    })
 
    return unsub;
+}
+
+
+export const fetchUsers = async () => {
+
+   const usersCollection = collection(db,"users");
+   const usersQuery =  query(usersCollection);
+   const usersSnapshot = await getDocs(usersQuery);
+   const users: User[] = []
+   usersSnapshot.forEach((snap)=>{
+      const user = snap.data() as User;
+      user.userId = snap.id;
+      users.push(user);
+   })
+
+
+   return users;
+
 }
