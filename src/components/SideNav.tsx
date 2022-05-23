@@ -14,7 +14,7 @@ type SideNavProps = {
 export const SideNav: FC<SideNavProps> = ({ auth: { displayName, photoUrl}})=> {
    const onLogout = useLogout();
    return (
-      <Flex display={{base: "none", md: "flex", lg: "flex"}}  background="rgba(255, 255, 255, .32)"  direction="column" width = "16rem" borderRadius="2xl" px={6} height= "95vh" position = "fixed" top="0" zIndex={1}  py={5}>
+      <Flex display={{base: "none", md: "none", lg: "flex"}}  background="rgba(255, 255, 255, .32)"  direction="column" width = "16rem" borderRadius="2xl" px={6} height= "95vh" position = "fixed" top="0" zIndex={1}  py={5}>
          <Heading fontSize="xl" my={3} alignSelf="center">Connected</Heading>
          <VStack>
             <Avatar as = {Link} to ="/profile" name = {displayName} src={photoUrl}  size = "lg" />

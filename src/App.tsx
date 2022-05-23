@@ -10,16 +10,18 @@ import { useLoadingAnimation } from './hooks/useLoadingAnimation';
 import { LoginPage } from './pages/LoginPage';
 import { MainNavigation } from './navigation/MainNavigation';
 import { BrowserRouter } from 'react-router-dom';
-import { listenOnProfile } from './services/profileServices';
+import { fetchUsers, listenOnProfile } from './services/profileServices';
 import { setProfile } from './reducers/profileSlice';
+import { setUsers } from './reducers/usersSlice';
 const codeLogo = require('./assets/images/logo.png');
 
 
 function App() {
   const [isLoading, setLoading] = useState<boolean>(true);
-  const { auth } = useAppSelector(({auth})=> ({auth}))
+  const { auth, users } = useAppSelector(({auth, users})=> ({auth, users}))
   const dispatch  = useDispatch();
   const loadingAnimation = useLoadingAnimation();
+
   useEffect(()=> {
     if(!auth){
      const unsubscribe =  onAuthStateChanged(firebaseAuth, (user)=> {
@@ -58,7 +60,20 @@ function App() {
 
     return () => { if(unsub) unsub()}
     
-  }, [auth, dispatch])
+  }, [auth, dispatch]);
+
+
+  useEffect(()=> {
+    const getUsers = async ()=> {
+      if(!users){
+        const us = await fetchUsers();
+        dispatch(setUsers(us));
+        return
+      }
+      return null
+    }
+    getUsers();
+  }, [users, dispatch])
   if(isLoading && !auth){
     return (
       <Flex width="100vw" height="100vh" alignItems="center" justifyContent="center">
