@@ -1,6 +1,7 @@
 import { extendTheme } from "@chakra-ui/react";
 import Text from './Text';
 import Heading from "./Heading";
+import IconButton from "./IconButton";
 
 
 const colors = {
@@ -31,4 +32,4 @@ const fonts = {
 }
 
 
-export const theme = extendTheme({colors, fonts, components: { Text, Heading}})
+export const theme = extendTheme({colors, fonts, components: { Text, Heading, IconButton }})

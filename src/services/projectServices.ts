@@ -4,9 +4,12 @@ import {
     doc,
     getDoc,
     onSnapshot,
+    orderBy,
+    query,
     setDoc,
     Timestamp,
     updateDoc,
+    where,
 } from 'firebase/firestore';
 import {
     deleteObject,
@@ -15,7 +18,7 @@ import {
     ref,
     uploadBytes,
 } from 'firebase/storage';
-import { Project, ProjectDocument } from '../types/Project';
+import { Project, ProjectDocument, Task } from '../types/Project';
 import { ProposalType } from '../types/ProposalType';
 import { db, firebaseApp } from './firebase';
 
@@ -89,65 +92,102 @@ export const deleteProposal = async (proposal: ProposalType) => {
 
 // projects
 
-export const listenOnProjects =  (callback: (data: Project[]) => void) => {
+export const listenOnProjects = (callback: (data: Project[]) => void) => {
     const collectionRef = collection(db, 'projects');
     return onSnapshot(collectionRef, (projectSnapshot) => {
         const projects: Project[] = [];
         projectSnapshot.forEach((snapshot) => {
-             const project = snapshot.data() as Project;
-             project.dateAdded = (project.dateAdded as Timestamp).toDate();
-             project.id = snapshot.id;
-             projects.push(project);
+            const project = snapshot.data() as Project;
+            project.dateAdded = (project.dateAdded as Timestamp).toDate();
+            project.id = snapshot.id;
+            projects.push(project);
         });
         callback(projects);
     });
 };
 
-
-
 export const deleteProject = async (project: Project) => {
-    const docRef =doc(db, `projects/${project.id}`);
+    const docRef = doc(db, `projects/${project.id}`);
     await deleteDoc(docRef);
 
     // Todo Clean up cloud function to remove residue of workplans and documents in storage
-}
+};
 
-export const addProject = async (project: Omit<Project, "id" | "dateAdded">) => {
+export const addProject = async (
+    project: Omit<Project, 'id' | 'dateAdded'>
+) => {
     const projectCollection = collection(db, 'projects');
     const projectRef = doc(projectCollection);
     const projectToAdd: Project = {
         id: projectRef.id,
         ...project,
-        dateAdded: Timestamp.now()
+        dateAdded: Timestamp.now(),
     };
 
     await setDoc(projectRef, projectToAdd);
+};
 
-}
-
-export const editProject = async(project: Partial<Project>) => {
-    if(!project.id) return ;
-    const projectRef = doc(db,`projects/${project.id}`);
-    await updateDoc(projectRef, {...project});
-}
-export const getProject = async(projectId: string) =>{
+export const editProject = async (project: Partial<Project>) => {
+    if (!project.id) return;
+    const projectRef = doc(db, `projects/${project.id}`);
+    await updateDoc(projectRef, { ...project });
+};
+export const getProject = async (projectId: string) => {
     const docRef = doc(db, `projects/${projectId}`);
     const docSnapshot = await getDoc(docRef);
     const project = docSnapshot.data() as Project;
     project.id = docSnapshot.id;
     project.dateAdded = (project.dateAdded as Timestamp).toDate();
     return project;
-}
+};
 
-
-export const addDocument = async(newdoc: ProjectDocument, project: Project) => {
-    const documents: ProjectDocument []= [...(project?.documents || []), newdoc] ;
+export const addDocument = async (
+    newdoc: ProjectDocument,
+    project: Project
+) => {
+    const documents: ProjectDocument[] = [
+        ...(project?.documents || []),
+        newdoc,
+    ];
     const documentRef = doc(db, `projects/${project.id}`);
     await updateDoc(documentRef, { documents });
 
-    return {...project, documents }
-}
-export const editDocument = async(documents: ProjectDocument [], project: Project) =>{
+    return { ...project, documents };
+};
+export const editDocument = async (
+    documents: ProjectDocument[],
+    project: Project
+) => {
     const documentRef = doc(db, `projects/${project.id}`);
     await updateDoc(documentRef, { documents });
-}
+};
+
+export const updateProject = async (projectId: string, update: any) => {
+    const documentRef = doc(db, `projects/${projectId}`);
+    await updateDoc(documentRef, update);
+};
+
+export const listenOnTasks =  (
+    projectId: string | undefined,
+    workplanId: string | undefined,
+    callback: (data: Task[]) => void
+) => {
+    if (!projectId || !workplanId) return;
+    const collectionRef = collection(db, `projects/${projectId}/tasks`);
+    const q = query(
+        collectionRef,
+        where('workplanId', '==', workplanId),
+        orderBy('timestamp', 'desc')
+    );
+    return onSnapshot(q, (snapshot) => {
+        const tasks: Task[] = [];
+        snapshot.forEach((snap) => {
+            const task = snap.data() as Task;
+            task.id = snap.id;
+            tasks.push(task)
+        });
+        
+
+        callback(tasks);
+    });
+};

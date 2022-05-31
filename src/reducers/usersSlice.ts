@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { User } from "../types/User";
 
-const initialAuth: User [] | null = null;
+const initialAuth: {users: User [], userMap: Record<string, User>} | null = null;
 
 const usersSlice = createSlice({
     name: 'users',

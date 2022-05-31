@@ -1,4 +1,5 @@
 import { Crop } from 'react-image-crop';
+import { Task, KanbanColumn, TaskStatus } from '../types/Project';
 
 
 
@@ -37,3 +38,66 @@ export const getCroppedImg = (image: HTMLImageElement, crop: Crop) => {
 export const toMB = (size: number) =>{
     return (size/1024).toFixed(2);
 }
+
+
+
+function dec2hex (dec: number) {
+    return dec.toString(16).padStart(2, "0")
+  }
+  
+  // generateId :: Integer -> String
+  export function generateId (len:number) {
+    var arr = new Uint8Array((len || 40) / 2)
+    window.crypto.getRandomValues(arr)
+    return Array.from(arr, dec2hex).join('')
+  }
+export function tasksToKanbanBoard (tasks: Task[]){
+    const notStartedColumn: KanbanColumn = {
+        title: TaskStatus['not-started'],
+        id: 2,
+        cards: []
+    }
+    const ongoingColumn: KanbanColumn = {
+        title: TaskStatus['ongoing'],
+        id: 3,
+        cards: []
+    }
+    const  completedColumn: KanbanColumn = {
+        title: TaskStatus['completed'],
+        id: 4,
+        cards: []
+    }
+    const plannedColumn: KanbanColumn = {
+        title: TaskStatus['planned'],
+        id: 1,
+        cards: []
+    }
+
+    tasks.forEach((task)=> {
+        switch(task.status){
+            case TaskStatus.ongoing:
+                ongoingColumn.cards.push(task);
+                break;
+            case TaskStatus.completed:
+                completedColumn.cards.push(task);
+                break;
+            case TaskStatus['not-started']:
+                notStartedColumn.cards.push(task);
+                break;
+            case TaskStatus.planned:
+                plannedColumn.cards.push(task);
+                break;
+        }
+    });
+
+    return  {
+        columns: [
+            plannedColumn,
+            notStartedColumn,
+            ongoingColumn,
+            completedColumn
+        ]
+    }
+}
+
+export const STATUS_INDEX_MAP :TaskStatus[] = [TaskStatus.planned, TaskStatus['not-started'], TaskStatus.ongoing, TaskStatus.completed]

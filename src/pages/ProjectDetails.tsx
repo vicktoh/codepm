@@ -25,14 +25,17 @@ import { FiChevronLeft } from 'react-icons/fi';
 import { useParams } from 'react-router-dom';
 import { DocumentCard } from '../components/DocumentCard';
 import { DocumentForm } from '../components/DocumentForm';
-import { editDocument, getProject } from '../services/projectServices';
+import { editDocument, getProject, updateProject } from '../services/projectServices';
 import { Project } from '../types/Project';
 import { ProjectDoughnut } from './ProjectDoughnut';
+import { WorkplanForm } from '../components/WorkPlanForm';
+import { WorkplanRow } from '../components/WorkplanRow';
 
 export const ProjectDetails = () => {
     const { projectId } = useParams();
     const [isLoading, setLoading] = useState<boolean>(true);
     const [project, setProject] = useState<Project>();
+    console.log({ project });
     const {
         isOpen: isDocumentModalOpen,
         onClose: onCloseDocumentModal,
@@ -43,12 +46,25 @@ export const ProjectDetails = () => {
         onClose: onCloseDeleteModal,
         onOpen: onOpenDeleteModal,
     } = useDisclosure();
+    const {
+        isOpen: isWorkplanModalOpen,
+        onClose: onCloseWorkPlanModal,
+        onOpen: onOpenWorkplanModal,
+    } = useDisclosure();
+    const {
+        isOpen: isDeleteWorkplanOpen,
+        onClose: onCloseDeleteWorkplanModal,
+        onOpen: onOpenDeleteWorkplanModal,
+    } = useDisclosure();
     const [isDeletingDocument, setDeletingDocument] = useState<boolean>();
+    const [isDeletingWorkplan, setDeletingWorkplan] = useState<boolean>();
     const [mode, setMode] = useState<'add' | 'edit'>('add');
     const [selectedDocIndex, setSelectedDocumentIndex] = useState<number>();
 
-    const toast = useToast();
+    const [selectedWorkPlanIndex, setWorkplanIndex] = useState<number>();
 
+    const toast = useToast();
+    // Document Actions
     const addDocumentPrompt = () => {
         setMode('add');
         setSelectedDocumentIndex(undefined);
@@ -67,14 +83,45 @@ export const ProjectDetails = () => {
         setDeletingDocument(true);
         newproject.documents?.splice(selectedDocIndex, 1);
         await editDocument(newproject?.documents || [], project);
-        setDeletingDocument(false);
+        setSelectedDocumentIndex(undefined)
         onCloseDeleteModal();
+        setDeletingDocument(false);
         setProject(newproject);
     };
 
     const deleteDocumentPrompt = async (index: number) => {
         setSelectedDocumentIndex(index);
         onOpenDeleteModal();
+    };
+    // Workplan Actions
+
+    const addWorkPlan = () => {
+        setMode('add');
+        setWorkplanIndex(undefined);
+        onOpenWorkplanModal();
+    };
+    const editWorkplanPrompt = async (index: number) => {
+        setMode('edit');
+        setWorkplanIndex(index);
+        onOpenWorkplanModal();
+    };
+
+    const deleteWorkplanPrompt = async (index: number) => {
+        setWorkplanIndex(index);
+        onOpenDeleteWorkplanModal();
+    };
+
+    const onDeleteWorkPlan = async () => {
+        if (!project || !project?.workplans || selectedWorkPlanIndex === undefined)
+            return;
+        const workplans = [...project.workplans]
+        setDeletingWorkplan(true);
+        workplans?.splice(selectedWorkPlanIndex, 1);
+        await updateProject(project.id, { workplans });
+        setWorkplanIndex(undefined)
+        onCloseDeleteWorkplanModal();
+        setDeletingWorkplan(false);
+        setProject({...project, ...{ workplans }});
     };
 
     useEffect(() => {
@@ -206,6 +253,7 @@ export const ProjectDetails = () => {
                                     icon={<Icon as={AiOutlinePlus} />}
                                     aria-label="add new Documant"
                                     variant="ghost"
+                                    onClick={addWorkPlan}
                                     borderRadius="full"
                                     _hover={{
                                         background: 'brand.400',
@@ -213,22 +261,39 @@ export const ProjectDetails = () => {
                                     }}
                                 />
                             </HStack>
-                            <Flex
-                                direction="column"
-                                height="5rem"
-                                bg="white"
-                                my={2}
-                                justifyContent="center"
-                                alignItems="center"
-                            >
-                                <Text
-                                    color="gray.200"
-                                    fontSize="xl"
-                                    fontWeight="semibold"
+
+                            {project?.workplans?.length ? (
+                                project.workplans.map((workplan, i) => (
+                                    <WorkplanRow
+                                        key = {`workplan-row-${i}`}
+                                        workplan={workplan}
+                                        onEditWorkPlan={() =>
+                                            editWorkplanPrompt(i)
+                                        }
+                                        onDeleteWorkPlan={() =>
+                                            deleteWorkplanPrompt(i)
+                                        }
+                                        projectId={project?.id || ""}
+                                    />
+                                ))
+                            ) : (
+                                <Flex
+                                    direction="column"
+                                    height="5rem"
+                                    bg="white"
+                                    my={2}
+                                    justifyContent="center"
+                                    alignItems="center"
                                 >
-                                    No Workplan added yet{' '}
-                                </Text>
-                            </Flex>
+                                    <Text
+                                        color="gray.200"
+                                        fontSize="xl"
+                                        fontWeight="semibold"
+                                    >
+                                        No Workplan added yet{' '}
+                                    </Text>
+                                </Flex>
+                            )}
                         </GridItem>
                         <GridItem colSpan={3} w="100%" px={3}>
                             <ProjectDoughnut />
@@ -270,7 +335,7 @@ export const ProjectDetails = () => {
                         <ModalCloseButton size="sm" />
                         <ModalBody>
                             <Text>{`Are you sure you want to delete this document named ${
-                                project.documents[selectedDocIndex].title ||
+                                project.documents[selectedDocIndex]?.title ||
                                 'unknown name'
                             }`}</Text>
                         </ModalBody>
@@ -284,12 +349,80 @@ export const ProjectDetails = () => {
                                     disabled={isDeletingDocument}
                                     variant="outline"
                                     colorScheme="brand"
+                                    onClick={onCloseDeleteModal}
                                 >
                                     No
                                 </Button>
                                 <Button
                                     onClick={onDelete}
                                     isLoading={isDeletingDocument}
+                                    variant="solid"
+                                    colorScheme="brand"
+                                >
+                                    Yes
+                                </Button>
+                            </Flex>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
+            ) : null}
+            {project ? (
+                <Modal
+                    isOpen={isWorkplanModalOpen}
+                    onClose={onCloseWorkPlanModal}
+                    size="xs"
+                >
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalCloseButton />
+                        <ModalHeader>{`${mode} workplan`}</ModalHeader>
+                        <ModalBody>
+                            <WorkplanForm
+                                onClose={onCloseWorkPlanModal}
+                                mode={mode}
+                                project={project}
+                                index={selectedWorkPlanIndex}
+                                setProject={setProject}
+                            />
+                        </ModalBody>
+                    </ModalContent>
+                </Modal>
+            ) : null}
+            {project &&
+            project.workplans &&
+            selectedWorkPlanIndex !== undefined ? (
+                <Modal
+                    isOpen={isDeleteWorkplanOpen}
+                    onClose={onCloseDeleteWorkplanModal}
+                    size="sm"
+                >
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalHeader py={8}>{`Delete Workplan`}</ModalHeader>
+                        <ModalCloseButton size="sm" />
+                        <ModalBody>
+                            <Text>{`Are you sure you want to delete this workplan named ${
+                                project.workplans[selectedWorkPlanIndex]
+                                    .title || 'unknown name'
+                            } including all assotiated tasks under this`}</Text>
+                        </ModalBody>
+                        <ModalFooter>
+                            <Flex
+                                width="100%"
+                                direction="row"
+                                justifyContent="space-between"
+                            >
+                                <Button
+                                    disabled={isDeletingWorkplan}
+                                    variant="outline"
+                                    colorScheme="brand"
+                                    onClick={onCloseDeleteWorkplanModal}
+                                >
+                                    No
+                                </Button>
+                                <Button
+                                    onClick={onDeleteWorkPlan}
+                                    isLoading={isDeletingWorkplan}
                                     variant="solid"
                                     colorScheme="brand"
                                 >

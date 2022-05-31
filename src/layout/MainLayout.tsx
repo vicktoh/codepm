@@ -33,6 +33,7 @@ export const MainLayout: FC = () => {
             height="100vh"
             direction="row"
             position="relative"
+            overflow="hidden"
         >
             <Image
                 src={homeLogo}
@@ -53,6 +54,7 @@ export const MainLayout: FC = () => {
                 maxWidth="90rem"
                 mx="auto"
                 pr={[0, null, null, 10]}
+                overflow="clip"
             >
                 <SideNav auth={auth} />
                 <Box
