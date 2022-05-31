@@ -13,7 +13,7 @@ import {
 } from '@chakra-ui/react';
 import React, { FC, useState } from 'react';
 import { useAppSelector } from '../reducers/types';
-import { Project, Task, TaskStatus } from '../types/Project';
+import { Project, Task } from '../types/Project';
 import { format } from 'date-fns';
 import { AiOutlineClockCircle } from 'react-icons/ai';
 import { RiAttachment2 } from 'react-icons/ri';

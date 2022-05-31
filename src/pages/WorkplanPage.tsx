@@ -9,7 +9,6 @@ import {
     ModalBody,
     ModalCloseButton,
     ModalContent,
-    ModalHeader,
     ModalOverlay,
     Skeleton,
     Text,
