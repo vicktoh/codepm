@@ -46,7 +46,7 @@ type ProposalRowType = {
     onDelete: () => void;
 };
 const ProjectRow: FC<ProposalRowType> = ({ project, onEdit, onDelete, index }) => {
-    const { title, dateAdded, funder, documents, workPlans } = project;
+    const { title, dateAdded, funder, documents, workplans } = project;
     const tagColor = useMemo(()=> COLOR_SPECTRUM_TAGS[index%COLOR_SPECTRUM_TAGS.length], [index]);
     const {pathname } = useLocation()
     return (
@@ -76,9 +76,9 @@ const ProjectRow: FC<ProposalRowType> = ({ project, onEdit, onDelete, index }) =
                    }
             </Td>
             <Td bg="white" mb={2}>
-                   {workPlans && workPlans.length ? 
+                   {workplans && workplans.length ? 
                    <Tag whiteSpace='nowrap' bg = {tagColor}>
-                      {`${workPlans.length} workplans`}
+                      {`${workplans.length} workplans`}
                    </Tag>:
                    <Tag>
                       0 

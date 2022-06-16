@@ -6,73 +6,67 @@ import {
     FormErrorMessage,
     FormLabel,
     Input,
+    Select,
     useToast,
 } from '@chakra-ui/react';
 import * as yup from 'yup';
 import { Form, Formik } from 'formik';
-import { addDocument, editDocument } from '../services/projectServices';
-import { Project, ProjectDocument } from '../types/Project';
-import { useAppSelector } from '../reducers/types';
+import { updateProject } from '../services/projectServices';
+import { Project, ProjectWorkPlan } from '../types/Project';
 import { Timestamp } from 'firebase/firestore';
+import { WORKPLAN_TYPES } from '../constants';
+import { generateId } from '../services/helpers';
 
-type DocumentFormProps = {
+type WorkplanFormProps = {
     onClose: () => void;
     mode: 'add' | 'edit';
+    setProject: (project: Project) => void
     project: Project;
-    setProject: (newProject: Project) => void;
-    index: number | undefined;
+    index?: number;
 };
-export const DocumentForm: FC<DocumentFormProps> = ({
+export const WorkplanForm: FC<WorkplanFormProps> = ({
     onClose = () => null,
     mode,
-    project,
-    setProject,
     index,
+    project,
+    setProject
 }) => {
-    const document: Partial<ProjectDocument> =
-        project?.documents && index !== undefined
-            ? project.documents[index]
-            : {};
-    console.log({ document, index, project });
-    const auth = useAppSelector(({ auth }) => auth);
     const toast = useToast();
+    const workplan = project?.workplans && index !==undefined ? project.workplans[index] : null
     const validationSchema = yup.object().shape({
         title: yup
             .string()
             .required('This field is required')
             .min(5, 'Must be at least 5 characters'),
-        url: yup
-            .string()
-            .required('This field is required')
-            .url('Must be a valid url'),
+        type: yup.string().required('This field is required'),
     });
-    const initialValues: Omit<
-        ProjectDocument,
-        'dateAdded' | 'addedById' | 'addedBy'
-    > = {
-        title: document?.title || '',
-        url: document?.url || '',
+    const initialValues: Omit<ProjectWorkPlan, 'dateAdded' | 'id'> = {
+        title: workplan?.title || '',
+        type: workplan?.type || "Communications",
     };
 
     return (
         <Formik
             validationSchema={validationSchema}
             onSubmit={async (values, { setSubmitting }) => {
-                const newDoc: ProjectDocument = {
+                const newPlan: ProjectWorkPlan = {
                     title: values.title,
-                    url: values.url,
+                    type: values.type,
                     dateAdded: Timestamp.now(),
-                    addedBy: auth?.displayName || 'Unknown User',
-                    addedById: auth?.uid || '',
+                    id: generateId(10)
                 };
                 if (mode === 'add') {
                     try {
-                        const newProject = await addDocument(newDoc, project);
-                        setProject(newProject);
+                        const workplans = [
+                            ...(project?.workplans || []),
+                            newPlan,
+                        ];
+                        await updateProject(project.id, { workplans });
+                        setProject({...project, ...{ workplans }});
                     } catch (error) {
                         let err: any = error;
                         toast({
-                            title: 'Could not add Document',
+                            title: 'Could not add workplan',
                             description: err?.message || 'Unknown Error',
                             status: 'error',
                         });
@@ -81,16 +75,19 @@ export const DocumentForm: FC<DocumentFormProps> = ({
                     }
                 }
                 if (mode === 'edit') {
-                    if (index === undefined) return;
+                    if (
+                        index === undefined ||
+                        !project.workplans ||
+                        !project.workplans.length
+                    )
+                        return;
                     try {
-                        const newdocuments = [...(project.documents || [])];
-                        newdocuments.splice(index, 1, newDoc);
-                        await editDocument(newdocuments, project);
-                        toast({
-                            title: 'Successfully edited document',
-                            status: 'success',
-                        });
-                        setProject({ ...project, documents: newdocuments });
+                        const workplans = [...project.workplans];
+                        const oldWorkplan = workplans[index];
+
+                        workplans[index] = {...oldWorkplan, ...values}
+                        await updateProject(project.id, { workplans });
+                        setProject({...project, ...{ workplans }});
                     } catch (error) {
                         let err: any = error;
                         toast({
@@ -135,19 +132,27 @@ export const DocumentForm: FC<DocumentFormProps> = ({
 
                         <FormControl
                             isRequired
-                            isInvalid={!!touched.url && !!errors.url}
+                            isInvalid={!!touched.type && !!errors.type}
                             mb={3}
                         >
                             <FormLabel>URL</FormLabel>
-                            <Input
-                                name="url"
-                                value={values.url}
+                            <Select
+                                value={values.type}
+                                name="type"
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                type="url"
-                            />
+                            >
+                                {WORKPLAN_TYPES.map((workplan, i) => (
+                                    <option
+                                        key={`workplan_type_${i}`}
+                                        value={workplan}
+                                    >
+                                        {workplan}
+                                    </option>
+                                ))}
+                            </Select>
                             <FormErrorMessage>
-                                {touched.url && errors.url}
+                                {touched.type && errors.type}
                             </FormErrorMessage>
                         </FormControl>
 

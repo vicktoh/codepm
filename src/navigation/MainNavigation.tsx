@@ -9,6 +9,7 @@ import { ProjectDetails } from '../pages/ProjectDetails';
 import { Proposals } from '../pages/Proposals';
 import { RequisitionPage } from '../pages/RequisitionPage';
 import { TasksPage } from '../pages/TasksPage';
+import { WorkplanPage } from '../pages/WorkplanPage';
 
 
 
@@ -31,6 +32,7 @@ export const MainNavigation = ()=> {
                <Route path = "projects">
                   <Route index  element={<Projects/>} />
                   <Route path = ":projectId"  element= {<ProjectDetails/>} />
+                  <Route path = ":projectId/:workplanId"  element= {<WorkplanPage/>} />
                </Route>
             </Route>
             <Route path='tasks' element= {<TasksPage/>} />

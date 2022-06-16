@@ -6,36 +6,21 @@ import {
     FormErrorMessage,
     FormLabel,
     Input,
-    useToast,
 } from '@chakra-ui/react';
 import * as yup from 'yup';
 import { Form, Formik } from 'formik';
-import { addDocument, editDocument } from '../services/projectServices';
-import { Project, ProjectDocument } from '../types/Project';
-import { useAppSelector } from '../reducers/types';
-import { Timestamp } from 'firebase/firestore';
+import { Document } from '../types/Project';
 
 type DocumentFormProps = {
+    onSubmit: (value: Document) => void;
+    document?: Document;
     onClose: () => void;
-    mode: 'add' | 'edit';
-    project: Project;
-    setProject: (newProject: Project) => void;
-    index: number | undefined;
 };
-export const DocumentForm: FC<DocumentFormProps> = ({
-    onClose = () => null,
-    mode,
-    project,
-    setProject,
-    index,
+export const TaskDocumentForm: FC<DocumentFormProps> = ({
+    onSubmit,
+    document,
+    onClose,
 }) => {
-    const document: Partial<ProjectDocument> =
-        project?.documents && index !== undefined
-            ? project.documents[index]
-            : {};
-    console.log({ document, index, project });
-    const auth = useAppSelector(({ auth }) => auth);
-    const toast = useToast();
     const validationSchema = yup.object().shape({
         title: yup
             .string()
@@ -46,10 +31,7 @@ export const DocumentForm: FC<DocumentFormProps> = ({
             .required('This field is required')
             .url('Must be a valid url'),
     });
-    const initialValues: Omit<
-        ProjectDocument,
-        'dateAdded' | 'addedById' | 'addedBy'
-    > = {
+    const initialValues: Document = {
         title: document?.title || '',
         url: document?.url || '',
     };
@@ -57,51 +39,9 @@ export const DocumentForm: FC<DocumentFormProps> = ({
     return (
         <Formik
             validationSchema={validationSchema}
-            onSubmit={async (values, { setSubmitting }) => {
-                const newDoc: ProjectDocument = {
-                    title: values.title,
-                    url: values.url,
-                    dateAdded: Timestamp.now(),
-                    addedBy: auth?.displayName || 'Unknown User',
-                    addedById: auth?.uid || '',
-                };
-                if (mode === 'add') {
-                    try {
-                        const newProject = await addDocument(newDoc, project);
-                        setProject(newProject);
-                    } catch (error) {
-                        let err: any = error;
-                        toast({
-                            title: 'Could not add Document',
-                            description: err?.message || 'Unknown Error',
-                            status: 'error',
-                        });
-                    } finally {
-                        onClose();
-                    }
-                }
-                if (mode === 'edit') {
-                    if (index === undefined) return;
-                    try {
-                        const newdocuments = [...(project.documents || [])];
-                        newdocuments.splice(index, 1, newDoc);
-                        await editDocument(newdocuments, project);
-                        toast({
-                            title: 'Successfully edited document',
-                            status: 'success',
-                        });
-                        setProject({ ...project, documents: newdocuments });
-                    } catch (error) {
-                        let err: any = error;
-                        toast({
-                            title: 'Could not edit proposal',
-                            description: err?.message || 'Unknown Error',
-                            status: 'error',
-                        });
-                    } finally {
-                        onClose();
-                    }
-                }
+            onSubmit={(values, { setSubmitting }) => {
+                onSubmit(values);
+                onClose();
             }}
             initialValues={initialValues}
         >
@@ -123,6 +63,7 @@ export const DocumentForm: FC<DocumentFormProps> = ({
                         >
                             <FormLabel>Title</FormLabel>
                             <Input
+                                size="sm"
                                 name="title"
                                 value={values.title}
                                 onChange={handleChange}
@@ -145,6 +86,7 @@ export const DocumentForm: FC<DocumentFormProps> = ({
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 type="url"
+                                size="sm"
                             />
                             <FormErrorMessage>
                                 {touched.url && errors.url}

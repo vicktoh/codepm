@@ -51,14 +51,16 @@ export const fetchUsers = async () => {
    const usersCollection = collection(db,"users");
    const usersQuery =  query(usersCollection);
    const usersSnapshot = await getDocs(usersQuery);
-   const users: User[] = []
+   const users: User[] = [];
+   const usersMap: Record<string, User> = {}
    usersSnapshot.forEach((snap)=>{
       const user = snap.data() as User;
       user.userId = snap.id;
       users.push(user);
+      usersMap[snap.id] = user;
    })
 
 
-   return users;
+   return {users, usersMap};
 
 }
