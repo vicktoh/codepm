@@ -271,7 +271,6 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
         <HStack>
           <Heading fontSize="md">👨🏿 Assigned to</Heading>
           <UserListPopover
-            saveTask={() => null}
             assignees={taskState.assignees || []}
             onSelectUser={addAssignees}
           >
@@ -292,6 +291,7 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
           <AvatarGroup spacing="-1rem">
             {taskState.assignees.map((userId) => (
               <Avatar
+                key={`assignees-${userId}`}
                 src={users?.usersMap ? users.usersMap[userId].photoUrl : ""}
                 name={
                   users?.usersMap
@@ -444,6 +444,7 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
         {taskState.todo?.length ? (
           taskState.todo.map((todo, i) => (
             <TodoItemComponent
+              key={`todoItem-${i}`}
               onRemoveTodoItem={removeTodoItem}
               todoItem={todo}
               index={i}

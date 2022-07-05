@@ -10,6 +10,7 @@ import {
   PopoverHeader,
   PopoverTrigger,
   Text,
+  useDisclosure,
 } from "@chakra-ui/react";
 import React, { FC, useState } from "react";
 import { AiFillCheckCircle } from "react-icons/ai";
@@ -18,20 +19,43 @@ import { useAppSelector } from "../reducers/types";
 type UserListPopverProps = {
   onSelectUser: (userId: string) => void;
   assignees: string[];
-  saveTask: () => void;
+  onCloseSuccess?: () => void;
+  closeOnSelect?: boolean;
 };
 
 export const UserListPopover: FC<UserListPopverProps> = ({
   children,
   onSelectUser,
   assignees,
-  saveTask,
+  onCloseSuccess,
+  closeOnSelect = false,
 }) => {
   const [search, setSearch] = useState<string>("");
   const initialFocusRef = React.useRef();
-  const users = useAppSelector(({ users }) => users);
+  const { isOpen, onClose, onOpen } = useDisclosure();
+  const { users, auth } = useAppSelector(({ users, auth }) => ({
+    users,
+    auth,
+  }));
+
+  const selectCallBack = (userId: string) => {
+    onSelectUser(userId);
+    if (closeOnSelect) {
+      onClose();
+    }
+  };
+
+  const afterClose = () => {
+    if (onCloseSuccess) onCloseSuccess();
+    onClose();
+  };
   return (
-    <Popover initialFocusRef={initialFocusRef.current} onClose={saveTask}>
+    <Popover
+      onOpen={onOpen}
+      isOpen={isOpen}
+      initialFocusRef={initialFocusRef.current}
+      onClose={afterClose}
+    >
       <PopoverTrigger>{children}</PopoverTrigger>
       <PopoverContent>
         <PopoverArrow />
@@ -46,6 +70,7 @@ export const UserListPopover: FC<UserListPopverProps> = ({
           {users?.users
             ? users.users
                 .filter((user) => {
+                  if (user.userId === auth?.uid) return false;
                   if (!search) return true;
                   const position = user.displayName
                     .toLowerCase()
@@ -58,9 +83,9 @@ export const UserListPopover: FC<UserListPopverProps> = ({
                     alignItems="center"
                     key={user.userId}
                     cursor="pointer"
-                    onClick={() => onSelectUser(user.userId)}
-                    my={2}
+                    onClick={() => selectCallBack(user.userId)}
                     spacing={2}
+                    py={2}
                   >
                     <Avatar
                       src={user.photoUrl}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Flex, Image, Text } from "@chakra-ui/react";
+import { Box, Flex, Image, Text, useToast } from "@chakra-ui/react";
 import { useAppSelector } from "./reducers/types";
 import { firebaseAuth } from "./services/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -13,17 +13,31 @@ import { BrowserRouter } from "react-router-dom";
 import { fetchUsers, listenOnProfile } from "./services/profileServices";
 import { setProfile } from "./reducers/profileSlice";
 import { setUsers } from "./reducers/usersSlice";
+import { reportMyPresence } from "./services/authServices";
+import {
+  listenOnConversations,
+  listenOnPressence,
+} from "./services/chatServices";
+import { setConversations } from "./reducers/conversationSlice";
+import { setPresence } from "./reducers/presenceSlice";
+import { listenOnLogs } from "./services/logsServices";
+import { setLog } from "./reducers/logSlice";
 const codeLogo = require("./assets/images/logo.png");
 
 function App() {
   const [isLoading, setLoading] = useState<boolean>(true);
-  const { auth, users } = useAppSelector(({ auth, users }) => ({
-    auth,
-    users,
-  }));
+  const { auth, users, conversations, presence, logs } = useAppSelector(
+    ({ auth, users, conversations, presence, logs }) => ({
+      auth,
+      users,
+      conversations,
+      presence,
+      logs,
+    }),
+  );
   const dispatch = useDispatch();
   const loadingAnimation = useLoadingAnimation();
-
+  const toast = useToast();
   useEffect(() => {
     if (!auth) {
       const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
@@ -74,6 +88,54 @@ function App() {
     };
     getUsers();
   }, [users, dispatch]);
+
+  useEffect(() => {
+    if (auth?.uid) {
+      try {
+        reportMyPresence(auth.uid);
+      } catch (error) {
+        const err: any = error;
+        toast({
+          title: "error",
+          description: err?.message || "unexpected error",
+          status: "error",
+        });
+      }
+    }
+  }, [auth, toast]);
+  useEffect(() => {
+    if (logs || !auth?.uid) return;
+    try {
+      listenOnLogs(auth?.uid, (logs) => {
+        console.log({ logs });
+        dispatch(setLog(logs));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [logs, auth?.uid, dispatch]);
+
+  useEffect(() => {
+    if (conversations || !auth?.uid) return;
+    try {
+      listenOnConversations(auth?.uid, (data) => {
+        dispatch(setConversations(data));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [conversations, auth?.uid, dispatch]);
+
+  useEffect(() => {
+    if (presence || !auth?.uid) return;
+    try {
+      listenOnPressence(auth.uid, (pres) => {
+        dispatch(setPresence(pres));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [presence, dispatch, auth?.uid]);
   if (isLoading && !auth) {
     return (
       <Flex

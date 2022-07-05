@@ -37,7 +37,6 @@ export const listenOnMyTasks = (
   callback: (task: Task[]) => void,
 ) => {
   const collectionRef = collectionGroup(db, "tasks");
-  console.log("Holla");
   const q = query(collectionRef, where("assignees", "array-contains", userId));
   return onSnapshot(q, (snapshot) => {
     const tasks: Task[] = [];

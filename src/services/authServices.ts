@@ -1,4 +1,12 @@
-import { firebaseAuth } from "./firebase";
+import { firebaseApp, firebaseAuth } from "./firebase";
+import {
+  getDatabase,
+  onDisconnect,
+  onValue,
+  ref,
+  serverTimestamp,
+  set,
+} from "firebase/database";
 import {
   GoogleAuthProvider,
   signInWithPopup,
@@ -42,4 +50,29 @@ export const logOut = async () => {
   } catch (error) {
     return error as AuthError;
   }
+};
+
+export const reportMyPresence = (userId: string) => {
+  const database = getDatabase(firebaseApp);
+  const statusRef = ref(database, `status/${userId}`);
+
+  const isOfflineForDatabase = {
+    state: "offline",
+    last_changed: serverTimestamp(),
+  };
+
+  const isOnlineForDatabase = {
+    state: "online",
+    last_changed: serverTimestamp(),
+  };
+
+  const connectedRef = ref(database, ".info/connected");
+  onValue(connectedRef, (snapshot) => {
+    if (snapshot.val() === false) {
+      console.log("it is not connected");
+      return;
+    }
+    onDisconnect(statusRef).set(isOfflineForDatabase);
+    set(statusRef, isOnlineForDatabase);
+  });
 };

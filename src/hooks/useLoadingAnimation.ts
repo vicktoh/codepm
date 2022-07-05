@@ -34,7 +34,7 @@ export const useLogout = () => {
 };
 
 export const useGlassEffect = (
-  border: boolean = false,
+  border?: boolean,
   borderRadius: string[] | string = ["none", "2xl"],
 ) => {
   return {
