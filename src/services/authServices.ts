@@ -14,6 +14,7 @@ import {
   AuthError,
   signOut,
 } from "firebase/auth";
+import { System } from "../types/System";
 
 type Result = {
   status: "success" | "failed";
@@ -74,5 +75,14 @@ export const reportMyPresence = (userId: string) => {
     }
     onDisconnect(statusRef).set(isOfflineForDatabase);
     set(statusRef, isOnlineForDatabase);
+  });
+};
+
+export const listenOnSystem = (callback: (system: System) => void) => {
+  const database = getDatabase(firebaseApp);
+  const statusRef = ref(database, `system`);
+  return onValue(statusRef, (snapshot) => {
+    const system: System = snapshot.val();
+    callback(system);
   });
 };

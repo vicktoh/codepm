@@ -89,7 +89,7 @@ export const ChatPage: FC = () => {
           alignItems="center"
           justifyContent="space-between"
         >
-          <Heading fontSize="lg">Chats</Heading>
+          <Heading>Chats</Heading>
 
           <HStack spacing={5}>
             <UserListPopover

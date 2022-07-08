@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { Form, Formik } from "formik";
 import React, { FC, useMemo } from "react";
 import * as yup from "yup";
+import { canfillLogOnThisDay } from "../helpers";
 import { useAppSelector } from "../reducers/types";
 import {
   newLogDay,
@@ -26,7 +27,14 @@ type LogFormProps = {
 };
 
 export const LogForm: FC<LogFormProps> = ({ logIndex, actvityIndex, mode }) => {
-  const { auth, logs } = useAppSelector(({ logs, auth }) => ({ logs, auth }));
+  const { auth, logs, system, permission } = useAppSelector(
+    ({ logs, auth, system, permission }) => ({
+      logs,
+      auth,
+      system,
+      permission,
+    }),
+  );
   const { logMap = {}, logs: logList = [] } = logs || {};
   const toast = useToast();
   const today = useMemo(() => {
@@ -55,7 +63,21 @@ export const LogForm: FC<LogFormProps> = ({ logIndex, actvityIndex, mode }) => {
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={async (values, { resetForm }) => {
-        console.log(values);
+        if (
+          !canfillLogOnThisDay(
+            values.date,
+            system?.logAllowanceDay || 0,
+            permission?.logAllowance,
+          )
+        ) {
+          toast({
+            title: "✍🏾 Cannot fill in log for this day",
+            description:
+              "You cannot fill log for this day Contact Admin for support",
+            status: "error",
+          });
+          return false;
+        }
 
         if (mode === "add") {
           try {

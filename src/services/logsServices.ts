@@ -13,6 +13,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { Log, LogFormType, LogState } from "../types/Log";
+import { Period, Request } from "../types/Permission";
 import { db } from "./firebase";
 
 export const listenOnLogs = (
@@ -70,4 +71,21 @@ export const removeLogActivity = (
 export const removeLog = (userId: string, dateString: string) => {
   const logRef = doc(db, `users/${userId}/logs/${dateString}`);
   return deleteDoc(logRef);
+};
+
+export const makeRequest = (
+  userId: string,
+  period: Period,
+  type: Request["type"],
+) => {
+  const requestRef = doc(collection(db, `permissionRequests`));
+  const { startDate, endDate } = period;
+  const newRequest: Request = {
+    userId,
+    startDate,
+    endDate,
+    status: "pending",
+    type,
+  };
+  return setDoc(requestRef, newRequest);
 };

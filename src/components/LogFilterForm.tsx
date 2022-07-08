@@ -12,12 +12,16 @@ import {
 import { Form, Formik } from "formik";
 import React, { FC } from "react";
 import * as yup from "yup";
+import { Period } from "../types/Permission";
 
 type FilterFormType = {
   startDate: string;
   endDate: string;
 };
-export const LogFilterForm: FC = () => {
+type LogFilterProps = {
+  onFilter: (period: Period) => void;
+};
+export const LogFilterForm: FC<LogFilterProps> = ({ onFilter }) => {
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
   const initialValues: FilterFormType = {
     startDate: "",
@@ -30,15 +34,17 @@ export const LogFilterForm: FC = () => {
     endDate: yup
       .date()
       .min(yup.ref("startDate"), "Cannot be before startDate")
-      .min(new Date(), "cannot be before in the future"),
+      .max(new Date(), "cannot be before in the future"),
   });
 
   return (
     <Formik
       validationSchema={validationSchema}
       initialValues={initialValues}
-      onSubmit={(values, { setSubmitting }) => {
-        console.log(values);
+      onSubmit={(values, { resetForm }) => {
+        console.log("i am submitting");
+        onFilter(values);
+        resetForm();
       }}
     >
       {({ values, errors, touched, handleChange, handleBlur }) => (
@@ -48,7 +54,9 @@ export const LogFilterForm: FC = () => {
           </Heading>
           <Form>
             <SimpleGrid columns={[1, 2, 2]} spacing={[0, 4, 4]}>
-              <FormControl>
+              <FormControl
+                isInvalid={!!touched.startDate && !!errors.startDate}
+              >
                 <FormLabel>Start date</FormLabel>
                 <Input
                   name="startDate"
@@ -59,10 +67,10 @@ export const LogFilterForm: FC = () => {
                   type="date"
                 />
                 <FormErrorMessage>
-                  {touched.startDate && touched.startDate}
+                  {touched.startDate && errors.startDate}
                 </FormErrorMessage>
               </FormControl>
-              <FormControl>
+              <FormControl isInvalid={!!touched.endDate && !!errors.endDate}>
                 <FormLabel>End date</FormLabel>
                 <Input
                   name="endDate"
@@ -73,11 +81,11 @@ export const LogFilterForm: FC = () => {
                   type="date"
                 />
                 <FormErrorMessage>
-                  {touched.endDate && touched.endDate}
+                  {touched.endDate && errors.endDate}
                 </FormErrorMessage>
               </FormControl>
             </SimpleGrid>
-            <Button colorScheme="brand" my={2}>
+            <Button type="submit" colorScheme="brand" my={2}>
               Filter
             </Button>
           </Form>

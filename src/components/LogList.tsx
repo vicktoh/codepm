@@ -12,18 +12,20 @@ import {
   ModalOverlay,
   useDisclosure,
 } from "@chakra-ui/react";
-import React, { useState } from "react";
+import React, { FC, useState } from "react";
 import { BsPlus } from "react-icons/bs";
 import { useAppSelector } from "../reducers/types";
 import { removeLog, removeLogActivity } from "../services/logsServices";
+import { Log } from "../types/Log";
 import { EmptyState } from "./EmptyState";
 import { LoadingComponent } from "./LoadingComponent";
 import { LogComponent } from "./LogComponent";
 import { LogForm } from "./LogForm";
-
-export const LogList = () => {
-  const { logs, auth } = useAppSelector(({ logs, auth }) => ({ logs, auth }));
-  const { logs: logList = [] } = logs || {};
+type LogListProps = {
+  logList: Log[];
+};
+export const LogList: FC<LogListProps> = ({ logList }) => {
+  const { auth } = useAppSelector(({ logs, auth }) => ({ auth }));
   const [selectedLog, setSelectedLog] = useState<{
     logIndex: number;
     activityIndex: number;
@@ -57,7 +59,7 @@ export const LogList = () => {
     }
   };
 
-  if (!logs) {
+  if (!logList) {
     return <LoadingComponent title="Fetching Logs..." />;
   }
   return (

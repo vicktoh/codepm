@@ -13,7 +13,7 @@ import { BrowserRouter } from "react-router-dom";
 import { fetchUsers, listenOnProfile } from "./services/profileServices";
 import { setProfile } from "./reducers/profileSlice";
 import { setUsers } from "./reducers/usersSlice";
-import { reportMyPresence } from "./services/authServices";
+import { listenOnSystem, reportMyPresence } from "./services/authServices";
 import {
   listenOnConversations,
   listenOnPressence,
@@ -22,19 +22,25 @@ import { setConversations } from "./reducers/conversationSlice";
 import { setPresence } from "./reducers/presenceSlice";
 import { listenOnLogs } from "./services/logsServices";
 import { setLog } from "./reducers/logSlice";
+import { setSystem } from "./reducers/systemSlice";
+import { listenOnPermission } from "./services/permissionServices";
+import { setPermisson } from "./reducers/permissionSlice";
 const codeLogo = require("./assets/images/logo.png");
 
 function App() {
   const [isLoading, setLoading] = useState<boolean>(true);
-  const { auth, users, conversations, presence, logs } = useAppSelector(
-    ({ auth, users, conversations, presence, logs }) => ({
-      auth,
-      users,
-      conversations,
-      presence,
-      logs,
-    }),
-  );
+  const { auth, users, conversations, presence, logs, system, permission } =
+    useAppSelector(
+      ({ auth, users, conversations, presence, logs, system, permission }) => ({
+        auth,
+        users,
+        conversations,
+        presence,
+        logs,
+        system,
+        permission,
+      }),
+    );
   const dispatch = useDispatch();
   const loadingAnimation = useLoadingAnimation();
   const toast = useToast();
@@ -103,6 +109,7 @@ function App() {
       }
     }
   }, [auth, toast]);
+
   useEffect(() => {
     if (logs || !auth?.uid) return;
     try {
@@ -136,6 +143,29 @@ function App() {
       console.log(error);
     }
   }, [presence, dispatch, auth?.uid]);
+
+  useEffect(() => {
+    if (system) return;
+    try {
+      listenOnSystem((system) => {
+        dispatch(setSystem(system));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [system, dispatch]);
+
+  useEffect(() => {
+    if (permission || !auth?.uid) return;
+    try {
+      listenOnPermission(auth.uid, (perm) => {
+        dispatch(setPermisson(permission));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [permission, dispatch, auth]);
+
   if (isLoading && !auth) {
     return (
       <Flex

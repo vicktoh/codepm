@@ -12,6 +12,7 @@ import { RequisitionPage } from "../pages/RequisitionPage";
 import { TasksPage } from "../pages/TasksPage";
 import { WorkplanPage } from "../pages/WorkplanPage";
 import { DashboardHome } from "../pages/DashboardHome";
+import { RequisitionLayout } from "../layout/RequisitionLayout";
 
 export const MainNavigation = () => {
   return (
@@ -32,7 +33,10 @@ export const MainNavigation = () => {
         <Route path="tasks" element={<TasksPage />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="logs" element={<LogsPage />} />
-        <Route path="requisitions" element={<RequisitionPage />} />
+        <Route path="requisitions" element={<RequisitionLayout />}>
+          <Route index element={<RequisitionPage />} />
+          <Route path="archive" element={<RequisitionPage />} />
+        </Route>
         <Route path="profile" element={<ProfilePage />} />
       </Route>
     </Routes>

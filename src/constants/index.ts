@@ -26,3 +26,9 @@ export const STATUS_COLORSCHEME: Record<TaskStatus, string> = {
   completed: "green",
   ongoing: "orange",
 };
+
+export const FILL_DAY_COLOR = "#6DF8AB";
+export const MISSED_DAY_COLOR = "#EA8181";
+export const PUBLIC_HOLIDAY_COLOR = "#5AB7D4";
+export const LEAVE_DAY_COLOR = "#E7D74C";
+export const CALENDAR_HEADER = ["S", "M", "T", "W", "T", "F", "S"];
