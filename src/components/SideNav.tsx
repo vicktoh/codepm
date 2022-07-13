@@ -12,7 +12,6 @@ import React, { FC } from "react";
 import { Link, useMatch } from "react-router-dom";
 import { Auth } from "../types/Auth";
 import { AiOutlineCheckSquare, AiOutlineDashboard } from "react-icons/ai";
-import { FaTasks } from "react-icons/fa";
 import { BsChat, BsCurrencyDollar, BsPower } from "react-icons/bs";
 import { useLogout } from "../hooks/useLoadingAnimation";
 
@@ -60,15 +59,6 @@ export const SideNav: FC<SideNavProps> = ({
         >
           <Icon as={AiOutlineDashboard} />
           <Text>Dashboard</Text>
-        </HStack>
-        <HStack
-          as={Link}
-          to="/tasks"
-          spacing={2}
-          color={!!useMatch("/tasks") ? "brand.400" : "tetiary"}
-        >
-          <Icon as={FaTasks} />
-          <Text>Tasks</Text>
         </HStack>
         <HStack
           as={Link}

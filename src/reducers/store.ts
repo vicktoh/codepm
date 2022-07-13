@@ -15,6 +15,7 @@ import { PresenceState } from "../types/Presence";
 import { LogState } from "../types/Log";
 import { System } from "../types/System";
 import { Permission } from "../types/Permission";
+import { Requisition } from "../types/Requisition";
 
 export const store = configureStore({
   reducer: {
@@ -38,6 +39,7 @@ export type StoreType = {
   logs: LogState | null;
   system: System | null;
   permission: Permission | null;
+  requisitions: Requisition[] | null;
 };
 
 export type AppDispatch = typeof store.dispatch;

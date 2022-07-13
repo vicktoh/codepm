@@ -1,28 +1,36 @@
 import {
+  Button,
   Flex,
   FormControl,
   FormErrorMessage,
   FormLabel,
   Input,
+  Select,
   SimpleGrid,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import React from "react";
-import { Requisition } from "../types/Requisition";
+import {
+  Requisition,
+  RequisitionStatus,
+  RequisitionType,
+} from "../types/Requisition";
 import * as yup from "yup";
 import { Formik, Form } from "formik";
 type RequisitionFilterType = {
-  projectId: string;
+  type: RequisitionType | "";
   startDate: string;
   endDate: string;
   status: Requisition["status"] | "";
 };
 export const RequisitionFilterForm = () => {
   const initialValues: RequisitionFilterType = {
-    projectId: "",
+    type: "",
     startDate: "",
     endDate: "",
     status: "",
   };
+  const inputSize = useBreakpointValue({ base: "sm", md: "md", lg: "md" });
   const validationSchema = yup.object().shape({
     projectId: yup.string(),
     startDate: yup.date().max(yup.ref("endDate"), "cannot be after end date"),
@@ -42,12 +50,14 @@ export const RequisitionFilterForm = () => {
       {({ values, touched, errors, handleChange, handleBlur }) => (
         <Flex>
           <Form>
-            <SimpleGrid columns={2}>
+            <SimpleGrid columns={[1, 2]} mb={4} gridGap={3}>
               <FormControl
                 isInvalid={!!touched.startDate && !!errors.startDate}
               >
                 <FormLabel>Start Date</FormLabel>
                 <Input
+                  size={inputSize}
+                  bg="white"
                   type="date"
                   name="startDate"
                   onChange={handleChange}
@@ -62,6 +72,8 @@ export const RequisitionFilterForm = () => {
                 <FormLabel>End Date</FormLabel>
                 <Input
                   type="date"
+                  size={inputSize}
+                  bg="white"
                   name="endDate"
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -71,7 +83,51 @@ export const RequisitionFilterForm = () => {
                   {touched.endDate && errors.endDate}
                 </FormErrorMessage>
               </FormControl>
+              <FormControl mb={3} isInvalid={!!touched.type && !!errors.type}>
+                <FormLabel>Requisition Type</FormLabel>
+                <Select
+                  value={values.type}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  bg="white"
+                  size={inputSize}
+                >
+                  <option value="">Select Type</option>
+                  {Object.values(RequisitionType).map((value, i) => (
+                    <option key={`type-${value}-${i}`} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </Select>
+                <FormErrorMessage>
+                  {touched.type && errors.type}
+                </FormErrorMessage>
+              </FormControl>
+              <FormControl mb={3} isInvalid={!!touched.type && !!errors.type}>
+                <FormLabel>Requisition Status</FormLabel>
+                <Select
+                  size={inputSize}
+                  bg="white"
+                  value={values.type}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                >
+                  <option value="">Select Status</option>
+                  {Object.values(RequisitionStatus).map((value, i) => (
+                    <option key={`type-${value}-${i}`} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </Select>
+                <FormErrorMessage>
+                  {touched.type && errors.type}
+                </FormErrorMessage>
+              </FormControl>
             </SimpleGrid>
+
+            <Button size="sm" colorScheme="brand" isFullWidth type="submit">
+              Filter
+            </Button>
           </Form>
         </Flex>
       )}
