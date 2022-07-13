@@ -9,7 +9,6 @@ import {
   ModalHeader,
   ModalOverlay,
   SimpleGrid,
-  Text,
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
@@ -24,7 +23,6 @@ import RequisitionStatsComponent from "../components/RequisitionStatsComponent";
 import { setRequisition } from "../reducers/requisitionsSlice";
 import { useAppSelector } from "../reducers/types";
 import { listenOnRequisition } from "../services/requisitionServices";
-import { RequisitionStats } from "../types/Requisition";
 
 export const RequisitionPage: FC = () => {
   const { auth, requisitions } = useAppSelector(({ auth, requisitions }) => ({
