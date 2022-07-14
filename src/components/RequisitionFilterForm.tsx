@@ -9,7 +9,7 @@ import {
   SimpleGrid,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import React from "react";
+import React, { FC } from "react";
 import {
   Requisition,
   RequisitionStatus,
@@ -17,13 +17,15 @@ import {
 } from "../types/Requisition";
 import * as yup from "yup";
 import { Formik, Form } from "formik";
-type RequisitionFilterType = {
+export type RequisitionFilterType = {
   type: RequisitionType | "";
   startDate: string;
   endDate: string;
   status: Requisition["status"] | "";
 };
-export const RequisitionFilterForm = () => {
+export const RequisitionFilterForm: FC<{
+  confirm: (reflection: RequisitionFilterType) => void;
+}> = ({ confirm }) => {
   const initialValues: RequisitionFilterType = {
     type: "",
     startDate: "",
@@ -45,6 +47,7 @@ export const RequisitionFilterForm = () => {
       validationSchema={validationSchema}
       onSubmit={(values) => {
         console.log(values);
+        confirm(values);
       }}
     >
       {({ values, touched, errors, handleChange, handleBlur }) => (
@@ -86,6 +89,7 @@ export const RequisitionFilterForm = () => {
               <FormControl mb={3} isInvalid={!!touched.type && !!errors.type}>
                 <FormLabel>Requisition Type</FormLabel>
                 <Select
+                  name="type"
                   value={values.type}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -106,9 +110,10 @@ export const RequisitionFilterForm = () => {
               <FormControl mb={3} isInvalid={!!touched.type && !!errors.type}>
                 <FormLabel>Requisition Status</FormLabel>
                 <Select
+                  name="status"
                   size={inputSize}
                   bg="white"
-                  value={values.type}
+                  value={values.status}
                   onChange={handleChange}
                   onBlur={handleBlur}
                 >

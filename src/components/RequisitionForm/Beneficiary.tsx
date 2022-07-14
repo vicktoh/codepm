@@ -18,8 +18,15 @@ import { RequisitionFormValues } from "../../types/Requisition";
 import { UserListPopover } from "../UserListPopover";
 
 export const Beneficiary = () => {
-  const { values, errors, touched, handleBlur, handleChange, setFieldValue } =
-    useFormikContext<RequisitionFormValues>();
+  const {
+    values,
+    errors,
+    touched,
+    handleBlur,
+    handleChange,
+    setFieldValue,
+    isSubmitting,
+  } = useFormikContext<RequisitionFormValues>();
   const { users } = useAppSelector(({ users }) => ({ users }));
   const { usersMap = {} } = users || {};
   const onSelectAttentionTo = (userId: string) => {
@@ -124,7 +131,7 @@ export const Beneficiary = () => {
         >
           Previous
         </Button>
-        <Button colorScheme="brand" type="submit">
+        <Button colorScheme="brand" type="submit" isLoading={isSubmitting}>
           Submit Requisition
         </Button>
       </Flex>

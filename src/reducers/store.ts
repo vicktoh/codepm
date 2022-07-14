@@ -10,6 +10,7 @@ import presence from "./presenceSlice";
 import logs from "./logSlice";
 import system from "./systemSlice";
 import permission from "./permissionSlice";
+import requisitions from "./requisitionsSlice";
 import { Conversation } from "../types/Conversation";
 import { PresenceState } from "../types/Presence";
 import { LogState } from "../types/Log";
@@ -27,6 +28,7 @@ export const store = configureStore({
     logs,
     system,
     permission,
+    requisitions,
   },
 });
 

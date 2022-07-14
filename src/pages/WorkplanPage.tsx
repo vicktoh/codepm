@@ -18,7 +18,6 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import React, { FC, useEffect, useMemo, useState } from "react";
-import { AiOutlineCalendar } from "react-icons/ai";
 import { BsKanban, BsTable } from "react-icons/bs";
 import { useParams } from "react-router-dom";
 import { KanbanWorkPlanView } from "../components/KanbanWorkPlanView";
@@ -127,20 +126,6 @@ export const WorkplanPage: FC = () => {
                 ? glassEffect
                 : null)}
               icon={<Icon as={BsKanban} />}
-            />
-          </Tooltip>
-          <Tooltip label="calendar view">
-            <IconButton
-              colorScheme={
-                currentView === WorkplanViewType.calendar ? "brand" : ""
-              }
-              onClick={() => setCurrentView(WorkplanViewType.calendar)}
-              aria-label="toggle calendar view"
-              variant="ghost"
-              {...(currentView === WorkplanViewType.calendar
-                ? glassEffect
-                : null)}
-              icon={<Icon as={AiOutlineCalendar} />}
             />
           </Tooltip>
         </HStack>

@@ -126,7 +126,7 @@ export const ItemsForm = () => {
         <FormControl>
           <FormLabel>Total</FormLabel>
           <Input
-            disabled={true}
+            readOnly
             value={total.toLocaleString()}
             onChange={handleChange}
           />
@@ -136,7 +136,7 @@ export const ItemsForm = () => {
         <FormLabel>Ammount In Words</FormLabel>
         <Input
           value={total ? converNumtoWord(total, values.currency) : ""}
-          disabled
+          readOnly
         />
         <FormErrorMessage>
           {touched.currency && errors.currency}

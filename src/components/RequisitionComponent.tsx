@@ -15,6 +15,7 @@ import React, { FC } from "react";
 import {
   BsCalculator,
   BsChat,
+  BsCheck,
   BsDownload,
   BsPencil,
   BsPrinter,
@@ -24,10 +25,22 @@ import { Requisition } from "../types/Requisition";
 
 type RequisitionComponentProps = {
   requisition: Requisition;
+  onEdit: () => void;
+  onPrint: () => void;
+  onDownload: () => void;
+  onDelete: () => void;
+  openRetirement: () => void;
+  openConversations: () => void;
 };
 
 export const RequisitionComponent: FC<RequisitionComponentProps> = ({
   requisition,
+  onEdit,
+  onPrint,
+  onDownload,
+  onDelete,
+  openRetirement,
+  openConversations,
 }) => {
   const date = format(new Date(requisition.timestamp), "do MMM Y");
   const { status } = requisition;
@@ -36,15 +49,21 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
     md: "md",
     lg: "md",
   });
+  const isMobile = useBreakpointValue({ base: true, md: true, lg: true });
   const getStatus = (status: Requisition["status"]) => {
     switch (status) {
       case "pending":
-        return <Text>Pending</Text>;
+        return (
+          <VStack spacing={0} alignItems="flex-start">
+            <Heading fontSize="sm">status</Heading>
+            <Text>Pending</Text>;
+          </VStack>
+        );
       case "approved":
         return (
           <VStack>
-            <Text>Approved by</Text>
-            <Heading fontSize="lg">{requisition.checkedby}</Heading>
+            <Heading fontSize="sm">Approved by</Heading>
+            <Text>{requisition.checkedby}</Text>
           </VStack>
         );
       case "budgetholder":
@@ -82,23 +101,26 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
       status === "checked"
     ) {
       return (
-        <HStack>
+        <HStack justifySelf={["flex-start", "flex-end"]}>
           <Tooltip label="Conversations">
             <IconButton
               aria-label="chat icon"
               icon={<Icon color="tetiary.300" as={BsChat} />}
               size={actionButtonSize}
+              onClick={openConversations}
             />
           </Tooltip>
           <Tooltip label="Edit Requisition">
             <IconButton
+              onClick={onEdit}
               aria-label="edit icon"
               icon={<Icon color="blue.300" as={BsPencil} />}
+              size={actionButtonSize}
             />
-            size={actionButtonSize}
           </Tooltip>
           <Tooltip label="Delete Requisition">
             <IconButton
+              onClick={onDelete}
               bg="red.300"
               color="white"
               aria-label="delete icon"
@@ -108,25 +130,39 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
         </HStack>
       );
     }
-    if (status === "approved" || status === "paid") {
+    if (
+      status === "approved" ||
+      status === "retirement-approved" ||
+      status === "paid"
+    ) {
       return (
-        <HStack>
+        <HStack justifySelf={["flex-start", "flex-end"]}>
           <Tooltip label="Conversations">
             <IconButton
+              onClick={openConversations}
               aria-label="chat icon"
               icon={<Icon color="tetiary.300" as={BsChat} />}
               size={actionButtonSize}
             />
           </Tooltip>
-          <Tooltip label="Retire">
+          {status === "retirement-approved" ? (
             <IconButton
-              aria-label="edit icon"
-              icon={<Icon color="blue.300" as={BsCalculator} />}
+              aria-label="retirement"
+              icon={<Icon color="green" as={BsCheck} />}
             />
-            size={actionButtonSize}
-          </Tooltip>
+          ) : (
+            <Tooltip label="Retire">
+              <IconButton
+                onClick={openRetirement}
+                aria-label="retirement icon"
+                icon={<Icon color="blue.300" as={BsCalculator} />}
+                size={actionButtonSize}
+              />
+            </Tooltip>
+          )}
           <Tooltip label="Print Requisition">
             <IconButton
+              onClick={onPrint}
               color="white"
               aria-label="delete icon"
               icon={<Icon color="yellow.300" as={BsPrinter} />}
@@ -137,9 +173,10 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
     }
     if (status === "retired") {
       return (
-        <HStack>
+        <HStack justifySelf={["flex-start", "flex-end"]}>
           <Tooltip label="Conversations">
             <IconButton
+              onClick={openConversations}
               aria-label="chat icon"
               icon={<Icon color="tetiary.300" as={BsChat} />}
               size={actionButtonSize}
@@ -147,13 +184,15 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
           </Tooltip>
           <Tooltip label="Print Requisition">
             <IconButton
-              aria-label="edit icon"
+              onClick={onPrint}
+              aria-label="print icon"
               icon={<Icon color="blue.300" as={BsPrinter} />}
+              size={actionButtonSize}
             />
-            size={actionButtonSize}
           </Tooltip>
           <Tooltip label="Download Requisition">
             <IconButton
+              onClick={onDownload}
               bg="green.300"
               color="white"
               aria-label="delete icon"
@@ -165,18 +204,47 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
     }
   };
   return (
-    <Flex px={5} py={2} bg="white">
-      <SimpleGrid columns={[1, 4]}>
-        <VStack alignItems="center">
-          <Text fontSize="xs" color="red.100">
+    <Flex
+      px={5}
+      py={2}
+      bg="white"
+      flex="1"
+      borderRadius="lg"
+      borderColor="black"
+      my={1}
+    >
+      <SimpleGrid py={[4, 0]} gridGap={[0, 5]} columns={[1, 3]} width="100%">
+        <VStack spacing={0} mb={[3, 0]} alignItems="flex-star">
+          <Text fontSize="xs" color="red.400">
             {date}
           </Text>
-          <Text fontSize="md">{requisition.title}</Text>
+          <Tooltip label={requisition.title}>
+            <Text isTruncated noOfLines={1} fontSize="lg">
+              {requisition.title}
+            </Text>
+          </Tooltip>
         </VStack>
-        <HStack spacing={6}>
-          {getStatus(requisition.status)}
-          <Heading fontSize="lg">{requisition.total.toLocaleString()}</Heading>
-        </HStack>
+        {!isMobile ? (
+          <>
+            {getStatus(requisition.status)}
+            <Heading fontSize="lg">
+              {requisition.total.toLocaleString()}
+            </Heading>
+          </>
+        ) : (
+          <Flex
+            alignItems="center"
+            mb={[5, 0]}
+            width="100%"
+            justifyContent="space-between"
+          >
+            {getStatus(requisition.status)}
+            <Heading fontSize="xl">
+              {`${requisition.currency} ${requisition.total.toLocaleString()}`}
+            </Heading>
+          </Flex>
+        )}
+
         {getActionButtons()}
       </SimpleGrid>
     </Flex>

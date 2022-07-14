@@ -26,6 +26,7 @@ export enum RequisitionStatus {
   "budgetholder" = "budgetholder",
   "checked" = "checked",
   "paid" = "paid",
+  "retirement-approved" = "retirement-approved",
   "retired" = "retired",
   "abandoned" = "abandoned",
 }
@@ -67,6 +68,7 @@ export interface Requisition {
   retired?: boolean;
   paid?: boolean;
   total: number;
+  amountInWords: string;
   beneficiaryName: string;
   beneficiaryAccountNumber: string;
   beneficiaryBank: string;

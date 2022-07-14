@@ -5,6 +5,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  writeBatch,
 } from "firebase/firestore";
 import {
   deleteObject,
@@ -36,6 +37,7 @@ export const listenOnRequisition = (
         req.id = snap.id;
         requisitons.push(req);
       });
+      console.log(requisitons);
       callback(requisitons);
     },
     (error) =>
@@ -95,9 +97,44 @@ export const removeInvoice = (name: string) => {
   return deleteObject(invoiceRef);
 };
 
-// export const saveRequisition = (
-//   userId: string,
-//   formvalues: RequisitionFormValues,
-// ) => {
-//   const reqRef = doc(db, collection(db, `requisitions`));
-// };
+export const addNewRequisition = (userId: string, requisition: Requisition) => {
+  const requisitionCollection = collection(db, "requisitions");
+  const requisitionRef = doc(requisitionCollection);
+  console.log(`users/${userId}/requisitions/${requisitionRef.id}`);
+  const userRequisitionRef = doc(
+    db,
+    `users/${userId}/requisitions/${requisitionRef.id}`,
+  );
+  const batch = writeBatch(db);
+  batch.set(requisitionRef, requisition);
+  batch.set(userRequisitionRef, requisition);
+  return batch.commit();
+};
+
+export const updateRequisition = (
+  userId: string,
+  requisitionId: string,
+  requisition: Requisition,
+) => {
+  const requisitionRef = doc(db, `requisitions/${requisitionId}`);
+  const userRequisitionRef = doc(
+    db,
+    `users/${userId}/requisitions/${requisitionId}`,
+  );
+  const batch = writeBatch(db);
+  batch.update(requisitionRef, { ...requisition });
+  batch.update(userRequisitionRef, { ...requisition });
+  return batch.commit();
+};
+
+export const deleteRequisition = (userId: string, requisitionId: string) => {
+  const requisitionRef = doc(db, `requisitions/${requisitionId}`);
+  const userRequisitionRef = doc(
+    db,
+    `users/${userId}/requisitions/${requisitionId}`,
+  );
+  const batch = writeBatch(db);
+  batch.delete(requisitionRef);
+  batch.delete(userRequisitionRef);
+  return batch.commit();
+};
