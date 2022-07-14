@@ -8,7 +8,7 @@ export const EmptyState: FC<EmptyStateProps> = ({ title, description }) => {
   return (
     <Flex
       direction="column"
-      flex={1}
+      flex="1 1"
       justifyContent="center"
       alignItems="center"
       maxHeight="5rem"

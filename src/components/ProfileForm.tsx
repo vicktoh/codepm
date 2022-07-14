@@ -19,7 +19,7 @@ import { useDispatch } from "react-redux";
 import { getAuth, updateProfile } from "firebase/auth";
 import { updateUserProfile } from "../services/profileServices";
 import { setProfile } from "../reducers/profileSlice";
-import { setAuth } from "../reducers/authSlice";
+import { updateAuth } from "../reducers/authSlice";
 
 const departments: string[] = require("../constants/departments.json");
 
@@ -65,7 +65,7 @@ export const ProfileForm: FC<{ onClose: () => void }> = ({
             }));
           dispatch(setProfile({ ...(profile || {}), ...values }));
           dispatch(
-            setAuth({
+            updateAuth({
               ...(auth || {}),
               displayName: values.displayName,
             }),

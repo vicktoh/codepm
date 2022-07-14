@@ -3,6 +3,7 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -104,6 +105,18 @@ export const listenOnProjects = (callback: (data: Project[]) => void) => {
     });
     callback(projects);
   });
+};
+
+export const getProjects = async () => {
+  const collectionRef = collection(db, "projects");
+  const snapshot = await getDocs(collectionRef);
+  const data: Project[] = [];
+  snapshot.forEach((snap) => {
+    const project = snap.data() as Project;
+    project.id = snap.id;
+    data.push(project);
+  });
+  return data;
 };
 
 export const deleteProject = async (project: Project) => {

@@ -7,6 +7,7 @@ import {
 } from "date-fns";
 import { Conversation } from "../types/Conversation";
 import { Permission } from "../types/Permission";
+import { RequisitionCurrency, RequisitionItem } from "../types/Requisition";
 import { User } from "../types/User";
 
 export const conversationExist = (
@@ -111,4 +112,108 @@ export const adherenceColor = (adherence: number) => {
   if (adherence <= 60) return "yellow.300";
   if (adherence <= 80) return "#8FC25E";
   return "green.500";
+};
+export const currencyWord: Record<RequisitionCurrency, string> = {
+  NGN: "naira",
+  USD: "dollars",
+  GBP: "pounds",
+  EUR: "euros",
+};
+export const currencySubWord: Record<RequisitionCurrency, string> = {
+  NGN: "kobo",
+  USD: "cents",
+  GBP: "pence",
+  EUR: "cents",
+};
+export const numToWords = (s: any) => {
+  const th = ["", "thousand", "million", "billion", "trillion"];
+  const dg = [
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+  ];
+  const tn = [
+    "ten",
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+  ];
+  const tw = [
+    "twenty",
+    "thirty",
+    "forty",
+    "fifty",
+    "sixty",
+    "seventy",
+    "eighty",
+    "ninety",
+  ];
+
+  s = (s || "").toString();
+  s = s.replace(/[, ]/g, "");
+  // if (s !== parseFloat(s)) return "not a number";
+  let x: number = s.indexOf(".");
+  if (x === -1) x = s.length;
+  if (x > 15) return "too big";
+  const n = s.split("");
+  let str = "";
+  let sk = 0;
+  for (let i = 0; i < x; i++) {
+    if ((x - i) % 3 === 2) {
+      if (n[i] === "1") {
+        str += tn[Number(n[i + 1])] + " ";
+        i++;
+        sk = 1;
+      } else if (n[i] !== "0") {
+        str += tw[n[i] - 2] + " ";
+        sk = 1;
+      }
+    } else if (n[i] !== "0") {
+      str += dg[n[i]] + " ";
+      if ((x - i) % 3 === 0) str += "hundred ";
+      sk = 1;
+    }
+    if ((x - i) % 3 === 1) {
+      if (sk) str += th[(x - i - 1) / 3] + " ";
+      sk = 0;
+    }
+  }
+  if (x !== s.length) {
+    const y = s.length;
+    str += "point ";
+    for (let i = x + 1; i < y; i++) str += dg[n[i]] + " ";
+  }
+  return str.replace(/\s+/g, " ");
+};
+
+export const converNumtoWord = (number: any, currency: RequisitionCurrency) => {
+  const num = "" + parseFloat(number);
+  const bits = num.split(".");
+  const firspart = "" + numToWords(parseInt(bits[0])) + currencyWord[currency];
+  const seconpart =
+    bits[1] || ""
+      ? ", " + numToWords(parseInt(bits[1])) + currencySubWord[currency]
+      : "";
+
+  return firspart + seconpart;
+};
+export const requisitonTotal = (items: RequisitionItem[]) => {
+  let tots = 0;
+  items.forEach((item) => {
+    tots += item.amount;
+  });
+  return tots;
 };

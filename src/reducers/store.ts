@@ -10,11 +10,13 @@ import presence from "./presenceSlice";
 import logs from "./logSlice";
 import system from "./systemSlice";
 import permission from "./permissionSlice";
+import requisitions from "./requisitionsSlice";
 import { Conversation } from "../types/Conversation";
 import { PresenceState } from "../types/Presence";
 import { LogState } from "../types/Log";
 import { System } from "../types/System";
 import { Permission } from "../types/Permission";
+import { Requisition } from "../types/Requisition";
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +28,7 @@ export const store = configureStore({
     logs,
     system,
     permission,
+    requisitions,
   },
 });
 
@@ -38,6 +41,7 @@ export type StoreType = {
   logs: LogState | null;
   system: System | null;
   permission: Permission | null;
+  requisitions: Requisition[] | null;
 };
 
 export type AppDispatch = typeof store.dispatch;
