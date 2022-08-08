@@ -20,6 +20,7 @@ import { loginNormalUser } from "../services/authServices";
 import { Auth } from "../types/Auth";
 import { useDispatch } from "react-redux";
 import { setAuth } from "../reducers/authSlice";
+import { getRoleFromClaims } from "../helpers";
 export const LoginPage: FC = () => {
   const toast = useToast();
   const dispatch = useDispatch();
@@ -34,11 +35,12 @@ export const LoginPage: FC = () => {
       });
       return;
     }
+    const idToken = await result.user?.getIdTokenResult();
     const authUser: Auth = {
       displayName: result.user?.displayName || "Unknown name",
       photoUrl: result.user?.photoURL || "",
       uid: result.user?.uid || "",
-      role: "user",
+      role: getRoleFromClaims(idToken?.claims || {}),
     };
     dispatch(setAuth(authUser));
   };
@@ -110,14 +112,6 @@ export const LoginPage: FC = () => {
                 colorScheme="brand"
               >
                 Login
-              </Button>
-              <Button
-                leftIcon={<FcGoogle />}
-                variant="outline"
-                borderColor="brand.500"
-                color="brand.400"
-              >
-                Admin Login
               </Button>
             </HStack>
           </Box>

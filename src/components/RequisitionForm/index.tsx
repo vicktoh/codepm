@@ -36,9 +36,10 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
   const initialValues: RequisitionFormValues = {
     title: requisition?.title || "",
     step: 1,
-    type: requisition?.type || RequisitionType.requisition,
+    type: requisition?.type || RequisitionType["procurement request"],
     items: requisition?.items || [],
-    attachments: requisition?.attachments || [],
+    projectTitle: requisition?.projectTitle || "",
+    activityTitle: requisition?.acitivityTitle || "",
     date: requisition?.timestamp
       ? format(requisition.timestamp, "y-MM-dd")
       : format(new Date(), "y-MM-dd"),

@@ -22,10 +22,14 @@ import { AiOutlineCheckSquare, AiOutlineDashboard } from "react-icons/ai";
 import { BsChat, BsCurrencyDollar, BsPower } from "react-icons/bs";
 import { Link, useMatch } from "react-router-dom";
 import { useLogout } from "../hooks/useLoadingAnimation";
+import { UserRole } from "../types/Profile";
+import { FaUsersCog } from "react-icons/fa";
+import { GiTakeMyMoney } from "react-icons/gi";
 
 export const MobileNav: FC = () => {
   const auth = useAppSelector(({ auth }) => auth);
   const { isOpen, onClose, onToggle } = useDisclosure();
+  const isUsersRoute = !!useMatch("/users");
   const onLogout = useLogout();
   return (
     <>
@@ -102,6 +106,30 @@ export const MobileNav: FC = () => {
                 <Icon as={BsCurrencyDollar} />
                 <Text>Requisition</Text>
               </HStack>
+              {auth?.role === UserRole.admin ||
+              auth?.role === UserRole.master ? (
+                <HStack
+                  as={Link}
+                  to="/users"
+                  spacing={2}
+                  color={isUsersRoute ? "brand.400" : "tetiary"}
+                >
+                  <Icon as={FaUsersCog} />
+                  <Text>Users</Text>
+                </HStack>
+              ) : null}
+              {auth?.role === UserRole.admin ||
+              auth?.role === UserRole.master ? (
+                <HStack
+                  as={Link}
+                  to="/requisition-admin"
+                  spacing={2}
+                  color={isUsersRoute ? "brand.400" : "tetiary"}
+                >
+                  <Icon as={GiTakeMyMoney} />
+                  <Text>Requisition Admin</Text>
+                </HStack>
+              ) : null}
             </VStack>
             <HStack
               as={Button}

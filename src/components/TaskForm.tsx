@@ -62,7 +62,10 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
   const [description, setDescription] = useState<string>(
     task?.description || "",
   );
-  const users = useAppSelector(({ users }) => users);
+  const { users, auth } = useAppSelector(({ users, auth }) => ({
+    users,
+    auth,
+  }));
   const glassEffect = useGlassEffect(true, "lg");
   const toast = useToast();
 
@@ -112,6 +115,13 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
     setTask((task) => ({ ...task, dueDate: values }));
   };
   const selectStatus = (status: TaskStatus) => {
+    if (status === TaskStatus.completed && auth?.uid !== task.creatorId) {
+      toast({
+        title: "Only the creator of this task can mark it as complete",
+        status: "warning",
+      });
+      return;
+    }
     setTask((task) => ({ ...task, status }));
   };
 
@@ -468,16 +478,18 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
         mt={8}
         justifyContent="space-between"
       >
-        <Button
-          size="sm"
-          isLoading={deleting}
-          onClick={() => deleteTask()}
-          bg="red.400"
-          textColor="white"
-          leftIcon={<Icon as={BsTrash} />}
-        >
-          Delete
-        </Button>
+        {auth?.uid === task.creatorId ? (
+          <Button
+            size="sm"
+            isLoading={deleting}
+            onClick={() => deleteTask()}
+            bg="red.400"
+            textColor="white"
+            leftIcon={<Icon as={BsTrash} />}
+          >
+            Delete
+          </Button>
+        ) : null}
       </Flex>
     </Flex>
   );

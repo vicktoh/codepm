@@ -3,6 +3,7 @@ import {
   collectionGroup,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   query,
   setDoc,
@@ -46,4 +47,29 @@ export const listenOnMyTasks = (
     });
     callback(tasks);
   });
+};
+
+export const fetchUserTasks = async (userId: string) => {
+  const collectionRef = collectionGroup(db, "tasks");
+  const q = query(collectionRef, where("assignees", "array-contains", userId));
+  const snapshot = await getDocs(q);
+  const tasks: Task[] = [];
+  snapshot.forEach((snap) => {
+    const task = snap.data() as Task;
+    task.id = snap.id;
+    tasks.push(task);
+  });
+  return tasks;
+};
+
+export const fetchProjectsTasks = async (projectId: string) => {
+  const collectionRef = collection(db, `projects/${projectId}/tasks`);
+  const snapshot = await getDocs(collectionRef);
+  const tasks: Task[] = [];
+  snapshot.forEach((snap) => {
+    const task = snap.data() as Task;
+    task.id = snap.id;
+    tasks.push(task);
+  });
+  return tasks;
 };

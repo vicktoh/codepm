@@ -12,6 +12,7 @@ import {
   Select,
   SimpleGrid,
   Text,
+  Textarea,
   VStack,
 } from "@chakra-ui/react";
 import { useFormikContext } from "formik";
@@ -32,7 +33,6 @@ export const ItemsForm = () => {
     const items = [...(values.items || [])];
     items.push({
       title: "",
-      budgetLine: "",
       amount: 0,
     });
     setFieldValue("items", items);
@@ -51,6 +51,7 @@ export const ItemsForm = () => {
       <HStack spacing={2} mb={2}>
         <Heading fontSize="md">Item List</Heading>
         <IconButton
+          variant="outline"
           onClick={addItem}
           colorScheme="brand"
           rounded="full"
@@ -59,31 +60,24 @@ export const ItemsForm = () => {
         />
       </HStack>
       <Flex direction="column" mb={5}>
-        {values.items.length
-          ? values.items.map((item, i) => (
-              <SimpleGrid
-                key={`req-item-${i}`}
-                columns={[1, 4]}
-                p={2}
-                gridGap={3}
-                borderWidth={1}
-              >
-                <Input
-                  placeholder="Item title"
-                  size="sm"
-                  name={`items.${i}.title`}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={item.title}
-                />
-                <Input
-                  placeholder="Budget Line"
-                  size="sm"
-                  name={`items.${i}.budgetLine`}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={item.budgetLine}
-                />
+        {values.items.length ? (
+          values.items.map((item, i) => (
+            <SimpleGrid
+              key={`req-item-${i}`}
+              columns={[1, 2]}
+              p={2}
+              gridGap={3}
+              borderWidth={1}
+            >
+              <Input
+                placeholder="Item title"
+                size="sm"
+                name={`items.${i}.title`}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                value={item.title}
+              />
+              <HStack spacing={2}>
                 <Input
                   placeholder="Item amount"
                   type="number"
@@ -100,9 +94,12 @@ export const ItemsForm = () => {
                   icon={<Icon as={BiMinusCircle} />}
                   onClick={() => removeItem(i)}
                 />
-              </SimpleGrid>
-            ))
-          : null}
+              </HStack>
+            </SimpleGrid>
+          ))
+        ) : (
+          <Input value="Click the plus button above to add items" readOnly />
+        )}
       </Flex>
       <SimpleGrid columns={[1, 2]} gridGap={3} mb={5}>
         <FormControl isInvalid={!!touched.currency && !!errors.currency}>
@@ -134,7 +131,7 @@ export const ItemsForm = () => {
       </SimpleGrid>
       <FormControl mb={5}>
         <FormLabel>Ammount In Words</FormLabel>
-        <Input
+        <Textarea
           value={total ? converNumtoWord(total, values.currency) : ""}
           readOnly
         />
@@ -150,7 +147,11 @@ export const ItemsForm = () => {
         >
           Previous
         </Button>
-        <Button colorScheme="brand" onClick={() => setFieldValue("step", 3)}>
+        <Button
+          disabled={!!!values.items.length}
+          colorScheme="brand"
+          onClick={() => setFieldValue("step", 3)}
+        >
           Next
         </Button>
       </Flex>

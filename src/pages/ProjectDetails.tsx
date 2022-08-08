@@ -287,7 +287,7 @@ export const ProjectDetails = () => {
               )}
             </GridItem>
             <GridItem colSpan={3} w="100%" px={3}>
-              <ProjectDoughnut />
+              <ProjectDoughnut projectId={project.id} />
             </GridItem>
           </Grid>
         </Flex>

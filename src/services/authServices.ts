@@ -6,6 +6,7 @@ import {
   ref,
   serverTimestamp,
   set,
+  update,
 } from "firebase/database";
 import {
   GoogleAuthProvider,
@@ -15,6 +16,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { System } from "../types/System";
+import { isEmailAllowed } from "../helpers";
 
 type Result = {
   status: "success" | "failed";
@@ -28,6 +30,13 @@ export const loginNormalUser = async () => {
   try {
     const result = await signInWithPopup(firebaseAuth, provider);
     if (result.user) {
+      if (!isEmailAllowed(result.user.email || "")) {
+        console.log("does not match email");
+        signOut(firebaseAuth);
+        return {
+          status: "failed",
+        } as Result;
+      }
       return {
         status: "success",
         user: result.user,
@@ -85,4 +94,12 @@ export const listenOnSystem = (callback: (system: System) => void) => {
     const system: System = snapshot.val();
     callback(system);
   });
+};
+
+export const updateSystemVariable = (
+  system: Omit<System, "publicHolidays">,
+) => {
+  const database = getDatabase(firebaseApp);
+  const statusRef = ref(database, `system`);
+  return update(statusRef, system);
 };

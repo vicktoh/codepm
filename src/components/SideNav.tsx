@@ -1,5 +1,7 @@
 import {
   Avatar,
+  Badge,
+  Box,
   Button,
   Flex,
   Heading,
@@ -8,21 +10,39 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
-import React, { FC } from "react";
+import React, { FC, useMemo } from "react";
 import { Link, useMatch } from "react-router-dom";
 import { Auth } from "../types/Auth";
 import { AiOutlineCheckSquare, AiOutlineDashboard } from "react-icons/ai";
 import { BsChat, BsCurrencyDollar, BsPower } from "react-icons/bs";
 import { useLogout } from "../hooks/useLoadingAnimation";
+import { FaUsersCog } from "react-icons/fa";
+import { UserRole } from "../types/Profile";
+import { GiTakeMyMoney } from "react-icons/gi";
+import { useAppSelector } from "../reducers/types";
+import { BiCog } from "react-icons/bi";
 
 type SideNavProps = {
   auth: Auth;
 };
 
 export const SideNav: FC<SideNavProps> = ({
-  auth: { displayName, photoUrl },
+  auth: { displayName, photoUrl, role },
 }) => {
   const onLogout = useLogout();
+  const { conversations } = useAppSelector(({ conversations }) => ({
+    conversations,
+  }));
+  const isUsersPath = !!useMatch("/users");
+  const isAdminReqPath = !!useMatch("/requisition-admin");
+  const isSettingPath = !!useMatch("/system-settings");
+  const unreadMessages = useMemo(() => {
+    let count = 0;
+    (conversations || []).forEach((converastion) => {
+      count += converastion?.unreadCount || 0;
+    });
+    return count > 9 ? "9+" : count;
+  }, [conversations]);
   return (
     <Flex
       display={{ base: "none", md: "none", lg: "flex" }}
@@ -60,15 +80,29 @@ export const SideNav: FC<SideNavProps> = ({
           <Icon as={AiOutlineDashboard} />
           <Text>Dashboard</Text>
         </HStack>
-        <HStack
-          as={Link}
-          to="/chat"
-          spacing={2}
-          color={!!useMatch("/chat") ? "brand.400" : "tetiary"}
-        >
-          <Icon as={BsChat} />
-          <Text>Chats</Text>
-        </HStack>
+        <Box position="relative">
+          <HStack
+            as={Link}
+            to="/chat"
+            spacing={2}
+            color={!!useMatch("/chat") ? "brand.400" : "tetiary"}
+          >
+            <Icon as={BsChat} />
+            <Text>Chats</Text>
+          </HStack>
+          {unreadMessages ? (
+            <Badge
+              position="absolute"
+              top="-5px"
+              left="-9px"
+              borderRadius="full"
+              bg="brand.500"
+              color="white"
+            >
+              {unreadMessages}
+            </Badge>
+          ) : null}
+        </Box>
         <HStack
           as={Link}
           to="/logs"
@@ -87,6 +121,42 @@ export const SideNav: FC<SideNavProps> = ({
           <Icon as={BsCurrencyDollar} />
           <Text>Requisition</Text>
         </HStack>
+        {role === UserRole.admin || role === UserRole.master ? (
+          <HStack
+            as={Link}
+            to="/users"
+            spacing={2}
+            color={isUsersPath ? "brand.400" : "tetiary"}
+          >
+            <Icon as={FaUsersCog} />
+            <Text>Users</Text>
+          </HStack>
+        ) : null}
+        {role === UserRole.admin ||
+        role === UserRole.master ||
+        role === UserRole.budgetHolder ||
+        role === UserRole.finance ? (
+          <HStack
+            as={Link}
+            to="/requisition-admin"
+            spacing={2}
+            color={isAdminReqPath ? "brand.400" : "tetiary"}
+          >
+            <Icon as={GiTakeMyMoney} />
+            <Text>Requisition Admin</Text>
+          </HStack>
+        ) : null}
+        {role === UserRole.admin || role === UserRole.master ? (
+          <HStack
+            as={Link}
+            to="/system-settings"
+            spacing={2}
+            color={isSettingPath ? "brand.400" : "tetiary"}
+          >
+            <Icon as={BiCog} />
+            <Text>System Settings</Text>
+          </HStack>
+        ) : null}
       </VStack>
       <HStack
         as={Button}

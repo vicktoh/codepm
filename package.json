@@ -18,6 +18,7 @@
     "@types/node": "^16.11.26",
     "@types/react": "^17.0.44",
     "@types/react-dom": "^17.0.15",
+    "algoliasearch": "^4.14.2",
     "chart.js": "^3.7.1",
     "date-fns": "^2.28.0",
     "firebase": "^9.6.10",

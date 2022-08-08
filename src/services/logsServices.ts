@@ -11,6 +11,8 @@ import {
   updateDoc,
   arrayRemove,
   deleteDoc,
+  where,
+  getDocs,
 } from "firebase/firestore";
 import { Log, LogFormType, LogState } from "../types/Log";
 import { Period, Request } from "../types/Permission";
@@ -32,6 +34,20 @@ export const listenOnLogs = (
     });
     callback({ logs, logMap });
   });
+};
+
+export const fetchLogs = async (userId: string, startDate: string) => {
+  const logRef = collection(db, `users/${userId}/logs`);
+  const timeStamp = new Date(startDate).getTime();
+  const q = query(logRef, where("timeStamp", ">=", timeStamp), limit(500));
+  const snapshot = await getDocs(q);
+  const logs: Log[] = [];
+  snapshot.forEach((snap) => {
+    const log = snap.data() as Log;
+    logs.push(log);
+  });
+
+  return logs;
 };
 
 export const newLogDay = (userId: string, logformvalue: LogFormType) => {
@@ -86,6 +102,23 @@ export const makeRequest = (
     endDate,
     status: "pending",
     type,
+    timestamp: new Date().getTime(),
+  };
+  return setDoc(requestRef, newRequest);
+};
+export const makeLeaveRequest = (
+  userId: string,
+  values: Omit<Request, "type" | "status" | "userId" | "timestamp">,
+  type: Request["type"],
+) => {
+  const requestRef = doc(collection(db, `permissionRequests`));
+
+  const newRequest: Request = {
+    userId,
+    ...values,
+    status: "pending",
+    type,
+    timestamp: new Date().getTime(),
   };
   return setDoc(requestRef, newRequest);
 };

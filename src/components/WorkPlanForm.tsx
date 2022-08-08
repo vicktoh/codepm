@@ -123,6 +123,7 @@ export const WorkplanForm: FC<WorkplanFormProps> = ({
                 value={values.title}
                 onChange={handleChange}
                 onBlur={handleBlur}
+                placeholder="e.g Communications workplan"
               />
               <FormErrorMessage>
                 {touched.title && errors.title}
@@ -134,7 +135,7 @@ export const WorkplanForm: FC<WorkplanFormProps> = ({
               isInvalid={!!touched.type && !!errors.type}
               mb={3}
             >
-              <FormLabel>URL</FormLabel>
+              <FormLabel>Type</FormLabel>
               <Select
                 value={values.type}
                 name="type"
