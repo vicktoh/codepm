@@ -2,6 +2,7 @@ import { db, firebaseApp } from "./firebase";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -28,6 +29,13 @@ export const updatePhotoUrl = async (userId: string, photoUrl: string) => {
   const userRef = doc(db, `users/${userId}`);
   await updateDoc(userRef, { photoUrl });
 };
+export const updateSignatureUrl = async (
+  userId: string,
+  signatureUrl: string,
+) => {
+  const userRef = doc(db, `users/${userId}`);
+  await updateDoc(userRef, { signatureUrl });
+};
 
 export const uploadProfilePic = async (
   userId: string,
@@ -38,6 +46,32 @@ export const uploadProfilePic = async (
 ) => {
   const storage = getStorage(firebaseApp);
   const storageRef = ref(storage, `profile-pics/${userId}`);
+
+  const task = uploadBytesResumable(storageRef, fileBlob);
+  task.on(
+    "state_changed",
+    (snapshot) => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      progressCallback(progress);
+    },
+    (error) => {
+      onErrorCallback(error?.message || "UnknownError");
+    },
+    async () => {
+      const url = await getDownloadURL(task.snapshot.ref);
+      onSuccessCallback(url);
+    },
+  );
+};
+export const uploadSignature = async (
+  userId: string,
+  fileBlob: Blob,
+  onErrorCallback: (mess: string) => void,
+  progressCallback: (progress: number) => void,
+  onSuccessCallback: (url: string) => void,
+) => {
+  const storage = getStorage(firebaseApp);
+  const storageRef = ref(storage, `signatures/${userId}`);
 
   const task = uploadBytesResumable(storageRef, fileBlob);
   task.on(
@@ -67,6 +101,12 @@ export const listenOnProfile = (
   });
 
   return unsub;
+};
+
+export const fetchProfile = async (userId: string) => {
+  const userRef = doc(db, `users/${userId}`);
+  const profileSnap = await getDoc(userRef);
+  return profileSnap.data() as Profile;
 };
 
 export const fetchUsers = async () => {

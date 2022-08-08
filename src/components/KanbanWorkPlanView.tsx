@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { Flex } from "@chakra-ui/react";
+import { Flex, useToast } from "@chakra-ui/react";
 // @ts-ignore
 import Board from "@asseinfo/react-kanban";
 import "@asseinfo/react-kanban/dist/styles.css";
@@ -10,6 +10,7 @@ import { KanbanCard } from "./KanbanCard";
 import { updateDbTask } from "../services/taskServices";
 import { Timestamp } from "firebase/firestore";
 import { KanbanColumnHeader } from "./KanbanColumnHeader";
+import { useAppSelector } from "../reducers/types";
 
 type KanbanWorklanViewProps = {
   tasks: Task[];
@@ -26,6 +27,8 @@ export const KanbanWorkPlanView: FC<KanbanWorklanViewProps> = ({
   setTask,
   openTask,
 }) => {
+  const { auth } = useAppSelector(({ auth }) => ({ auth }));
+  const toast = useToast();
   const addNewTaskDraft = (status: TaskStatus) => {
     const newTask: Task & { draft: boolean } = {
       title: "",
@@ -50,6 +53,16 @@ export const KanbanWorkPlanView: FC<KanbanWorklanViewProps> = ({
     const index = tasks.findIndex((task) => task.id === _card.id);
     if (index > -1) {
       const task = tasks[index];
+      if (
+        STATUS_INDEX_MAP[destination.toColumnId - 1] === TaskStatus.completed &&
+        auth?.uid !== task.creatorId
+      ) {
+        toast({
+          title: "Only the creator of this task can mark it as completed",
+          status: "error",
+        });
+        return;
+      }
       setTask({
         ...task,
         status: STATUS_INDEX_MAP[destination.toColumnId - 1],

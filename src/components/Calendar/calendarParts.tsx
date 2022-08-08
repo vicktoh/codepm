@@ -29,8 +29,11 @@ export const CalendarCell: FC<CalenderCellProps> = ({ day, year, month }) => {
     if (logs.logMap[dayString]) return FILL_DAY_COLOR;
     if ((system?.publicHolidays || []).includes(dayString))
       return PUBLIC_HOLIDAY_COLOR;
-    if ((permission?.leaveDays || []).includes(dayString))
+    if (
+      (permission?.leaveDays || []).map(({ date }) => date).includes(dayString)
+    ) {
       return LEAVE_DAY_COLOR;
+    }
     if (isWeekend(dateObj) || isFuture(dateObj)) return "transparent";
     return MISSED_DAY_COLOR;
   }, [system, logs, permission, day, month, year]);

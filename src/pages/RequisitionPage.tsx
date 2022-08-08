@@ -1,4 +1,8 @@
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
   Button,
   Flex,
   Heading,
@@ -9,12 +13,15 @@ import {
   ModalHeader,
   ModalOverlay,
   SimpleGrid,
+  Text,
+  useBreakpointValue,
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
 import { isAfter, isBefore, isEqual } from "date-fns";
 import React, { FC, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
 import { DeleteDialog } from "../components/DeleteDialog";
 import { EmptyState } from "../components/EmptyState";
 import { LoadingComponent } from "../components/LoadingComponent";
@@ -24,7 +31,9 @@ import {
   RequisitionFilterType,
 } from "../components/RequisitionFilterForm";
 import { RequisitionForm } from "../components/RequisitionForm";
+import { RequisitionChat } from "../components/RequisitionForm/RequisitionChat";
 import RequisitionStatsComponent from "../components/RequisitionStatsComponent";
+import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { setRequisition } from "../reducers/requisitionsSlice";
 import { useAppSelector } from "../reducers/types";
 import {
@@ -34,11 +43,13 @@ import {
 import { Requisition } from "../types/Requisition";
 
 export const RequisitionPage: FC = () => {
-  const { auth, requisitions } = useAppSelector(({ auth, requisitions }) => ({
-    requisitions,
-    auth,
-  }));
-  console.log({ requisitions });
+  const { auth, requisitions, profile } = useAppSelector(
+    ({ auth, requisitions, profile }) => ({
+      requisitions,
+      auth,
+      profile,
+    }),
+  );
   const dispatch = useDispatch();
   const toast = useToast();
   const [requisitionFilter, setFilterFilter] =
@@ -63,7 +74,8 @@ export const RequisitionPage: FC = () => {
     onClose: onCloseDeleteModal,
   } = useDisclosure();
   const [selectedReq, setSelectedReq] = useState<Requisition>();
-
+  const glassEffect = useGlassEffect();
+  const isMobile = useBreakpointValue({ base: true, md: false, lg: false });
   const editRequisition = (requisition: Requisition) => {
     const req = { ...requisition };
     setSelectedReq(req);
@@ -163,7 +175,24 @@ export const RequisitionPage: FC = () => {
       <Heading fontSize="lg" my={5}>
         My requisitions
       </Heading>
-      <SimpleGrid columns={[1, 2]}>
+      {profile?.signatureUrl ? null : (
+        <Alert status="error">
+          <AlertIcon />
+          <AlertTitle>Upload your signature</AlertTitle>
+          <AlertDescription>
+            Your signature is needed for any requisition action. Update profile{" "}
+            <Text
+              as={Link}
+              textDecor="underline"
+              color="brand.500"
+              to="/profile"
+            >
+              Here
+            </Text>
+          </AlertDescription>
+        </Alert>
+      )}
+      <SimpleGrid columns={[1, 2]} columnGap={[3, 1]} gridGap={[3, 5]}>
         <RequisitionFilterForm confirm={setFilterFilter} />
         <RequisitionStatsComponent />
       </SimpleGrid>
@@ -172,6 +201,7 @@ export const RequisitionPage: FC = () => {
         alignSelf="flex-start"
         mt={5}
         colorScheme="brand"
+        disabled={!!!profile?.signatureUrl}
       >
         New Requisiton
       </Button>
@@ -248,13 +278,13 @@ export const RequisitionPage: FC = () => {
         size="md"
       >
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent {...glassEffect}>
           <ModalCloseButton />
           <ModalHeader>
-            <Heading fontSize="2xl">Converstations 💬 </Heading>
+            <Heading fontSize={isMobile ? "md" : "lg"}>Conversation 💬</Heading>
           </ModalHeader>
           <ModalBody>
-            <Heading>Conversations</Heading>
+            {selectedReq && <RequisitionChat requisition={selectedReq} />}
           </ModalBody>
         </ModalContent>
       </Modal>

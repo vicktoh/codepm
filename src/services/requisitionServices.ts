@@ -1,3 +1,4 @@
+import { FirebaseError } from "firebase/app";
 import {
   collection,
   doc,
@@ -5,6 +6,8 @@ import {
   onSnapshot,
   orderBy,
   query,
+  setDoc,
+  Timestamp,
   writeBatch,
 } from "firebase/firestore";
 import {
@@ -14,6 +17,7 @@ import {
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
+import { Chat } from "../types/Chat";
 import { Requisition, RequisitionStats } from "../types/Requisition";
 import { db, firebaseApp } from "./firebase";
 
@@ -37,7 +41,6 @@ export const listenOnRequisition = (
         req.id = snap.id;
         requisitons.push(req);
       });
-      console.log(requisitons);
       callback(requisitons);
     },
     (error) =>
@@ -46,7 +49,64 @@ export const listenOnRequisition = (
       ),
   );
 };
+export const listenOnRequisitionChat = (
+  requisitionId: string,
+  successCallback: (chats: Chat[]) => void,
+  onError: (error: string) => void,
+) => {
+  const requisitionChatCollecito = collection(
+    db,
+    `requisitions/${requisitionId}/chats`,
+  );
+  const q = query(
+    requisitionChatCollecito,
+    orderBy("timestamp", "desc"),
+    limit(20),
+  );
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const chats: Chat[] = [];
+      snapshot.forEach((snap) => {
+        const chat = snap.data() as Chat;
+        chat.id = snap.id;
+        chat.timestamp = (chat.timestamp as Timestamp).toMillis();
+        chats.push(chat);
+      });
+      successCallback(chats.reverse());
+    },
+    (error) => {
+      onError(error.message);
+    },
+  );
+};
+export const sendRequisitionChat = (requisitoinId: string, newchat: Chat) => {
+  const chatRef = doc(collection(db, `requisitions/${requisitoinId}/chats`));
+  return setDoc(chatRef, newchat);
+};
 
+export const markRequisitionChatAsRead = (
+  requisitionId: string,
+  requisitionUserId: string,
+  conversation: Record<string, number>,
+  chatCount: number,
+) => {
+  const requisitionRef = doc(db, `requisitions/${requisitionId}`);
+  const userRequisitionRef = doc(
+    db,
+    `users/${requisitionUserId}/requisitions/${requisitionId}`,
+  );
+  const batch = writeBatch(db);
+  batch.update(requisitionRef, {
+    chatCount,
+    conversation,
+  });
+  batch.update(userRequisitionRef, {
+    chatCount,
+    conversation,
+  });
+  return batch.commit();
+};
 export const listenOnRequisitionStats = (
   userId: string,
   callback: (stats: RequisitionStats) => void,
@@ -65,6 +125,30 @@ export const listenOnRequisitionStats = (
     },
     (error) => errorCallback(error.message || "Unexpected error"),
   );
+};
+
+export const listenOnRequisitionAdmin = (
+  callback: (requisitions: Requisition[]) => void,
+  errorCallback: (error: FirebaseError) => void,
+) => {
+  const q = query(collection(db, "requisitions"));
+  const unsub = onSnapshot(
+    q,
+    (snapshot) => {
+      const requisitions: Requisition[] = [];
+      snapshot.forEach((snap) => {
+        const req = snap.data() as Requisition;
+        req.id = snap.id;
+        requisitions.push(req);
+      });
+      callback(requisitions);
+    },
+    (error) => {
+      console.log(error);
+      errorCallback(error);
+    },
+  );
+  return unsub;
 };
 
 export const uploadInvoice = (
@@ -100,7 +184,6 @@ export const removeInvoice = (name: string) => {
 export const addNewRequisition = (userId: string, requisition: Requisition) => {
   const requisitionCollection = collection(db, "requisitions");
   const requisitionRef = doc(requisitionCollection);
-  console.log(`users/${userId}/requisitions/${requisitionRef.id}`);
   const userRequisitionRef = doc(
     db,
     `users/${userId}/requisitions/${requisitionRef.id}`,

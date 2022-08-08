@@ -30,9 +30,11 @@ export const LogFilterForm: FC<LogFilterProps> = ({ onFilter }) => {
   const validationSchema = yup.object().shape({
     startDate: yup
       .date()
+      .required()
       .max(new Date(), "Start date cannot be further in the future"),
     endDate: yup
       .date()
+      .required()
       .min(yup.ref("startDate"), "Cannot be before startDate")
       .max(new Date(), "cannot be before in the future"),
   });

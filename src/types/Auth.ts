@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "user";
+import { UserRole } from "./Profile";
 
 export type Auth = {
   displayName: string;

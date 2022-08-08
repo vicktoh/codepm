@@ -30,7 +30,12 @@ import { ProfileForm } from "../components/ProfileForm";
 import { updateAuth } from "../reducers/authSlice";
 import { useAppSelector } from "../reducers/types";
 import { firebaseAuth } from "../services/firebase";
-import { updatePhotoUrl, uploadProfilePic } from "../services/profileServices";
+import {
+  updatePhotoUrl,
+  updateSignatureUrl,
+  uploadProfilePic,
+  uploadSignature,
+} from "../services/profileServices";
 
 export const ProfilePage: FC = () => {
   const { profile, auth } = useAppSelector(({ profile, auth }) => ({
@@ -47,11 +52,20 @@ export const ProfilePage: FC = () => {
     onClose: onCloseAvartarModal,
     onOpen: onOpenAvatarModal,
   } = useDisclosure();
+  const {
+    isOpen: isSignatureModalOpen,
+    onClose: onCloseSignatureModal,
+    onOpen: onOpenSignatureModal,
+  } = useDisclosure();
   const [imageSrc, setImageSrc] = useState<string>();
+  const [signatureSrc, setSignatureSrc] = useState<string>();
   const [croppedBlob, setCroppedBlob] = useState<Blob>();
+  const [croppedSigBlob, setCroppedSigBlob] = useState<Blob>();
   const [uploadingProfilePic, setUploadingProfilePic] =
     useState<boolean>(false);
+  const [uploadingSignature, setUploadingSignature] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
+  const [sigProgress, setSigProgress] = useState<number>(0);
   const toast = useToast();
   const dispatch = useDispatch();
 
@@ -86,6 +100,32 @@ export const ProfilePage: FC = () => {
     }
     uploadProfile();
   }, [croppedBlob, auth?.uid, toast, dispatch]);
+  useEffect(() => {
+    function uploadSignatureFile() {
+      if (croppedSigBlob && auth?.uid) {
+        setUploadingSignature(true);
+        console.log({ croppedSigBlob });
+        uploadSignature(
+          auth?.uid,
+          croppedSigBlob,
+          (e) => {
+            toast({
+              title: "Error Uploading Image",
+              description: e,
+              status: "error",
+            });
+            setUploadingSignature(false);
+          },
+          setSigProgress,
+          async (url) => {
+            await updateSignatureUrl(auth.uid, url);
+            setUploadingSignature(false);
+          },
+        );
+      }
+    }
+    uploadSignatureFile();
+  }, [croppedSigBlob, auth?.uid, toast, dispatch]);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;
@@ -93,6 +133,13 @@ export const ProfilePage: FC = () => {
     const blob = URL.createObjectURL(file);
     setImageSrc(blob);
     onOpenAvatarModal();
+  };
+  const onSigFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    if (!file) return;
+    const blob = URL.createObjectURL(file);
+    setSignatureSrc(blob);
+    onOpenSignatureModal();
   };
   return (
     <Flex width="100%" direction="column" py={5}>
@@ -164,6 +211,35 @@ export const ProfilePage: FC = () => {
             <Heading fontSize="md">{profile?.department || "None"}</Heading>
           </Box>
         </VStack>
+        <Box position="relative" mt={5}>
+          <Heading fontSize="sm">Signature</Heading>
+          <VisuallyHidden>
+            <Input type="file" onChange={onSigFileChange} id="sigFileInput" />
+          </VisuallyHidden>
+          <Avatar src={profile?.signatureUrl || ""} size="md" />
+          {uploadingSignature ? (
+            <CircularProgress
+              color="brand.300"
+              top="-2px"
+              left="-2px"
+              position="absolute"
+              value={sigProgress}
+              thickness="6px"
+              size="30px"
+            />
+          ) : (
+            <IconButton
+              size="xs"
+              position="absolute"
+              right={0}
+              bottom={0}
+              icon={<Icon as={BsPencil} />}
+              aria-label="edit button"
+              as={FormLabel}
+              htmlFor="sigFileInput"
+            />
+          )}
+        </Box>
         <Button
           onClick={onOpenProfileModal}
           size="sm"
@@ -198,6 +274,22 @@ export const ProfilePage: FC = () => {
               src={imageSrc || ""}
               setInput={setCroppedBlob}
               onClose={onCloseAvartarModal}
+            />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal
+        isOpen={isSignatureModalOpen}
+        onClose={onCloseSignatureModal}
+        size="sm"
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalBody>
+            <ImageCropper
+              src={signatureSrc || ""}
+              setInput={setCroppedSigBlob}
+              onClose={onCloseSignatureModal}
             />
           </ModalBody>
         </ModalContent>

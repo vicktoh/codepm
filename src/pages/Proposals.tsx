@@ -28,7 +28,6 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { AiOutlineEdit, AiOutlineEye, AiOutlinePlus } from "react-icons/ai";
-import { FiSend } from "react-icons/fi";
 import { ProposalStatus, ProposalType, STATUSES } from "../types/ProposalType";
 import { deleteProposal, listenOnProposals } from "../services/projectServices";
 import { BsTrash } from "react-icons/bs";
@@ -79,16 +78,9 @@ const ProposalRow: FC<ProposalRowType> = ({ proposal, onEdit, onDelete }) => {
               isExternal
             />
           </Tooltip>
-          <Tooltip label="Send for approval" bg="tetiary.200" placement="top">
-            <IconButton
-              aria-label="Send to colleague"
-              color="green.300"
-              icon={<Icon as={FiSend} />}
-            />
-          </Tooltip>
           <Tooltip label="Delete proposal" bg="tetiary.200" placement="top">
             <IconButton
-              aria-label="view proposal doc"
+              aria-label="delete proposal doc"
               color="red.300"
               icon={<Icon as={BsTrash} />}
               onClick={onDelete}

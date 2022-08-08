@@ -7,9 +7,12 @@ import {
 } from "date-fns";
 import { Conversation } from "../types/Conversation";
 import { Permission } from "../types/Permission";
+import { Task } from "../types/Project";
 import { RequisitionCurrency, RequisitionItem } from "../types/Requisition";
 import { User } from "../types/User";
-
+import * as _ from "lodash";
+import { WHITE_LIST } from "../constants";
+import { UserRole } from "../types/Profile";
 export const conversationExist = (
   userId: string,
   conversations: Conversation[],
@@ -216,4 +219,51 @@ export const requisitonTotal = (items: RequisitionItem[]) => {
     tots += item.amount;
   });
   return tots;
+};
+
+export const parseTasksToChartData = (tasks: Task[]) => {
+  const categories = _.groupBy(tasks, "status");
+  const data = [];
+  const labels = [];
+  for (const key in categories) {
+    if (Object.prototype.hasOwnProperty.call(categories, key)) {
+      data.push(categories[key].length);
+      labels.push(key);
+    }
+  }
+  return {
+    labels,
+    datasets: [
+      {
+        label: "Task break down",
+        data,
+        backgroundColor: [
+          "rgba(196, 252, 239, 1)",
+          "rgba(249, 248, 113, 1)",
+          "rgba(255, 128, 102, 1)",
+        ],
+        borderColor: [
+          "rgba(255, 255, 255, 1)",
+          "rgba(255, 255, 255, 1)",
+          "rgba(255, 255, 255, 1)",
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+};
+
+export const isEmailAllowed = (email: string) => {
+  return WHITE_LIST.some(
+    (list) => !!email.match(`^[A-Za-z0-9._%+-]+@${list}$`),
+  );
+};
+export const getRoleFromClaims = (claims: Record<string, any>) => {
+  let userRole = UserRole.user;
+  Object.values(UserRole).forEach((role) => {
+    if (claims[role]) {
+      userRole = role;
+    }
+  });
+  return userRole;
 };

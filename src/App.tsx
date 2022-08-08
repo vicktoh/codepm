@@ -25,6 +25,7 @@ import { setLog } from "./reducers/logSlice";
 import { setSystem } from "./reducers/systemSlice";
 import { listenOnPermission } from "./services/permissionServices";
 import { setPermisson } from "./reducers/permissionSlice";
+import { getRoleFromClaims, isEmailAllowed } from "./helpers";
 const codeLogo = require("./assets/images/logo.png");
 
 function App() {
@@ -46,13 +47,16 @@ function App() {
   const toast = useToast();
   useEffect(() => {
     if (!auth) {
-      const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+      const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
         if (user) {
+          if (!isEmailAllowed(user.email || "")) return;
+          const idToken = await user.getIdTokenResult();
+          console.log(idToken.claims, "claims");
           const newAuth: Auth = {
             displayName: user.displayName || "Unknown Name",
             uid: user.uid,
             photoUrl: user?.photoURL || "",
-            role: "user",
+            role: getRoleFromClaims(idToken.claims),
           };
 
           dispatch(setAuth(newAuth));
@@ -159,7 +163,7 @@ function App() {
     if (permission || !auth?.uid) return;
     try {
       listenOnPermission(auth.uid, (perm) => {
-        dispatch(setPermisson(permission));
+        dispatch(setPermisson(perm));
       });
     } catch (error) {
       console.log(error);

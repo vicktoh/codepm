@@ -3,7 +3,6 @@ import { UserReference } from "./User";
 export type RequisitionItem = {
   title: string;
   amount: number;
-  budgetLine: string;
   budgetId?: string;
 };
 
@@ -11,6 +10,7 @@ export type RequisitionAttachement = {
   title: string;
   name?: string;
   fileUrl?: string;
+  uploaderId: string;
 };
 
 export type RequisitionStats = {
@@ -37,15 +37,18 @@ export enum RequisitionCurrency {
   "EUR" = "EUR",
 }
 export enum RequisitionType {
-  "cash-advance" = "cash-advance",
-  "requisition" = "requisition",
-  "refund" = "refund",
+  "procurement request" = "procurement request",
+  "travel request" = "travel request",
+  "advance request" = "advance request",
+  "per diem" = "advance request",
 }
 export interface Requisition {
   creatorId: string;
   id?: string;
   creator: UserReference;
   title: string;
+  projectTitle?: string;
+  acitivityTitle?: string;
   project?: {
     title: string;
     projectId: string;
@@ -74,6 +77,8 @@ export interface Requisition {
   beneficiaryBank: string;
   currency: RequisitionCurrency;
   attentionTo?: string[];
+  chatCount?: number;
+  conversation?: Record<string, number>;
 }
 
 export type RequisitionFormValues = {
@@ -83,6 +88,8 @@ export type RequisitionFormValues = {
   items: Requisition["items"];
   type: Requisition["type"];
   attachments?: Requisition["attachments"];
+  projectTitle: string;
+  activityTitle: string;
   beneficiaryName: string;
   beneficiaryBank: string;
   beneficiaryAccountNumber: string;

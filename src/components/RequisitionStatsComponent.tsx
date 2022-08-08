@@ -25,7 +25,7 @@ const RequisitionStatsComponent: FC = () => {
   const toast = useToast();
   useEffect(() => {
     if (!stats) {
-      const unsub = listenOnRequisitionStats(
+      listenOnRequisitionStats(
         auth?.uid || "",
         (stats) => {
           setLoading(false);
@@ -40,7 +40,6 @@ const RequisitionStatsComponent: FC = () => {
           });
         },
       );
-      return unsub;
     }
   }, [stats, toast, auth]);
   if (loading) {
@@ -100,8 +99,8 @@ const RequisitionStatsComponent: FC = () => {
               <HStack alignItems="center">
                 <Icon boxSize={8} as={FaMoneyBill} color="blue.300" />
                 <Heading>
-                  {stats.pendingRequisitions
-                    ? `${stats.pendingRequisitions.toLocaleString()}`
+                  {stats.totalApprovedSum
+                    ? `${stats.totalApprovedSum.toLocaleString()}`
                     : 0}
                 </Heading>
               </HStack>

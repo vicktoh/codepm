@@ -1,12 +1,12 @@
-import React, { useMemo } from "react";
 import {
   Flex,
   Heading,
+  SimpleGrid,
   HStack,
   Icon,
-  SimpleGrid,
   Text,
 } from "@chakra-ui/react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import { differenceInBusinessDays } from "date-fns/esm";
 import { BsCheckAll } from "react-icons/bs";
 import { FaBusinessTime } from "react-icons/fa";
@@ -19,11 +19,18 @@ import {
   isBetween,
 } from "../helpers";
 import { useAppSelector } from "../reducers/types";
-export const LogStats = () => {
-  const { logs, system, permission } = useAppSelector(
-    ({ logs, system, permission }) => ({ logs, system, permission }),
-  );
-  const loggedDays = logs?.logs.length || 0;
+import { Log } from "../types/Log";
+import { fetchLogs } from "../services/logsServices";
+type UserLogStatsProps = {
+  userId: string;
+};
+export const UserLogStats: FC<UserLogStatsProps> = ({ userId }) => {
+  const { system, permission } = useAppSelector(({ system, permission }) => ({
+    system,
+    permission,
+  }));
+  const [logs, setLogs] = useState<Log[]>();
+  const loggedDays = logs?.length || 0;
   const businessDays = system
     ? differenceInBusinessDays(new Date(), new Date(system?.logStartDate))
     : 0;
@@ -38,6 +45,20 @@ export const LogStats = () => {
   const adColor = useMemo(() => adherenceColor(adherence), [adherence]);
   const adEmoji = useMemo(() => adherenceEmoji(adherence), [adherence]);
   const adWord = useMemo(() => adherenceWord(adherence), [adherence]);
+  useEffect(() => {
+    const fetchUserLogs = async () => {
+      if (userId && system?.logStartDate) {
+        try {
+          const logs = await fetchLogs(userId, system?.logStartDate);
+          setLogs(logs);
+        } catch (error) {
+          console.log(error);
+        } finally {
+        }
+      }
+    };
+    fetchUserLogs();
+  }, [userId, system?.logStartDate]);
   return (
     <Flex direction="column" mt={5}>
       <Heading fontSize="lg" my={5}>
@@ -54,7 +75,7 @@ export const LogStats = () => {
         >
           <HStack>
             <Icon boxSize={8} color="green.300" as={BsCheckAll} />
-            <Heading fontSize="2xl">{logs?.logs.length || 0}</Heading>
+            <Heading fontSize="2xl">{logs?.length || 0}</Heading>
           </HStack>
           <Text>Days Logged</Text>
         </Flex>

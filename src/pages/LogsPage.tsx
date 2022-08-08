@@ -22,13 +22,14 @@ import { BiStats } from "react-icons/bi";
 import { LogFilterForm } from "../components/LogFilterForm";
 import { LogList } from "../components/LogList";
 import { LogRequestForm } from "../components/LogRequestForm";
-import { Period } from "../types/Permission";
-import { makeRequest } from "../services/logsServices";
+import { Period, Request } from "../types/Permission";
+import { makeLeaveRequest, makeRequest } from "../services/logsServices";
 import { useAppSelector } from "../reducers/types";
 import { isBetween } from "../helpers";
 import { format } from "date-fns";
 import { CalendarMonth } from "../components/Calendar/CalendarMonth";
 import { LogStats } from "../components/LogStats";
+import { LeaveRequestForm } from "../components/LeaveRequestForm";
 
 export const LogsPage: FC = () => {
   const currentDate = useMemo(() => {
@@ -70,8 +71,10 @@ export const LogsPage: FC = () => {
     isOpen: isStatsModalOpen,
   } = useDisclosure();
 
-  const onRequestForLeave = async (period: Period) => {
-    await makeRequest(auth?.uid || "", period, "leave");
+  const onRequestForLeave = async (
+    values: Omit<Request, "status" | "type" | "userId" | "timestamp">,
+  ) => {
+    await makeLeaveRequest(auth?.uid || "", values, "leave");
     onCloseLeaveRequest();
   };
   const onAccessRequest = async (period: Period) => {
@@ -159,7 +162,7 @@ export const LogsPage: FC = () => {
           <ModalCloseButton />
           <ModalHeader>🏝 Leave Request</ModalHeader>
           <ModalBody>
-            <LogRequestForm type="leave" onSubmit={onRequestForLeave} />
+            <LeaveRequestForm onSubmit={onRequestForLeave} />
           </ModalBody>
         </ModalContent>
       </Modal>

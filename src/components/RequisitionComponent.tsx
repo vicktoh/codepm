@@ -1,4 +1,6 @@
 import {
+  Badge,
+  Box,
   Flex,
   Heading,
   HStack,
@@ -21,6 +23,7 @@ import {
   BsPrinter,
   BsTrash,
 } from "react-icons/bs";
+import { useAppSelector } from "../reducers/types";
 import { Requisition } from "../types/Requisition";
 
 type RequisitionComponentProps = {
@@ -43,6 +46,7 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
   openConversations,
 }) => {
   const date = format(new Date(requisition.timestamp), "do MMM Y");
+  const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const { status } = requisition;
   const actionButtonSize = useBreakpointValue({
     base: "sm",
@@ -50,6 +54,11 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
     lg: "md",
   });
   const isMobile = useBreakpointValue({ base: true, md: true, lg: true });
+
+  const unReadChat =
+    requisition.chatCount && requisition.conversation
+      ? requisition.chatCount - (requisition.conversation[auth?.uid || ""] || 0)
+      : 0;
   const getStatus = (status: Requisition["status"]) => {
     switch (status) {
       case "pending":
@@ -61,25 +70,27 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
         );
       case "approved":
         return (
-          <VStack>
-            <Heading fontSize="sm">Approved by</Heading>
-            <Text>{requisition.checkedby}</Text>
+          <VStack spacing={0} alignItems="flex-start">
+            <Text fontSize="sm">Approved by</Text>
+            <Heading fontSize="md">
+              {requisition.checkedby?.displayName}
+            </Heading>
           </VStack>
         );
       case "budgetholder":
         return (
-          <VStack>
-            <Text>Bugetholder Check</Text>
-            <Heading fontSize="lg">
+          <VStack spacing={0} alignItems="flex-start">
+            <Text fontSize="sm">Bugetholder Check</Text>
+            <Heading fontSize="md">
               {requisition.budgetHolderCheck?.displayName}
             </Heading>
           </VStack>
         );
       case "checked":
         return (
-          <VStack>
-            <Text>Checked by</Text>
-            <Heading fontSize="lg">
+          <VStack spacing={0} alignItems="flex-start">
+            <Text fontSize="sm">Checked by</Text>
+            <Heading fontSize="md">
               {requisition.checkedby?.displayName}
             </Heading>
           </VStack>
@@ -94,6 +105,7 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
         return null;
     }
   };
+
   const getActionButtons = () => {
     if (
       status === "pending" ||
@@ -103,12 +115,26 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
       return (
         <HStack justifySelf={["flex-start", "flex-end"]}>
           <Tooltip label="Conversations">
-            <IconButton
-              aria-label="chat icon"
-              icon={<Icon color="tetiary.300" as={BsChat} />}
-              size={actionButtonSize}
-              onClick={openConversations}
-            />
+            <Box position="relative">
+              <IconButton
+                aria-label="chat icon"
+                icon={<Icon color="tetiary.300" as={BsChat} />}
+                size={actionButtonSize}
+                onClick={openConversations}
+              />
+              {unReadChat ? (
+                <Box position="absolute" top={0} right="-3px">
+                  <Badge
+                    bg="brand.500"
+                    color="white"
+                    borderRadius="full"
+                    fontSize="xs"
+                  >
+                    {unReadChat}
+                  </Badge>
+                </Box>
+              ) : null}
+            </Box>
           </Tooltip>
           <Tooltip label="Edit Requisition">
             <IconButton
@@ -138,12 +164,26 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
       return (
         <HStack justifySelf={["flex-start", "flex-end"]}>
           <Tooltip label="Conversations">
-            <IconButton
-              onClick={openConversations}
-              aria-label="chat icon"
-              icon={<Icon color="tetiary.300" as={BsChat} />}
-              size={actionButtonSize}
-            />
+            <Box position="relative">
+              <IconButton
+                aria-label="chat icon"
+                icon={<Icon color="tetiary.300" as={BsChat} />}
+                size={actionButtonSize}
+                onClick={openConversations}
+              />
+              {unReadChat ? (
+                <Box position="absolute" top={0} right="-3px">
+                  <Badge
+                    bg="brand.500"
+                    color="white"
+                    borderRadius="full"
+                    fontSize="xs"
+                  >
+                    {unReadChat}
+                  </Badge>
+                </Box>
+              ) : null}
+            </Box>
           </Tooltip>
           {status === "retirement-approved" ? (
             <IconButton
@@ -175,12 +215,26 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
       return (
         <HStack justifySelf={["flex-start", "flex-end"]}>
           <Tooltip label="Conversations">
-            <IconButton
-              onClick={openConversations}
-              aria-label="chat icon"
-              icon={<Icon color="tetiary.300" as={BsChat} />}
-              size={actionButtonSize}
-            />
+            <Box position="relative">
+              <IconButton
+                aria-label="chat icon"
+                icon={<Icon color="tetiary.300" as={BsChat} />}
+                size={actionButtonSize}
+                onClick={openConversations}
+              />
+              {unReadChat ? (
+                <Box position="absolute" top={0} right="-3px">
+                  <Badge
+                    bg="brand.500"
+                    color="white"
+                    borderRadius="full"
+                    fontSize="xs"
+                  >
+                    {unReadChat}
+                  </Badge>
+                </Box>
+              ) : null}
+            </Box>
           </Tooltip>
           <Tooltip label="Print Requisition">
             <IconButton

@@ -13,6 +13,14 @@ import { TasksPage } from "../pages/TasksPage";
 import { WorkplanPage } from "../pages/WorkplanPage";
 import { DashboardHome } from "../pages/DashboardHome";
 import { RequisitionLayout } from "../layout/RequisitionLayout";
+import { UsersLayout } from "../layout/UsersLayout";
+import { UserListsPage } from "../pages/UserListsPage";
+import { UserProfilePage } from "../pages/UserProfilePage";
+import { PermissionsPage } from "../pages/PermissionsPage";
+import { RequisitionAdminLayout } from "../layout/RequisitionAdminLayout";
+import { RequisitionAdminPage } from "../pages/RequisitionAdminPage";
+import { RequisitionAnalytics } from "../pages/RequisitionAnalytics";
+import { SystemPage } from "../pages/SystemPage";
 
 export const MainNavigation = () => {
   return (
@@ -37,6 +45,16 @@ export const MainNavigation = () => {
           <Route index element={<RequisitionPage />} />
           <Route path="archive" element={<RequisitionPage />} />
         </Route>
+        <Route path="users" element={<UsersLayout />}>
+          <Route index element={<UserListsPage />} />
+          <Route path="requests" element={<PermissionsPage />} />
+          <Route path="profile/:userId" element={<UserProfilePage />} />
+        </Route>
+        <Route path="requisition-admin" element={<RequisitionAdminLayout />}>
+          <Route index element={<RequisitionAdminPage />} />
+          <Route path="analytics" element={<RequisitionAnalytics />} />
+        </Route>
+        <Route path="system-settings" element={<SystemPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
     </Routes>

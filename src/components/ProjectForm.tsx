@@ -34,7 +34,6 @@ export const ProjectForm: FC<ProjectFormType> = ({
     description: yup
       .string()
       .required("This field is required")
-      .min(100, "Must be at least 100 digits")
       .max(1500, "Cannot be above 1500 characters"),
     funder: yup.string().required("This field is required"),
   });
@@ -48,7 +47,6 @@ export const ProjectForm: FC<ProjectFormType> = ({
     <Formik
       validationSchema={validationSchema}
       onSubmit={async (values, { setSubmitting }) => {
-        console.log("hey there");
         if (mode === "add") {
           try {
             await addProject(values);
