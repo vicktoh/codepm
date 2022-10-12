@@ -14,18 +14,20 @@ import {
 } from "@chakra-ui/react";
 import { format } from "date-fns";
 import React, { FC } from "react";
-import { BsChat, BsEye } from "react-icons/bs";
+import { BsCalculator, BsChat, BsEye } from "react-icons/bs";
 import { useAppSelector } from "../reducers/types";
-import { Requisition } from "../types/Requisition";
+import { Requisition, RequisitionStatus } from "../types/Requisition";
 type RequisitionAdminComponentProps = {
   requisition: Requisition;
   onViewRequisition: () => void;
   onOpenChat: () => void;
+  onOpenRetirement: () => void;
 };
 export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
   requisition,
   onViewRequisition,
   onOpenChat,
+  onOpenRetirement,
 }) => {
   const { users, auth } = useAppSelector(({ users, auth }) => ({
     users,
@@ -90,6 +92,7 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
     <Flex
       bg="white"
       px={5}
+      my={1}
       borderRadius="lg"
       py={[5, 2]}
       alignItems={isMobile ? "flex-start" : "center"}
@@ -184,6 +187,16 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
             ) : null}
           </Box>
         </Tooltip>
+        {requisition.status === RequisitionStatus.retired ? (
+          <Tooltip title="View Retirement">
+            <IconButton
+              onClick={onOpenRetirement}
+              color="yellow.300"
+              icon={<Icon as={BsCalculator} />}
+              aria-label="View Retirement"
+            />
+          </Tooltip>
+        ) : null}
       </HStack>
     </Flex>
   );

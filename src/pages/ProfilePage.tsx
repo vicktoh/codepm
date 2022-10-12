@@ -22,7 +22,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { updateProfile } from "firebase/auth";
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useState, useRef } from "react";
 import { BsPencil } from "react-icons/bs";
 import { useDispatch } from "react-redux";
 import { ImageCropper } from "../components/ImageCropper";
@@ -66,9 +66,10 @@ export const ProfilePage: FC = () => {
   const [uploadingSignature, setUploadingSignature] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [sigProgress, setSigProgress] = useState<number>(0);
+  const [fileInput, setFileInput] = useState<File>();
   const toast = useToast();
   const dispatch = useDispatch();
-
+  const sigRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     function uploadProfile() {
       if (croppedBlob && auth?.uid) {
@@ -130,13 +131,27 @@ export const ProfilePage: FC = () => {
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;
     if (!file) return;
+    if (file.type.split("/")[0] !== "image") {
+      toast({ title: "only Image files are allowed", status: "error" });
+      return;
+    }
+    setFileInput(file);
     const blob = URL.createObjectURL(file);
     setImageSrc(blob);
     onOpenAvatarModal();
   };
+  const onInputClick = () => {
+    if (sigRef.current?.value) {
+      sigRef.current.value = "";
+    }
+  };
   const onSigFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;
     if (!file) return;
+    if (file.type.split("/")[0] !== "image") {
+      toast({ title: "only Image files are allowed", status: "error" });
+      return;
+    }
     const blob = URL.createObjectURL(file);
     setSignatureSrc(blob);
     onOpenSignatureModal();
@@ -214,7 +229,14 @@ export const ProfilePage: FC = () => {
         <Box position="relative" mt={5}>
           <Heading fontSize="sm">Signature</Heading>
           <VisuallyHidden>
-            <Input type="file" onChange={onSigFileChange} id="sigFileInput" />
+            <Input
+              onClick={(e) => onInputClick()}
+              ref={sigRef}
+              value={fileInput?.name}
+              type="file"
+              onChange={onSigFileChange}
+              id="sigFileInput"
+            />
           </VisuallyHidden>
           <Avatar src={profile?.signatureUrl || ""} size="md" />
           {uploadingSignature ? (
@@ -289,7 +311,11 @@ export const ProfilePage: FC = () => {
             <ImageCropper
               src={signatureSrc || ""}
               setInput={setCroppedSigBlob}
-              onClose={onCloseSignatureModal}
+              onClose={() => {
+                setFileInput(undefined);
+                onCloseSignatureModal();
+              }}
+              aspect={5 / 3}
             />
           </ModalBody>
         </ModalContent>

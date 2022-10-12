@@ -39,7 +39,6 @@ export const ProjectDetails = () => {
   const { projectId } = useParams();
   const [isLoading, setLoading] = useState<boolean>(true);
   const [project, setProject] = useState<Project>();
-  console.log({ project });
   const {
     isOpen: isDocumentModalOpen,
     onClose: onCloseDocumentModal,

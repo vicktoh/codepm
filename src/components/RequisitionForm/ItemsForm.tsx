@@ -13,13 +13,16 @@ import {
   SimpleGrid,
   Text,
   Textarea,
+  useToast,
   VStack,
 } from "@chakra-ui/react";
 import { useFormikContext } from "formik";
-import React, { useMemo } from "react";
+import React, { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { BiMinusCircle } from "react-icons/bi";
 import { BsPlus } from "react-icons/bs";
 import { converNumtoWord, requisitonTotal } from "../../helpers";
+import { getBudgetItems } from "../../services/budgetServices";
+import { BudgetItem } from "../../types/Project";
 import {
   RequisitionCurrency,
   RequisitionFormValues,
@@ -29,6 +32,30 @@ export const ItemsForm = () => {
   const { values, setFieldValue, errors, touched, handleBlur, handleChange } =
     useFormikContext<RequisitionFormValues>();
   const total = useMemo(() => requisitonTotal(values.items), [values]);
+  const [fetching, setFetching] = useState<boolean>(false);
+  const [budgetList, setBudgetList] = useState<BudgetItem[]>();
+  console.log({ budgetList });
+
+  const toast = useToast();
+  useEffect(() => {
+    const fetchBudget = async () => {
+      if (!values.projectId) return;
+      try {
+        setFetching(true);
+        const budget = await getBudgetItems(values.projectId);
+        setBudgetList(budget);
+      } catch (error) {
+        console.log(error);
+        toast({
+          title: "Didn't find a budget for this project",
+          status: "warning",
+        });
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchBudget();
+  }, [values.projectId, toast]);
   const addItem = () => {
     const items = [...(values.items || [])];
     items.push({
@@ -39,8 +66,11 @@ export const ItemsForm = () => {
   };
   const removeItem = (i: number) => {
     const items = [...values.items];
+    const ids = [...(values.budgetIds || [])];
     items.splice(i, 1);
+    ids.splice(i, 1);
     setFieldValue("items", items);
+    setFieldValue("budgetIds", ids);
   };
   return (
     <Flex direction="column" px={5} pb={5}>
@@ -64,7 +94,7 @@ export const ItemsForm = () => {
           values.items.map((item, i) => (
             <SimpleGrid
               key={`req-item-${i}`}
-              columns={[1, 2]}
+              columns={[1, 3]}
               p={2}
               gridGap={3}
               borderWidth={1}
@@ -76,6 +106,15 @@ export const ItemsForm = () => {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 value={item.title}
+              />
+              <Input
+                placeholder="Budget Line"
+                size="sm"
+                list="budgetlist"
+                name={`items.${i}.budget`}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                value={item.budget}
               />
               <HStack spacing={2}>
                 <Input
@@ -155,6 +194,16 @@ export const ItemsForm = () => {
           Next
         </Button>
       </Flex>
+      <datalist id="budgetlist">
+        {budgetList?.length
+          ? budgetList.map((budget) => (
+              <option
+                key={`budget-list-${budget.code}`}
+                value={`${budget.code} - ${budget.description}`}
+              ></option>
+            ))
+          : null}
+      </datalist>
     </Flex>
   );
 };

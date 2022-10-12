@@ -26,22 +26,42 @@ import { setSystem } from "./reducers/systemSlice";
 import { listenOnPermission } from "./services/permissionServices";
 import { setPermisson } from "./reducers/permissionSlice";
 import { getRoleFromClaims, isEmailAllowed } from "./helpers";
+import { listenOnProjects } from "./services/projectServices";
+import { setProjects } from "./reducers/projectSlice";
 const codeLogo = require("./assets/images/logo.png");
 
 function App() {
   const [isLoading, setLoading] = useState<boolean>(true);
-  const { auth, users, conversations, presence, logs, system, permission } =
-    useAppSelector(
-      ({ auth, users, conversations, presence, logs, system, permission }) => ({
-        auth,
-        users,
-        conversations,
-        presence,
-        logs,
-        system,
-        permission,
-      }),
-    );
+  const {
+    auth,
+    users,
+    conversations,
+    presence,
+    logs,
+    system,
+    permission,
+    projects,
+  } = useAppSelector(
+    ({
+      auth,
+      users,
+      conversations,
+      presence,
+      logs,
+      system,
+      permission,
+      projects,
+    }) => ({
+      auth,
+      users,
+      conversations,
+      presence,
+      logs,
+      system,
+      permission,
+      projects,
+    }),
+  );
   const dispatch = useDispatch();
   const loadingAnimation = useLoadingAnimation();
   const toast = useToast();
@@ -169,6 +189,16 @@ function App() {
       console.log(error);
     }
   }, [permission, dispatch, auth]);
+  useEffect(() => {
+    if (projects) return;
+    try {
+      listenOnProjects((projs) => {
+        dispatch(setProjects(projs));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [projects, dispatch]);
 
   if (isLoading && !auth) {
     return (

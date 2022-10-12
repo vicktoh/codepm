@@ -18,6 +18,7 @@ import { useToast } from "@chakra-ui/react";
 import {
   addNewRequisition,
   updateRequisition,
+  updateVendorsList,
 } from "../../services/requisitionServices";
 
 type RequisitionFormProps = {
@@ -31,22 +32,25 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
   mode,
   onClose,
 }) => {
-  const { auth } = useAppSelector(({ auth }) => ({ auth }));
+  const { auth, vendors } = useAppSelector(({ auth, vendors }) => ({
+    auth,
+    vendors,
+  }));
   const toast = useToast();
   const initialValues: RequisitionFormValues = {
     title: requisition?.title || "",
     step: 1,
     type: requisition?.type || RequisitionType["procurement request"],
     items: requisition?.items || [],
-    projectTitle: requisition?.projectTitle || "",
+    projectId: requisition?.projectId || "",
     activityTitle: requisition?.acitivityTitle || "",
     date: requisition?.timestamp
       ? format(requisition.timestamp, "y-MM-dd")
       : format(new Date(), "y-MM-dd"),
-    beneficiaryAccountNumber: requisition?.beneficiaryAccountNumber || "",
-    beneficiaryBank: requisition?.beneficiaryBank || "",
-    beneficiaryName: requisition?.beneficiaryName || "",
+    beneficiaries: requisition?.beneficiaries || [],
     currency: requisition?.currency || RequisitionCurrency.NGN,
+    attentionTo: requisition?.attentionTo || [],
+    budgetIds: requisition?.budgetIds || [],
   };
   const validationSchema = yup.object().shape({
     title: yup.string().required("Requisition title is required"),
@@ -61,11 +65,17 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
       )
       .min(1, "You must add at least one requisition item"),
     date: yup.date().required(),
-    beneficiaryName: yup.string().required("Beneficiary name is required"),
-    beneficiaryAccountNumber: yup
-      .string()
-      .required("Account Number is required"),
-    beneficiaryBank: yup.string().required(),
+    projectId: yup.string().required("Project must be selected"),
+    beneficiaries: yup
+      .array()
+      .of(
+        yup.object().shape({
+          accountNumber: yup.string().required(),
+          bank: yup.string().required(),
+          name: yup.string().required(),
+        }),
+      )
+      .min(1, "At least one beneficiary must be added"),
     currency: yup.string().required(),
   });
   const renderFormStep = (step: number) => {
@@ -83,6 +93,7 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={async (values) => {
+        console.log("Hello");
         if (!auth) return;
         const { date, step, ...rest } = values;
         const total = requisitonTotal(rest.items);
@@ -105,6 +116,11 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
         if (mode === "add") {
           try {
             await addNewRequisition(auth.uid, newRequisition);
+            await updateVendorsList(
+              auth.uid,
+              vendors || {},
+              newRequisition.beneficiaries,
+            );
             onClose();
           } catch (error) {
             console.log(error);
@@ -119,6 +135,11 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
         if (mode === "edit" && requisition?.id) {
           try {
             await updateRequisition(auth.uid, requisition.id, newRequisition);
+            await updateVendorsList(
+              auth.uid,
+              vendors || {},
+              newRequisition.beneficiaries,
+            );
             onClose();
           } catch (error) {
             console.log(error);

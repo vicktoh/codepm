@@ -10,10 +10,11 @@ import {
   Text,
   Tooltip,
   useBreakpointValue,
+  useToast,
   VStack,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import {
   BsCalculator,
   BsChat,
@@ -24,12 +25,12 @@ import {
   BsTrash,
 } from "react-icons/bs";
 import { useAppSelector } from "../reducers/types";
-import { Requisition } from "../types/Requisition";
+import { Requisition, RequisitionStatus } from "../types/Requisition";
 
 type RequisitionComponentProps = {
   requisition: Requisition;
   onEdit: () => void;
-  onPrint: () => void;
+  onPrint: () => Promise<void>;
   onDownload: () => void;
   onDelete: () => void;
   openRetirement: () => void;
@@ -47,6 +48,9 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
 }) => {
   const date = format(new Date(requisition.timestamp), "do MMM Y");
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
+  const [isPrinting, setPrinting] = useState<boolean>();
+  const [isDowloading, setDownloading] = useState<boolean>();
+  const toast = useToast();
   const { status } = requisition;
   const actionButtonSize = useBreakpointValue({
     base: "sm",
@@ -54,7 +58,21 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
     lg: "md",
   });
   const isMobile = useBreakpointValue({ base: true, md: true, lg: true });
-
+  const printDocument = async () => {
+    try {
+      setPrinting(true);
+      await onPrint();
+    } catch (error) {
+      const err: any = error;
+      toast({
+        title: "Could not print document",
+        description: err?.message || "unkown error",
+        status: "error",
+      });
+    } finally {
+      setPrinting(false);
+    }
+  };
   const unReadChat =
     requisition.chatCount && requisition.conversation
       ? requisition.chatCount - (requisition.conversation[auth?.uid || ""] || 0)
@@ -98,7 +116,25 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
       case "paid":
         return <Text>Paid</Text>;
       case "retired":
-        return <Text>Retired</Text>;
+        return (
+          <VStack spacing={0} alignItems="flex-start">
+            <Text>Retired</Text>;
+            <Text fontSize="xs" color="brand.300">
+              Awaiting Approval
+            </Text>
+            ;
+          </VStack>
+        );
+      case RequisitionStatus["retirement-approved"]:
+        return (
+          <VStack spacing={0} alignItems="flex-start">
+            <Text>Retired</Text>;
+            <Text fontSize="xs" color="green.300">
+              Approved
+            </Text>
+            ;
+          </VStack>
+        );
       case "abandoned":
         return <Text color="red.200">Abandoned</Text>;
       default:
@@ -156,11 +192,7 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
         </HStack>
       );
     }
-    if (
-      status === "approved" ||
-      status === "retirement-approved" ||
-      status === "paid"
-    ) {
+    if (status === "approved" || status === "retired" || status === "paid") {
       return (
         <HStack justifySelf={["flex-start", "flex-end"]}>
           <Tooltip label="Conversations">
@@ -185,21 +217,14 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
               ) : null}
             </Box>
           </Tooltip>
-          {status === "retirement-approved" ? (
+          <Tooltip label="Retire">
             <IconButton
-              aria-label="retirement"
-              icon={<Icon color="green" as={BsCheck} />}
+              onClick={openRetirement}
+              aria-label="retirement icon"
+              icon={<Icon color="blue.300" as={BsCalculator} />}
+              size={actionButtonSize}
             />
-          ) : (
-            <Tooltip label="Retire">
-              <IconButton
-                onClick={openRetirement}
-                aria-label="retirement icon"
-                icon={<Icon color="blue.300" as={BsCalculator} />}
-                size={actionButtonSize}
-              />
-            </Tooltip>
-          )}
+          </Tooltip>
           <Tooltip label="Print Requisition">
             <IconButton
               onClick={onPrint}
@@ -211,7 +236,7 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
         </HStack>
       );
     }
-    if (status === "retired") {
+    if (status === RequisitionStatus["retirement-approved"]) {
       return (
         <HStack justifySelf={["flex-start", "flex-end"]}>
           <Tooltip label="Conversations">
@@ -238,10 +263,12 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
           </Tooltip>
           <Tooltip label="Print Requisition">
             <IconButton
-              onClick={onPrint}
+              onClick={printDocument}
               aria-label="print icon"
               icon={<Icon color="blue.300" as={BsPrinter} />}
               size={actionButtonSize}
+              disabled={isPrinting}
+              isLoading={isPrinting}
             />
           </Tooltip>
           <Tooltip label="Download Requisition">
@@ -251,6 +278,12 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
               color="white"
               aria-label="delete icon"
               icon={<Icon as={BsDownload} />}
+            />
+          </Tooltip>
+          <Tooltip label="Retirement Approved">
+            <IconButton
+              aria-label="retirement"
+              icon={<Icon color="green" as={BsCheck} />}
             />
           </Tooltip>
         </HStack>

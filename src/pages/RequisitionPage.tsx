@@ -32,24 +32,37 @@ import {
 } from "../components/RequisitionFilterForm";
 import { RequisitionForm } from "../components/RequisitionForm";
 import { RequisitionChat } from "../components/RequisitionForm/RequisitionChat";
+import { RetirementForm } from "../components/RequisitionForm/RetirementForm";
 import RequisitionStatsComponent from "../components/RequisitionStatsComponent";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { setRequisition } from "../reducers/requisitionsSlice";
 import { useAppSelector } from "../reducers/types";
+import { setVendors } from "../reducers/vendorSlice";
+import * as pdfMake from "pdfmake/build/pdfmake";
+import * as pdfFonts from "pdfmake/build/vfs_fonts";
+import codeLogo from "../assets/images/logo.png";
+
 import {
   deleteRequisition,
   listenOnRequisition,
+  listenOnVendors,
 } from "../services/requisitionServices";
 import { Requisition } from "../types/Requisition";
+import { getBase64FromUrl, tobase64 } from "../helpers";
+import { requisitionPrintDefinition } from "../services/requisitonPrint";
+(pdfMake as any).vfs = pdfFonts.pdfMake.vfs;
 
 export const RequisitionPage: FC = () => {
-  const { auth, requisitions, profile } = useAppSelector(
-    ({ auth, requisitions, profile }) => ({
+  const { auth, requisitions, profile, vendors, users } = useAppSelector(
+    ({ auth, requisitions, profile, vendors, users }) => ({
       requisitions,
       auth,
       profile,
+      vendors,
+      users,
     }),
   );
+  const usersMap = users?.usersMap || {};
   const dispatch = useDispatch();
   const toast = useToast();
   const [requisitionFilter, setFilterFilter] =
@@ -82,9 +95,42 @@ export const RequisitionPage: FC = () => {
     setMode("edit");
     onOpen();
   };
-  const printRequisition = (requisition: Requisition) => {
-    const req = { ...requisition };
-    setSelectedReq(req);
+  const printRequisition = async (requisition: Requisition) => {
+    const {
+      creatorId,
+      budgetHolderId = "",
+      checkedById = "",
+      approvedById = "",
+    } = { ...requisition };
+    const signatures = [
+      requisition.creator.signatureUrl || usersMap[creatorId].signatureUrl,
+      requisition.budgetHolderCheck?.signatureUrl ||
+        usersMap[budgetHolderId].signatureUrl,
+      requisition.checkedby?.signatureUrl || usersMap[checkedById].signatureUrl,
+      requisition.approvedBy?.signatureUrl ||
+        usersMap[approvedById].signatureUrl,
+    ];
+    console.log(signatures);
+    const signatureDataUrls = [];
+    for (const sig of signatures) {
+      if (!sig) {
+        signatureDataUrls.push(null);
+        continue;
+      }
+      console.log("sig");
+      const dataUrl = (await getBase64FromUrl(sig)) as string;
+      console.log({ dataUrl });
+      signatureDataUrls.push(dataUrl);
+    }
+    const logoImage = await tobase64(codeLogo);
+    const docDefinition = requisitionPrintDefinition(
+      { ...requisition },
+      logoImage as string,
+      signatureDataUrls,
+    );
+    console.log(signatureDataUrls);
+    console.log(docDefinition);
+    pdfMake.createPdf(docDefinition as any).open();
   };
   const downloadRequisition = (requisition: Requisition) => {
     const req = { ...requisition };
@@ -136,6 +182,7 @@ export const RequisitionPage: FC = () => {
         status: "error",
       });
     } finally {
+      setDeleting(false);
       onCloseDeleteModal();
     }
   };
@@ -160,7 +207,14 @@ export const RequisitionPage: FC = () => {
       );
     }
   }, [auth, requisitions, dispatch, toast]);
-
+  useEffect(() => {
+    if (!auth?.uid || vendors) return;
+    console.log("whewwww");
+    const unsub = listenOnVendors(auth.uid, (vend) => {
+      dispatch(setVendors(vend));
+    });
+    return unsub;
+  }, [auth?.uid, vendors, dispatch]);
   if (!requisitions && loading) {
     return <LoadingComponent title="loading requisitions..." />;
   }
@@ -176,7 +230,7 @@ export const RequisitionPage: FC = () => {
         My requisitions
       </Heading>
       {profile?.signatureUrl ? null : (
-        <Alert status="error">
+        <Alert status="error" my={5}>
           <AlertIcon />
           <AlertTitle>Upload your signature</AlertTitle>
           <AlertDescription>
@@ -210,7 +264,7 @@ export const RequisitionPage: FC = () => {
           {requisitions.filter(onFilter).map((requisition, i) => (
             <RequisitionComponent
               openConversations={() => openConversationModal(requisition)}
-              openRetirement={() => openRetirementModal}
+              openRetirement={() => openRetirementModal(requisition)}
               onEdit={() => editRequisition(requisition)}
               key={`requisition-${i}`}
               requisition={requisition}
@@ -248,10 +302,15 @@ export const RequisitionPage: FC = () => {
         <ModalContent>
           <ModalCloseButton />
           <ModalHeader>
-            <Heading fontSize="2xl">Retirements 🧮</Heading>
+            <Heading fontSize="2xl">Retirement 🧮</Heading>
           </ModalHeader>
           <ModalBody>
-            <Heading>Retirement</Heading>
+            {selectedReq ? (
+              <RetirementForm
+                onClose={onCloseRetirementModal}
+                requisition={selectedReq}
+              />
+            ) : null}
           </ModalBody>
         </ModalContent>
       </Modal>

@@ -11,12 +11,15 @@ import logs from "./logSlice";
 import system from "./systemSlice";
 import permission from "./permissionSlice";
 import requisitions from "./requisitionsSlice";
+import projects from "./projectSlice";
+import vendors from "./vendorSlice";
 import { Conversation } from "../types/Conversation";
 import { PresenceState } from "../types/Presence";
 import { LogState } from "../types/Log";
 import { System } from "../types/System";
 import { Permission } from "../types/Permission";
-import { Requisition } from "../types/Requisition";
+import { Beneficiary, Requisition } from "../types/Requisition";
+import { Project } from "../types/Project";
 
 export const store = configureStore({
   reducer: {
@@ -29,6 +32,8 @@ export const store = configureStore({
     system,
     permission,
     requisitions,
+    projects,
+    vendors,
   },
 });
 
@@ -42,6 +47,8 @@ export type StoreType = {
   system: System | null;
   permission: Permission | null;
   requisitions: Requisition[] | null;
+  projects: Project[] | null;
+  vendors: Record<string, Beneficiary>;
 };
 
 export type AppDispatch = typeof store.dispatch;

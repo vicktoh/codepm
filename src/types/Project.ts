@@ -31,6 +31,10 @@ export interface Project {
   budgetId?: string;
   workplans?: ProjectWorkPlan[];
   dateAdded: number | Date | Timestamp;
+  budget?: {
+    date: number;
+    creator: string;
+  };
 }
 
 export type WorkplanView = "table" | "kanban" | "calendar";
@@ -79,4 +83,13 @@ export type KanbanColumn = {
   id: string | number;
   title: string;
   cards: Task[];
+};
+
+export type BudgetItem = {
+  id?: string;
+  description: string;
+  activity: string;
+  amount: number;
+  code?: string;
+  spent?: number;
 };

@@ -1,13 +1,16 @@
 import { FirebaseError } from "firebase/app";
+import { getDatabase, onValue, update } from "firebase/database";
 import {
   collection,
   doc,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
   query,
   setDoc,
   Timestamp,
+  where,
   writeBatch,
 } from "firebase/firestore";
 import {
@@ -17,9 +20,17 @@ import {
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
+import { ref as dbRef } from "firebase/database";
 import { Chat } from "../types/Chat";
-import { Requisition, RequisitionStats } from "../types/Requisition";
+import {
+  Beneficiary,
+  Requisition,
+  RequisitionItem,
+  RequisitionStats,
+  RequisitionStatus,
+} from "../types/Requisition";
 import { db, firebaseApp } from "./firebase";
+import { BudgetItem } from "../types/Project";
 
 export const listenOnRequisition = (
   userId: string,
@@ -131,7 +142,7 @@ export const listenOnRequisitionAdmin = (
   callback: (requisitions: Requisition[]) => void,
   errorCallback: (error: FirebaseError) => void,
 ) => {
-  const q = query(collection(db, "requisitions"));
+  const q = query(collection(db, "requisitions"), orderBy("timestamp", "desc"));
   const unsub = onSnapshot(
     q,
     (snapshot) => {
@@ -219,5 +230,82 @@ export const deleteRequisition = (userId: string, requisitionId: string) => {
   const batch = writeBatch(db);
   batch.delete(requisitionRef);
   batch.delete(userRequisitionRef);
+  return batch.commit();
+};
+
+export const listenOnVendors = (
+  userId: string,
+  callback: (vendors: Record<string, Beneficiary>) => void,
+) => {
+  const database = getDatabase(firebaseApp);
+  const statusRef = dbRef(database, `userVendors/${userId}`);
+  return onValue(statusRef, (snapshot) => {
+    const vendors: Record<string, Beneficiary> = {};
+    snapshot.forEach((snap) => {
+      const pres = snap.val() as Beneficiary;
+      vendors[snap.key || ""] = pres;
+    });
+    console.log({ vendors });
+    callback(vendors);
+  });
+};
+
+export const updateVendorsList = (
+  userId: string,
+  vendors: Record<string, Beneficiary | null>,
+  beneficiaries: Beneficiary[],
+) => {
+  const database = getDatabase();
+  const updates: Record<string, Beneficiary> = {};
+  beneficiaries.forEach((vendor) => {
+    if (!vendors[vendor.accountNumber]) {
+      updates[`userVendors/${userId}/${vendor.accountNumber}`] = vendor;
+    }
+  });
+  if (Object.keys(updates).length) {
+    return update(dbRef(database), updates);
+  }
+};
+
+export const fetchBudgetItems = async (
+  items: RequisitionItem[],
+  projectId: string,
+) => {
+  const codes = items.map((item) => (item.budget || "").split("-")[0].trim());
+  const collecitonRef = collection(db, `projects/${projectId}/budget`);
+  const q = query(collecitonRef, where("code", "in", codes));
+  const docs = await getDocs(collecitonRef);
+  const budgetItems: BudgetItem[] = [];
+  docs.forEach((snap) => {
+    const budget = snap.data() as BudgetItem;
+    budget.id = snap.id;
+    budgetItems.push(budget);
+  });
+  return budgetItems;
+};
+
+export const updateRetirementStatus = (
+  userId: string,
+  requisitionId: string,
+  updates: Pick<
+    Requisition,
+    | "retired"
+    | "retirementApproveDate"
+    | "retirementComment"
+    | "retirementRefund"
+    | "retirementApproved"
+    | "status"
+    | "retirementTimestamp"
+  >,
+) => {
+  const requisitionRef = doc(db, `requisitions/${requisitionId}`);
+  const userRequisitionRef = doc(
+    db,
+    `users/${userId}/requisitions/${requisitionId}`,
+  );
+  const batch = writeBatch(db);
+  updates = { ...updates };
+  batch.update(requisitionRef, updates);
+  batch.update(userRequisitionRef, updates);
   return batch.commit();
 };

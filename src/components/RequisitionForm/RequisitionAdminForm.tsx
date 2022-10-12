@@ -6,6 +6,8 @@ import {
   GridItem,
   Heading,
   HStack,
+  Image,
+  SimpleGrid,
   Text,
   useBreakpointValue,
   useToast,
@@ -18,7 +20,9 @@ import { useAppSelector } from "../../reducers/types";
 import { updateRequisition } from "../../services/requisitionServices";
 import { UserRole } from "../../types/Profile";
 import { Requisition, RequisitionStatus } from "../../types/Requisition";
+import { UserReference } from "../../types/User";
 import { RequisitionAttachmentForm } from "./RequisitionAttachementForm";
+import { RequisitionBeneficiaryTable } from "./RequisitionBeneficiaryTable";
 import { RequisitionItemTable } from "./RequisitionItemTable";
 type RequisitionAdminFormProps = {
   requisition: Requisition;
@@ -35,6 +39,45 @@ const RequisitionField: FC<RequisitionFieldProps> = ({ label, value }) => {
       <Heading fontSize={isMobile ? "xs" : "sm"}>{label}</Heading>
       <Text>{value}</Text>
     </VStack>
+  );
+};
+export const CheckedBy: FC<
+  UserReference & { timestamp?: number; title: string }
+> = ({ userId, signatureUrl, photoUrl, title, displayName, timestamp }) => {
+  const { users } = useAppSelector(({ users }) => ({ users }));
+  const { usersMap = {} } = users || {};
+  return (
+    <Flex direction="column">
+      <VStack alignItems="flex-start">
+        <HStack spacing={3}>
+          <Avatar
+            name={usersMap[userId]?.displayName || displayName}
+            size="sm"
+            src={usersMap[userId]?.photoUrl || photoUrl}
+          />
+          <VStack spacing={0} alignItems="flex-start">
+            <Heading fontSize="md">
+              {usersMap[userId]?.displayName || displayName}
+            </Heading>
+            <Text>{usersMap[userId]?.designation}</Text>
+          </VStack>
+        </HStack>
+        <Text color="tetiary.200" fontSize="md" fontWeight="bold">
+          {title}
+        </Text>
+        {timestamp ? (
+          <Text my={1} fontSize="sm" color="brand.400" fontWeight="bold">
+            {format(timestamp, "dd MMM Y")}
+          </Text>
+        ) : null}
+        <Image
+          width="80px"
+          height="50px"
+          src={usersMap[userId]?.signatureUrl || signatureUrl}
+          alt="Signature"
+        />
+      </VStack>
+    </Flex>
   );
 };
 export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
@@ -55,13 +98,11 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
     creatorId,
     items = [],
     type,
-    beneficiaryAccountNumber,
-    beneficiaryBank,
+    beneficiaries = [],
     projectTitle,
     total,
     amountInWords,
     acitivityTitle,
-    beneficiaryName,
   } = requisition;
   const isMobile = useBreakpointValue({ base: true, md: false, lg: true });
   const date = format(requisition.timestamp, "dd MMM Y");
@@ -69,10 +110,13 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
   const initialValues: {
     attachments: Requisition["attachments"];
     mode: "check" | "approve" | "send-back";
+    budgetIds: string[];
   } = {
     attachments: requisition?.attachments || [],
     mode: "check",
+    budgetIds: [],
   };
+
   return (
     <Flex px={5} py={5} direction="column">
       <HStack my={3} alignItems="center">
@@ -81,7 +125,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
           src={usersMap[creatorId]?.photoUrl}
           name={usersMap[creatorId]?.displayName}
         />
-        <Heading fontSize="dm">{usersMap[creatorId]?.displayName}</Heading>
+        <Heading fontSize="md">{usersMap[creatorId]?.displayName}</Heading>
       </HStack>
       <Grid
         templateColumns={{
@@ -114,18 +158,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
             value={acitivityTitle || "N/A"}
           />
         </GridItem>
-        <GridItem colSpan={1}>
-          <RequisitionField label="Beneficiary Name" value={beneficiaryName} />
-        </GridItem>
-        <GridItem colSpan={1}>
-          <RequisitionField label="Beneficiary Bank" value={beneficiaryBank} />
-        </GridItem>
-        <GridItem colSpan={1}>
-          <RequisitionField
-            label="Beneficiary Account Number"
-            value={beneficiaryAccountNumber}
-          />
-        </GridItem>
+
         <GridItem colSpan={1}>
           <RequisitionField
             label="Total"
@@ -136,7 +169,6 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
           <RequisitionField label="Amount In Words" value={amountInWords} />
         </GridItem>
       </Grid>
-      <RequisitionItemTable items={items} />
       <Formik
         initialValues={initialValues}
         onSubmit={async (values) => {
@@ -210,6 +242,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               approvedById: auth?.uid || "",
               approvedCheckedTimestamp: new Date().getTime(),
               status: RequisitionStatus.approved,
+              budgetIds: values.budgetIds,
             };
             await updateRequisition(
               requisition.creatorId,
@@ -222,13 +255,46 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
       >
         {({ values, isSubmitting, setFieldValue, submitForm }) => (
           <Form>
+            <RequisitionItemTable
+              projectId={requisition.projectId}
+              items={items}
+            />
+            <RequisitionBeneficiaryTable beneficiaries={beneficiaries} />
             <RequisitionAttachmentForm />
+            <SimpleGrid columns={[1, 3]} mt={5} mb={3}>
+              {requisition.budgetHolderCheck ? (
+                <CheckedBy
+                  {...requisition.budgetHolderCheck}
+                  timestamp={requisition.budgetHolderCheckedTimestamp}
+                  title={"Budget Holder Check"}
+                />
+              ) : null}
+              {requisition.checkedby ? (
+                <CheckedBy
+                  {...requisition.checkedby}
+                  timestamp={requisition.checkedTimeStamp}
+                  title={"Finance Checked"}
+                />
+              ) : null}
+              {requisition.approvedBy ? (
+                <CheckedBy
+                  {...requisition.approvedBy}
+                  timestamp={requisition.approvedCheckedTimestamp}
+                  title={"Approved By"}
+                />
+              ) : null}
+            </SimpleGrid>
             <HStack spacing={3} my={3}>
               {auth?.role === UserRole.budgetHolder &&
-              requisition.status !== RequisitionStatus.approved ? (
+              ![
+                RequisitionStatus.approved,
+                RequisitionStatus.budgetholder,
+              ].includes(requisition.status) &&
+              !requisition.budgetHolderCheck ? (
                 <Button
                   variant="outline"
                   colorScheme="brand"
+                  isLoading={values.mode === "check" && isSubmitting}
                   size={isMobile ? "sm" : "lg"}
                   onClick={() => {
                     setFieldValue("mode", "check");
@@ -239,12 +305,13 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                 </Button>
               ) : null}
               {auth?.role === UserRole.finance &&
-              requisition.status !== RequisitionStatus.approved ? (
+              requisition.status !== RequisitionStatus.approved &&
+              requisition.status !== RequisitionStatus.checked ? (
                 <Button
                   colorScheme="brand"
                   variant="outline"
                   size={isMobile ? "sm" : "lg"}
-                  isLoading={isSubmitting}
+                  isLoading={values.mode === "check" && isSubmitting}
                   onClick={() => {
                     setFieldValue("mode", "check");
                     submitForm();
@@ -255,7 +322,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               ) : null}
               {requisition.status === RequisitionStatus.approved ? null : (
                 <Button
-                  isLoading={isSubmitting}
+                  isLoading={values.mode === "approve" && isSubmitting}
                   onClick={() => {
                     setFieldValue("mode", "approve");
                     submitForm();
