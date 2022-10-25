@@ -70,9 +70,12 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
       .array()
       .of(
         yup.object().shape({
-          accountNumber: yup.string().required(),
-          bank: yup.string().required(),
-          name: yup.string().required(),
+          accountNumber: yup
+            .string()
+            .required()
+            .length(10, "Must be 10 characters"),
+          bank: yup.string().required("field required"),
+          name: yup.string().required("Required"),
         }),
       )
       .min(1, "At least one beneficiary must be added"),

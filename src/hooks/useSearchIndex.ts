@@ -2,8 +2,9 @@ import { useToast } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { algoliaIndex } from "../services/algolia";
 
-export function useSearchIndex<T>(index: string) {
+export function useSearchIndex<T>(index: string, initialFilter?: string) {
   const [query, setQuery] = useState<string>("");
+  const [filters, setFilters] = useState<string>(initialFilter || "");
   const [page, setPage] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [pageStat, setpageStats] = useState<{
@@ -22,6 +23,7 @@ export function useSearchIndex<T>(index: string) {
         const response = await usersIndex.search(query, {
           page,
           hitsPerPage: 10,
+          ...(filters ? { filters } : null),
         });
         const { hits, nbHits, page: currentPage, nbPages } = response;
         setData(hits as any);
@@ -34,7 +36,7 @@ export function useSearchIndex<T>(index: string) {
       } catch (error) {
         const err: any = error;
         toast({
-          title: "Unable to fetch the users",
+          title: `Unable to fetch the ${index}`,
           description: err?.message || "Unknown Error",
           status: "error",
         });
@@ -43,7 +45,7 @@ export function useSearchIndex<T>(index: string) {
       }
     }
     searchIndex();
-  }, [page, query, toast, index]);
+  }, [page, query, toast, index, filters]);
 
   return {
     page,
@@ -51,6 +53,7 @@ export function useSearchIndex<T>(index: string) {
     pageStat,
     loading,
     setQuery,
+    setFilters,
     data,
     setData,
   };

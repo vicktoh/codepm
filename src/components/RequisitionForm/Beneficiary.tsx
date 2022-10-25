@@ -12,9 +12,10 @@ import {
   Input,
   SimpleGrid,
   Text,
+  Tooltip,
   VStack,
 } from "@chakra-ui/react";
-import { useFormikContext } from "formik";
+import { getIn, useFormikContext } from "formik";
 import { BiMinus } from "react-icons/bi";
 import { BsPlus } from "react-icons/bs";
 import { useAppSelector } from "../../reducers/types";
@@ -26,7 +27,7 @@ import { UserListPopover } from "../UserListPopover";
 import { RequisitionAttachmentForm } from "./RequisitionAttachementForm";
 
 export const Beneficiary = () => {
-  const { values, handleBlur, setFieldValue, isSubmitting } =
+  const { values, handleBlur, setFieldValue, isSubmitting, errors, touched } =
     useFormikContext<RequisitionFormValues>();
   const { users, vendors } = useAppSelector(({ users, vendors }) => ({
     users,
@@ -112,17 +113,25 @@ export const Beneficiary = () => {
                 onChange={(e) => onInputChange(i, e.target.value, "name")}
                 onBlur={handleBlur}
               />
-              <Input
-                size="sm"
-                value={accountNumber}
-                name={`beneficiaries.${i}.accountNumber`}
-                placeholder="Account Number"
-                list="vendorlist"
-                onChange={(e) =>
-                  onInputChange(i, e.target.value, "accountNumber")
-                }
-                onBlur={handleBlur}
-              />
+              <Tooltip
+                colorScheme="danger"
+                label={getIn(errors, `beneficiaries.${i}.accountNumber`)}
+              >
+                <Input
+                  isInvalid={
+                    !!getIn(errors, `beneficiaries.${i}.accountNumber`)
+                  }
+                  size="sm"
+                  value={accountNumber}
+                  name={`beneficiaries.${i}.accountNumber`}
+                  placeholder="Account Number"
+                  list="vendorlist"
+                  onChange={(e) =>
+                    onInputChange(i, e.target.value, "accountNumber")
+                  }
+                  onBlur={handleBlur}
+                />
+              </Tooltip>
               <HStack spacing={2}>
                 <Input
                   size="sm"
@@ -146,6 +155,14 @@ export const Beneficiary = () => {
             No Beneficiaries Added yet
           </Text>
         )}
+        {!!getIn(errors, "beneficiaries") &&
+        !!getIn(touched, "beneficiaries") ? (
+          <Text width="100%" textAlign="center" color="red.300">
+            {typeof getIn(errors, "beneficiaries") === "string"
+              ? getIn(errors, "beneficiaries")
+              : null}
+          </Text>
+        ) : null}
       </Flex>
       <RequisitionAttachmentForm />
       <FormControl mb={5}>

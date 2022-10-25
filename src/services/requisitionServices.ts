@@ -27,7 +27,6 @@ import {
   Requisition,
   RequisitionItem,
   RequisitionStats,
-  RequisitionStatus,
 } from "../types/Requisition";
 import { db, firebaseApp } from "./firebase";
 import { BudgetItem } from "../types/Project";
@@ -274,7 +273,7 @@ export const fetchBudgetItems = async (
   const codes = items.map((item) => (item.budget || "").split("-")[0].trim());
   const collecitonRef = collection(db, `projects/${projectId}/budget`);
   const q = query(collecitonRef, where("code", "in", codes));
-  const docs = await getDocs(collecitonRef);
+  const docs = await getDocs(q);
   const budgetItems: BudgetItem[] = [];
   docs.forEach((snap) => {
     const budget = snap.data() as BudgetItem;

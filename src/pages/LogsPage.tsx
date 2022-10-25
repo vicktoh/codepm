@@ -153,7 +153,7 @@ export const LogsPage: FC = () => {
             year={currentDate.year}
             month={month}
           />
-          <LogStats />
+          <LogStats month={month} currentYear={currentDate.year} />
         </Flex>
       )}
       <Modal isOpen={isLeaveRequestOpen} onClose={onCloseLeaveRequest}>
@@ -189,7 +189,7 @@ export const LogsPage: FC = () => {
                 year={currentDate.year}
                 month={month}
               />
-              <LogStats />
+              <LogStats month={month} currentYear={currentDate.year} />
             </ModalBody>
           </ModalContent>
         </Modal>

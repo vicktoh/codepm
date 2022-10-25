@@ -14,7 +14,7 @@ export enum LeaveType {
   "Casual Leave" = "Casual Leave",
   "Maternity Leave" = "Maternity Leave",
   "Paternity Leave" = "Study Leave",
-  "Certification Leave" = "Certification Leave",
+  "Meditation Leave" = "Meditation Leave",
   "Sick Leave" = "Sick Leave",
   "Compassionate Leave" = "Compassionate Leave",
   "Leave of Absence" = "Leave of Absence",

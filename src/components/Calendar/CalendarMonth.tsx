@@ -1,10 +1,12 @@
 import {
+  Box,
   Flex,
   Heading,
   Icon,
   IconButton,
   Table,
   Tbody,
+  Text,
   Th,
   Thead,
   Tr,
@@ -12,7 +14,13 @@ import {
 import { format, getDay, getDaysInMonth } from "date-fns";
 import React, { FC } from "react";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
-import { CALENDAR_HEADER } from "../../constants";
+import {
+  CALENDAR_HEADER,
+  FILL_DAY_COLOR,
+  LEAVE_DAY_COLOR,
+  MISSED_DAY_COLOR,
+  PUBLIC_HOLIDAY_COLOR,
+} from "../../constants";
 import { CalendarCell, CalendarRow } from "./calendarParts";
 type CalendarMonthProps = {
   year: number;
@@ -20,6 +28,24 @@ type CalendarMonthProps = {
   nextMonth: () => void;
   previousMonth: () => void;
 };
+const TABLE_KEY_COLORS = [
+  {
+    label: "Day logged",
+    color: FILL_DAY_COLOR,
+  },
+  {
+    label: "Missed day",
+    color: MISSED_DAY_COLOR,
+  },
+  {
+    label: "Leave day",
+    color: LEAVE_DAY_COLOR,
+  },
+  {
+    label: "Public holiday",
+    color: PUBLIC_HOLIDAY_COLOR,
+  },
+];
 export const CalendarMonth: FC<CalendarMonthProps> = ({
   year,
   month,
@@ -103,6 +129,23 @@ export const CalendarMonth: FC<CalendarMonthProps> = ({
         </Thead>
         <Tbody>{renderDays()}</Tbody>
       </Table>
+      <Flex
+        direction="row"
+        my={3}
+        alignItems="center"
+        bg="white"
+        borderRadius={5}
+        py={2}
+      >
+        {TABLE_KEY_COLORS.map(({ label, color }) => (
+          <Flex key={color} direction="column" alignItems="center" mx={2}>
+            <Box boxSize={5} bg={color} />
+            <Text fontSize="xx-small" whiteSpace="nowrap">
+              {label}
+            </Text>
+          </Flex>
+        ))}
+      </Flex>
     </Flex>
   );
 };
