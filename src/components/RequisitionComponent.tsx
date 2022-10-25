@@ -49,7 +49,7 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
   const date = format(new Date(requisition.timestamp), "do MMM Y");
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [isPrinting, setPrinting] = useState<boolean>();
-  const [isDowloading, setDownloading] = useState<boolean>();
+  // const [isDowloading, setDownloading] = useState<boolean>();
   const toast = useToast();
   const { status } = requisition;
   const actionButtonSize = useBreakpointValue({

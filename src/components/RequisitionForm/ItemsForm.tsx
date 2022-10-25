@@ -17,7 +17,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { useFormikContext } from "formik";
-import React, { ChangeEvent, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { BiMinusCircle } from "react-icons/bi";
 import { BsPlus } from "react-icons/bs";
 import { converNumtoWord, requisitonTotal } from "../../helpers";
@@ -32,7 +32,7 @@ export const ItemsForm = () => {
   const { values, setFieldValue, errors, touched, handleBlur, handleChange } =
     useFormikContext<RequisitionFormValues>();
   const total = useMemo(() => requisitonTotal(values.items), [values]);
-  const [fetching, setFetching] = useState<boolean>(false);
+  // const [fetching, setFetching] = useState<boolean>(false);
   const [budgetList, setBudgetList] = useState<BudgetItem[]>();
   console.log({ budgetList });
 
@@ -41,7 +41,7 @@ export const ItemsForm = () => {
     const fetchBudget = async () => {
       if (!values.projectId) return;
       try {
-        setFetching(true);
+        // setFetching(true);
         const budget = await getBudgetItems(values.projectId);
         setBudgetList(budget);
       } catch (error) {
@@ -51,7 +51,7 @@ export const ItemsForm = () => {
           status: "warning",
         });
       } finally {
-        setFetching(false);
+        // setFetching(false);
       }
     };
     fetchBudget();
