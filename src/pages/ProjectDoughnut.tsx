@@ -26,26 +26,6 @@ import { BsListOl } from "react-icons/bs";
 import { parseTasksToChartData } from "../helpers";
 ChartJs.register(ArcElement, Tooltip, Legend);
 
-// const data = {
-//   labels: ["successfull", "pending", "not-started"],
-//   datasets: [
-//     {
-//       label: "Project overview",
-//       data: [12, 8, 4],
-//       backgroundColor: [
-//         "rgba(196, 252, 239, 1)",
-//         "rgba(249, 248, 113, 1)",
-//         "rgba(255, 128, 102, 1)",
-//       ],
-//       borderColor: [
-//         "rgba(255, 255, 255, 1)",
-//         "rgba(255, 255, 255, 1)",
-//         "rgba(255, 255, 255, 1)",
-//       ],
-//       borderWidth: 1,
-//     },
-//   ],
-// };
 type ProjectDoughnutProps = {
   projectId: string;
 };
@@ -60,7 +40,6 @@ export const ProjectDoughnut: FC<ProjectDoughnutProps> = ({ projectId }) => {
     if (!tasks) return {};
     return _.groupBy(tasks, "status");
   }, [tasks]);
-  console.log({ categories });
   const toast = useToast();
   useEffect(() => {
     const getProjectTask = async () => {

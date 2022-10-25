@@ -97,3 +97,7 @@ export const STATUS_INDEX_MAP: TaskStatus[] = [
   TaskStatus.ongoing,
   TaskStatus.completed,
 ];
+
+export const pdfRequisition = () => {
+  console.log("holla");
+};

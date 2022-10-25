@@ -38,7 +38,9 @@ export const ALGOLIA_SEARCH_API_KEY = "4df18395c02e8cda29ac8aae7a22b0d4";
 export const WHITE_LIST = [
   "connecteddevelopment.org",
   "ifollowthemoney.org",
-  // "gmail.com",
+  "gmail.com",
+  "turing.com",
+  "procurementmonitor.org",
 ];
 
 export const SystemFields: Record<keyof System, string> = {

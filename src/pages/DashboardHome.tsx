@@ -9,7 +9,12 @@ export const DashboardHome = () => {
     <Flex direction="column" px={5}>
       <Flex direction="row" justifyContent="space-between">
         <Heading fontSize="lg">Projects</Heading>
-        <Text as={Link} to="" textDecor="underline" color="red.500">
+        <Text
+          as={Link}
+          to="/dashboard/projects"
+          textDecor="underline"
+          color="red.500"
+        >
           See All
         </Text>
       </Flex>

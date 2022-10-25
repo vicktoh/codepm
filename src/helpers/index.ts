@@ -267,3 +267,52 @@ export const getRoleFromClaims = (claims: Record<string, any>) => {
   });
   return userRole;
 };
+
+export const validateBudgetItem = (data: []) => {
+  for (let i = 1; i < data.length; i++) {
+    const element = data[i];
+    if (element["activity"] && element["description"] && element["amount"]) {
+    } else {
+      return {
+        success: false,
+        message: `Invalid data at row ${i} ${element["activity"]}, ${element["description"]}, ${element["amount"]}`,
+      };
+    }
+  }
+  return { success: true };
+};
+
+export const tobase64 = (url: string) => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement("canvas");
+    const img = document.createElement("img");
+    const ctx = canvas.getContext("2d");
+    console.log(url);
+    img.setAttribute("src", url);
+    img.crossOrigin = "anonymous";
+    img.onload = function () {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx && ctx.drawImage(img, 0, 0);
+      const dataUrl = canvas.toDataURL("image/png");
+      resolve(dataUrl);
+    };
+    img.onerror = function (e) {
+      console.log(e);
+      reject(e?.toString() || "");
+    };
+  });
+};
+
+export const getBase64FromUrl = async (url: string) => {
+  const data = await fetch(url);
+  const blob = await data.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      const base64data = reader.result;
+      resolve(base64data);
+    };
+  });
+};

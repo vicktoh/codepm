@@ -34,7 +34,7 @@ export const updateSignatureUrl = async (
   signatureUrl: string,
 ) => {
   const userRef = doc(db, `users/${userId}`);
-  await updateDoc(userRef, { signatureUrl });
+  await updateDoc(userRef, { signatureUrl } as Profile);
 };
 
 export const uploadProfilePic = async (

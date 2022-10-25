@@ -28,6 +28,7 @@ import {
 } from "../components/RequisitionFilterForm";
 import { RequisitionAdminForm } from "../components/RequisitionForm/RequisitionAdminForm";
 import { RequisitionChat } from "../components/RequisitionForm/RequisitionChat";
+import { RetirementForm } from "../components/RequisitionForm/RetirementForm";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { useAppSelector } from "../reducers/types";
 import { listenOnRequisitionAdmin } from "../services/requisitionServices";
@@ -48,6 +49,11 @@ export const RequisitionAdminPage = () => {
     onClose: onCloseChatModal,
     isOpen: isChatModalOpen,
   } = useDisclosure();
+  const {
+    isOpen: isRetirementModalOpen,
+    onOpen: onOnpenRetirementModal,
+    onClose: onCloseRetirementModal,
+  } = useDisclosure();
   const toast = useToast();
   const glassEffect = useGlassEffect(false);
   const isMobile = useBreakpointValue({ base: true, md: false, lg: false });
@@ -59,6 +65,11 @@ export const RequisitionAdminPage = () => {
   const onOpenConversation = (requisition: Requisition) => {
     setSelectedRequisition(requisition);
     onOpenChatModal();
+  };
+  const openRetirementModal = (requisition: Requisition) => {
+    const req = { ...requisition };
+    setSelectedRequisition(req);
+    onOnpenRetirementModal();
   };
   useEffect(() => {
     const unsubscribe = listenOnRequisitionAdmin(
@@ -110,6 +121,7 @@ export const RequisitionAdminPage = () => {
           <RequisitionAdminComponent
             key={`requisition-${i}`}
             requisition={requisition}
+            onOpenRetirement={() => openRetirementModal(requisition)}
             onViewRequisition={() => onViewRequisition(requisition)}
             onOpenChat={() => onOpenConversation(requisition)}
           />
@@ -118,7 +130,7 @@ export const RequisitionAdminPage = () => {
         <EmptyState title="Empty requisition list" />
       )}
       <Modal
-        size="xl"
+        size="2xl"
         isOpen={isRequisitionModalOpen}
         onClose={onCloseRequisitionModal}
       >
@@ -151,6 +163,28 @@ export const RequisitionAdminPage = () => {
             {selectedRequisition && (
               <RequisitionChat requisition={selectedRequisition} />
             )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal
+        isOpen={isRetirementModalOpen}
+        onClose={onCloseRetirementModal}
+        size="xl"
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton />
+          <ModalHeader>
+            <Heading fontSize="2xl">Retirement 🧮</Heading>
+          </ModalHeader>
+          <ModalBody>
+            {selectedRequisition ? (
+              <RetirementForm
+                onClose={onCloseRetirementModal}
+                requisition={selectedRequisition}
+                mode="approve"
+              />
+            ) : null}
           </ModalBody>
         </ModalContent>
       </Modal>

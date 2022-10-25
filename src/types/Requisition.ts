@@ -3,7 +3,8 @@ import { UserReference } from "./User";
 export type RequisitionItem = {
   title: string;
   amount: number;
-  budgetId?: string;
+  budget?: string;
+  id?: string;
 };
 
 export type RequisitionAttachement = {
@@ -40,7 +41,7 @@ export enum RequisitionType {
   "procurement request" = "procurement request",
   "travel request" = "travel request",
   "advance request" = "advance request",
-  "per diem" = "advance request",
+  "per diem" = "per perdiem",
 }
 export interface Requisition {
   creatorId: string;
@@ -48,7 +49,9 @@ export interface Requisition {
   creator: UserReference;
   title: string;
   projectTitle?: string;
+  budgetIds?: string[];
   acitivityTitle?: string;
+  projectId: string;
   project?: {
     title: string;
     projectId: string;
@@ -61,6 +64,7 @@ export interface Requisition {
   budgetHolderCheck?: UserReference;
   budgetHolderId?: string;
   approvedBy?: UserReference;
+  retirementApproved?: UserReference;
   approvedById?: string;
   checkedTimeStamp?: number;
   budgetHolderCheckedTimestamp?: number;
@@ -72,27 +76,32 @@ export interface Requisition {
   paid?: boolean;
   total: number;
   amountInWords: string;
-  beneficiaryName: string;
-  beneficiaryAccountNumber: string;
-  beneficiaryBank: string;
+  beneficiaries: Beneficiary[];
   currency: RequisitionCurrency;
   attentionTo?: string[];
   chatCount?: number;
+  retirementComment?: string;
+  retirementRefund?: number;
+  retirementTimestamp?: number;
+  retirementApproveDate?: number;
   conversation?: Record<string, number>;
 }
-
+export type Beneficiary = {
+  name: string;
+  accountNumber: string;
+  bank: string;
+};
 export type RequisitionFormValues = {
   step: number;
   date: string;
   title: Requisition["title"];
   items: Requisition["items"];
+  budgetIds?: string[];
   type: Requisition["type"];
   attachments?: Requisition["attachments"];
-  projectTitle: string;
+  beneficiaries: Beneficiary[];
+  projectId: string;
   activityTitle: string;
-  beneficiaryName: string;
-  beneficiaryBank: string;
-  beneficiaryAccountNumber: string;
   currency: Requisition["currency"];
   attentionTo?: Requisition["attentionTo"];
 };

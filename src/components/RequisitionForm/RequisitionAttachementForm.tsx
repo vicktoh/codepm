@@ -9,6 +9,7 @@ import {
   Link,
   Progress,
   Text,
+  Tooltip,
   useToast,
   VisuallyHidden,
   VStack,
@@ -97,7 +98,7 @@ export const RequisitionAttachmentForm = () => {
   return (
     <Flex direction="column" mt={5}>
       <HStack spacing={3}>
-        <Heading fontSize="">Add New File Attachement 🧷</Heading>
+        <Heading fontSize="md">Add New File Attachement 🧷</Heading>
         <IconButton
           as={FormLabel}
           rounded="full"
@@ -125,33 +126,42 @@ export const RequisitionAttachmentForm = () => {
           values.attachments.map((attachment, i) => (
             <VStack
               {...glassEffect}
-              key={"invoice-${i"}
+              key={`invoice-${i}`}
               shadow={2}
               p={2}
               my={2}
+              borderColor="brand.300"
+              borderWidth={1}
+              borderRadius="lg"
             >
               <HStack>
                 <Input
                   size="xs"
                   name={`attachments.${i}.title`}
                   value={attachment.title}
+                  readOnly={auth?.uid !== attachment.uploaderId}
                   onChange={handleChange}
                   onBlur={handleBlur}
                 />
-                <IconButton
-                  as={Link}
-                  href={attachment.fileUrl}
-                  isExternal
-                  size="xs"
-                  aria-label="view invoice"
-                  icon={<Icon color="blue.200" as={BsEye} />}
-                />
-                <IconButton
-                  onClick={() => removeFile(i)}
-                  size="xs"
-                  aria-label="remove invoice"
-                  icon={<Icon color="red.300" as={MdCancel} />}
-                />
+                <Tooltip label="view this attachment" size="sm">
+                  <IconButton
+                    as={Link}
+                    href={attachment.fileUrl}
+                    isExternal
+                    size="xs"
+                    aria-label="view invoice"
+                    icon={<Icon color="blue.200" as={BsEye} />}
+                  />
+                </Tooltip>
+                <Tooltip label="delete this attachment" size="sm">
+                  <IconButton
+                    disabled={auth?.uid !== attachment.uploaderId}
+                    onClick={() => removeFile(i)}
+                    size="xs"
+                    aria-label="remove invoice"
+                    icon={<Icon color="red.300" as={MdCancel} />}
+                  />
+                </Tooltip>
               </HStack>
               <Text fontSize="xs">{`Uploaded by ${
                 usersMap[attachment.uploaderId]?.displayName || "N/A"

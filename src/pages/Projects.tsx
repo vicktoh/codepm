@@ -35,11 +35,14 @@ import {
 import { FiChevronsRight } from "react-icons/fi";
 import { Project } from "../types/Project";
 import { deleteProject, listenOnProjects } from "../services/projectServices";
-import { BsTrash } from "react-icons/bs";
+import { BsCalculator, BsTrash } from "react-icons/bs";
 import { useLoadingAnimation } from "../hooks/useLoadingAnimation";
 import { COLOR_SPECTRUM_TAGS } from "../constants";
 import { ProjectForm } from "../components/ProjectForm";
 import { Link, useLocation } from "react-router-dom";
+import { useAppSelector } from "../reducers/types";
+import { useDispatch } from "react-redux";
+import { setProjects } from "../reducers/projectSlice";
 
 type ProposalRowType = {
   index: number;
@@ -77,7 +80,10 @@ const ProjectRow: FC<ProposalRowType> = ({
             <Text color="blue.300">{documents?.length || 0}</Text>
           </HStack>
         ) : (
-          <Tag>0 documents</Tag>
+          <HStack spacing={2}>
+            <Icon color="tetiary.400" as={AiOutlineFileText} />
+            <Text>{documents?.length || 0}</Text>
+          </HStack>
         )}
       </Td>
       <Td bg="white" mb={2}>
@@ -102,10 +108,22 @@ const ProjectRow: FC<ProposalRowType> = ({
 
           <Tooltip label="Delete project" bg="tetiary.200" placement="top">
             <IconButton
+              variant="outline"
               aria-label="view project"
               color="red.300"
               icon={<Icon as={BsTrash} />}
               onClick={onDelete}
+            />
+          </Tooltip>
+          <Tooltip label="View Budget" bg="tetiary.200" placement="top">
+            <IconButton
+              as={Link}
+              variant="outline"
+              aria-label="View Budget"
+              color="yellow.300"
+              icon={<Icon as={BsCalculator} />}
+              onClick={onDelete}
+              to={`${pathname}/${project.id}/budget`}
             />
           </Tooltip>
           <Tooltip
@@ -128,15 +146,14 @@ const ProjectRow: FC<ProposalRowType> = ({
 };
 
 export const Projects: FC = () => {
-  const [projects, setProjects] = useState<Project[]>();
-  const [loadingProjects, setLoadingProjects] = useState<boolean>(true);
+  const { projects } = useAppSelector(({ projects }) => ({ projects }));
   const [isDeletingProjects, setDeletingProjects] = useState<boolean>();
   const [selectedProject, setSelectedProject] = useState<Project>();
   const [mode, setMode] = useState<"add" | "edit">("add");
   const loadingAnimation = useLoadingAnimation();
   const addButonSize = useBreakpointValue({ base: "md", md: "md", lg: "lg" });
   const isMobile = useBreakpointValue({ base: true, md: false, lg: false });
-
+  const dispatch = useDispatch();
   const {
     isOpen: isProposalModalOpen,
     onClose: onCloseProjectModal,
@@ -149,13 +166,13 @@ export const Projects: FC = () => {
   } = useDisclosure();
 
   useEffect(() => {
+    if (projects) return;
     const unsub = listenOnProjects((data) => {
-      setLoadingProjects(false);
-      setProjects(data);
+      dispatch(setProjects(data));
     });
 
     return () => unsub();
-  }, []);
+  }, [projects, dispatch]);
 
   const addProjectPrompt = () => {
     setMode("add");
@@ -220,7 +237,7 @@ export const Projects: FC = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {loadingProjects ? (
+              {!projects ? (
                 <Tr bg="white" borderRadius="xl" animation={loadingAnimation}>
                   <Td
                     colSpan={5}

@@ -21,6 +21,7 @@ import { RequisitionAdminLayout } from "../layout/RequisitionAdminLayout";
 import { RequisitionAdminPage } from "../pages/RequisitionAdminPage";
 import { RequisitionAnalytics } from "../pages/RequisitionAnalytics";
 import { SystemPage } from "../pages/SystemPage";
+import { BudgetPage } from "../pages/BudgetPage";
 
 export const MainNavigation = () => {
   return (
@@ -36,6 +37,7 @@ export const MainNavigation = () => {
             <Route index element={<Projects />} />
             <Route path=":projectId" element={<ProjectDetails />} />
             <Route path=":projectId/:workplanId" element={<WorkplanPage />} />
+            <Route path=":projectId/budget" element={<BudgetPage />} />
           </Route>
         </Route>
         <Route path="tasks" element={<TasksPage />} />

@@ -12,12 +12,14 @@ import {
 } from "@chakra-ui/react";
 import { useFormikContext } from "formik";
 import React from "react";
+import { useAppSelector } from "../../reducers/types";
 import {
   RequisitionFormValues,
   RequisitionType,
 } from "../../types/Requisition";
 
 export const DetailForm = () => {
+  const { projects } = useAppSelector(({ projects }) => ({ projects }));
   const { values, handleChange, handleBlur, errors, touched, setFieldValue } =
     useFormikContext<RequisitionFormValues>();
   return (
@@ -64,20 +66,25 @@ export const DetailForm = () => {
         </Select>
         <FormErrorMessage>{touched.type && errors.type}</FormErrorMessage>
       </FormControl>
-      <FormControl
-        isInvalid={!!touched.projectTitle && !!errors.projectTitle}
-        mb={5}
-      >
-        <FormLabel>Project Title</FormLabel>
-        <Input
-          value={values.projectTitle}
+      <FormControl isInvalid={!!touched.projectId && !!errors.projectId} mb={5}>
+        <FormLabel>Project</FormLabel>
+        <Select
+          value={values.projectId}
           onChange={handleChange}
-          name="projectTitle"
-          type="text"
           onBlur={handleBlur}
-        />
+          name="projectId"
+        >
+          <option value="">Select Project</option>
+          {projects?.length
+            ? projects.map((project, i) => (
+                <option key={`requisition-project-${i}`} value={project.id}>
+                  {project.title}
+                </option>
+              ))
+            : null}
+        </Select>
         <FormErrorMessage>
-          {touched.projectTitle && errors.projectTitle}
+          {touched.projectId && errors.projectId}
         </FormErrorMessage>
       </FormControl>
       <FormControl

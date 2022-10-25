@@ -8,12 +8,14 @@ type ImageCropperProps = {
   setInput: (value: any) => void;
   onClose: () => void;
   src: string;
+  aspect?: number;
 };
 
 export const ImageCropper: FC<ImageCropperProps> = ({
   setInput,
   onClose,
   src,
+  aspect,
 }) => {
   const [crop, setCrop] = useState<Crop & { aspect?: number }>({
     unit: "%",
@@ -21,7 +23,7 @@ export const ImageCropper: FC<ImageCropperProps> = ({
     x: 0,
     y: 0,
     height: 30,
-    aspect: 1 / 1,
+    aspect: aspect || 1 / 1,
   });
   const [imageBlob, setImageBlob] = useState<HTMLImageElement>();
 
