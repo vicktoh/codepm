@@ -24,7 +24,6 @@ import { getRoleFromClaims } from "../helpers";
 export const LoginPage: FC = () => {
   const toast = useToast();
   const dispatch = useDispatch();
-
   const loginWithGoogle = async () => {
     const result = await loginNormalUser();
     if (result.status === "failed" || result.error) {
@@ -84,8 +83,8 @@ export const LoginPage: FC = () => {
           }}
           justifyContent={{
             base: "center",
-            md: "flex-end",
-            lg: "flex-end",
+            md: "center",
+            lg: "center",
           }}
           flexWrap="wrap"
         >
@@ -93,13 +92,14 @@ export const LoginPage: FC = () => {
             pl={10}
             mt={{ base: "30%", md: -6, lg: -12 }}
             mr={{ base: 0, md: -12, lg: -12 }}
+            width="70%"
           >
             <Image
               display={{ base: "block", md: "none", lg: "none" }}
               src={homeLogo}
               width={{ base: "250px", md: "auto", lg: "auto" }}
             />
-            <Heading fontSize={{ base: "5xl", lg: "7xl" }}>Connected</Heading>
+            <Heading fontSize={{ base: "5xl", lg: "7xl" }}>CODE</Heading>
             <Text lineHeight={1.8} maxWidth="80%" my={5}>
               Connected Development&apos;s project management, collaboration and
               planning all in one workspace
@@ -110,6 +110,7 @@ export const LoginPage: FC = () => {
                 leftIcon={<FcGoogle />}
                 variant="solid"
                 colorScheme="brand"
+                size="lg"
               >
                 Login
               </Button>
