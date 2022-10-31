@@ -34,6 +34,8 @@ export const SideNav: FC<SideNavProps> = ({
     conversations,
   }));
   const isUsersPath = !!useMatch("/users");
+  const isDashboardpath = !!useMatch("/dashboard");
+  const isHomePath = !!useMatch("/");
   const isAdminReqPath = !!useMatch("/requisition-admin");
   const isSettingPath = !!useMatch("/system-settings");
   const unreadMessages = useMemo(() => {
@@ -51,7 +53,7 @@ export const SideNav: FC<SideNavProps> = ({
       width="16rem"
       borderRadius="2xl"
       px={6}
-      height="95vh"
+      height="98vh"
       position="fixed"
       top="0"
       zIndex={1}
@@ -70,15 +72,20 @@ export const SideNav: FC<SideNavProps> = ({
         />
         <Text fontWeight="bold">{displayName}</Text>
       </VStack>
-      <VStack alignItems="flex-start" alignSelf="center" mt={12} spacing={10}>
+      <VStack alignItems="flex-start" alignSelf="center" mt={12} spacing={7}>
         <HStack
           as={Link}
           to="/"
           spacing={2}
-          color={!!useMatch("/") ? "brand.400" : "tetiary"}
+          color={isHomePath || isDashboardpath ? "brand.400" : "tetiary"}
         >
           <Icon as={AiOutlineDashboard} />
-          <Text>Dashboard</Text>
+          <Text
+            color={isHomePath || isDashboardpath ? "brand.400" : "tetiary"}
+            fontWeight={isHomePath || isDashboardpath ? "extrabold" : "medium"}
+          >
+            Dashboard
+          </Text>
         </HStack>
         <Box position="relative">
           <HStack
@@ -88,7 +95,12 @@ export const SideNav: FC<SideNavProps> = ({
             color={!!useMatch("/chat") ? "brand.400" : "tetiary"}
           >
             <Icon as={BsChat} />
-            <Text>Chats</Text>
+            <Text
+              color={!!useMatch("/chat") ? "brand.400" : "tetiary"}
+              fontWeight={!!useMatch("/chat") ? "extrabold" : "medium"}
+            >
+              Chats
+            </Text>
           </HStack>
           {unreadMessages ? (
             <Badge
@@ -110,7 +122,12 @@ export const SideNav: FC<SideNavProps> = ({
           color={!!useMatch("/logs") ? "brand.400" : "tetiary"}
         >
           <Icon as={AiOutlineCheckSquare} />
-          <Text>Logs</Text>
+          <Text
+            color={!!useMatch("/logs") ? "brand.400" : "tetiary"}
+            fontWeight={!!useMatch("/logs") ? "extrabold" : "medium"}
+          >
+            Logs
+          </Text>
         </HStack>
         <HStack
           as={Link}
@@ -119,7 +136,12 @@ export const SideNav: FC<SideNavProps> = ({
           color={!!useMatch("/requisitions") ? "brand.400" : "tetiary"}
         >
           <Icon as={BsCurrencyDollar} />
-          <Text>Requisition</Text>
+          <Text
+            color={!!useMatch("/requisitions") ? "brand.400" : "tetiary"}
+            fontWeight={!!useMatch("/requisitions") ? "extrabold" : "medium"}
+          >
+            Requisition
+          </Text>
         </HStack>
         {role === UserRole.admin || role === UserRole.master ? (
           <HStack
@@ -129,7 +151,12 @@ export const SideNav: FC<SideNavProps> = ({
             color={isUsersPath ? "brand.400" : "tetiary"}
           >
             <Icon as={FaUsersCog} />
-            <Text>Users</Text>
+            <Text
+              color={isUsersPath ? "brand.400" : "tetiary"}
+              fontWeight={isUsersPath ? "extrabold" : "medium"}
+            >
+              Users
+            </Text>
           </HStack>
         ) : null}
         {role === UserRole.admin ||
@@ -143,7 +170,12 @@ export const SideNav: FC<SideNavProps> = ({
             color={isAdminReqPath ? "brand.400" : "tetiary"}
           >
             <Icon as={GiTakeMyMoney} />
-            <Text>Requisition Admin</Text>
+            <Text
+              color={isAdminReqPath ? "brand.400" : "tetiary"}
+              fontWeight={isAdminReqPath ? "extrabold" : "medium"}
+            >
+              Requisition Admin
+            </Text>
           </HStack>
         ) : null}
         {role === UserRole.admin || role === UserRole.master ? (
@@ -154,7 +186,12 @@ export const SideNav: FC<SideNavProps> = ({
             color={isSettingPath ? "brand.400" : "tetiary"}
           >
             <Icon as={BiCog} />
-            <Text>System Settings</Text>
+            <Text
+              color={isSettingPath ? "brand.400" : "tetiary"}
+              fontWeight={isSettingPath ? "extrabold" : "medium"}
+            >
+              System Settings
+            </Text>
           </HStack>
         ) : null}
       </VStack>

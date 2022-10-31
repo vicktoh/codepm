@@ -25,8 +25,8 @@ const colors = {
 };
 
 const fonts = {
-  heading: "Lato, sans-serif",
-  body: "Nunito Sans, sans-serif",
+  heading: "Poppins, sans-serif",
+  body: "Lato, sans-serif",
 };
 
 export const theme = extendTheme({

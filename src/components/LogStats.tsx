@@ -22,7 +22,7 @@ import {
   isBetween,
 } from "../helpers";
 import { useAppSelector } from "../reducers/types";
-import { isAfter, isSameMonth, lastDayOfMonth } from "date-fns";
+import { format, isAfter, isSameMonth, lastDayOfMonth } from "date-fns";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 type LogStatsProps = {
   month: number;
@@ -90,16 +90,16 @@ export const LogStats: FC<LogStatsProps> = ({ month, currentYear }) => {
       ).length
     : 0;
   const missedDays = businessDays - leaveDays - publicHolidays - loggedDays;
-  const adherence = missedDays === 0 ? 100 : (loggedDays / missedDays) * 100;
+  const countDays = businessDays - leaveDays - publicHolidays;
+  const adherence = missedDays === 0 ? 100 : (loggedDays / countDays) * 100;
   const adColor = useMemo(() => adherenceColor(adherence), [adherence]);
   const adEmoji = useMemo(() => adherenceEmoji(adherence), [adherence]);
   const adWord = useMemo(() => adherenceWord(adherence), [adherence]);
   return (
     <Flex direction="column" mt={5}>
       <Flex direction="row" justifyContent="space-between" mb={5}>
-        <Heading fontSize="lg" my={5}>
-          Log Stats
-        </Heading>
+        <Heading fontSize="lg">Log Stats</Heading>
+
         <FormControl width="max-content">
           <FormLabel>Filter By</FormLabel>
           <Select
@@ -113,6 +113,12 @@ export const LogStats: FC<LogStatsProps> = ({ month, currentYear }) => {
           </Select>
         </FormControl>
       </Flex>
+      {logFilter === "all" && system?.logStartDate ? (
+        <Text my={2} fontSize="sm">{`Logs starts counting from ${format(
+          new Date(system.logStartDate),
+          "do MMM yyy",
+        )} `}</Text>
+      ) : null}
       <SimpleGrid rowGap={5} columns={2} columnGap={5}>
         <Flex
           direction="column"

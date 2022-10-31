@@ -23,9 +23,10 @@ const RequisitionStatsComponent: FC = () => {
   const [stats, setStats] = useState<RequisitionStats>();
   const [loading, setLoading] = useState<boolean>(true);
   const toast = useToast();
+
   useEffect(() => {
     if (!stats) {
-      listenOnRequisitionStats(
+      const unsub = listenOnRequisitionStats(
         auth?.uid || "",
         (stats) => {
           setLoading(false);
@@ -33,6 +34,7 @@ const RequisitionStatsComponent: FC = () => {
         },
         (error) => {
           setLoading(false);
+
           toast({
             title: "could not fetch stats try again",
             description: error || "Unexpected error",
@@ -40,6 +42,7 @@ const RequisitionStatsComponent: FC = () => {
           });
         },
       );
+      return unsub;
     }
   }, [stats, toast, auth]);
   if (loading) {
