@@ -2,9 +2,14 @@ import { useToast } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { algoliaIndex } from "../services/algolia";
 
-export function useSearchIndex<T>(index: string, initialFilter?: string) {
+export function useSearchIndex<T>(
+  index: string,
+  initialFilter?: string,
+  perpage?: number,
+) {
   const [query, setQuery] = useState<string>("");
   const [filters, setFilters] = useState<string>(initialFilter || "");
+  const [facets, setFacets] = useState<(string | string[])[]>();
   const [page, setPage] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [pageStat, setpageStats] = useState<{
@@ -14,7 +19,6 @@ export function useSearchIndex<T>(index: string, initialFilter?: string) {
   }>();
   const [data, setData] = useState<T>();
   const toast = useToast();
-
   useEffect(() => {
     async function searchIndex() {
       try {
@@ -22,8 +26,9 @@ export function useSearchIndex<T>(index: string, initialFilter?: string) {
         const usersIndex = algoliaIndex(index);
         const response = await usersIndex.search(query, {
           page,
-          hitsPerPage: 10,
+          hitsPerPage: perpage || 10,
           ...(filters ? { filters } : null),
+          facetFilters: facets,
         });
         const { hits, nbHits, page: currentPage, nbPages } = response;
         setData(hits as any);
@@ -45,7 +50,7 @@ export function useSearchIndex<T>(index: string, initialFilter?: string) {
       }
     }
     searchIndex();
-  }, [page, query, toast, index, filters]);
+  }, [page, query, toast, index, filters, facets, perpage]);
 
   return {
     page,
@@ -54,6 +59,7 @@ export function useSearchIndex<T>(index: string, initialFilter?: string) {
     loading,
     setQuery,
     setFilters,
+    setFacets,
     data,
     setData,
   };

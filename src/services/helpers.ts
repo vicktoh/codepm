@@ -1,6 +1,9 @@
+/* eslint-disable new-cap */
 import { Crop } from "react-image-crop";
 import { Task, KanbanColumn, TaskStatus } from "../types/Project";
-
+import { Requisition } from "../types/Requisition";
+import * as Papa from "papaparse";
+import { format } from "date-fns";
 export const getCroppedImg = (image: HTMLImageElement, crop: Crop) => {
   const canvas = document.createElement("canvas");
   const scaleX = image.naturalWidth / image.width;
@@ -98,6 +101,46 @@ export const STATUS_INDEX_MAP: TaskStatus[] = [
   TaskStatus.completed,
 ];
 
-export const pdfRequisition = () => {
-  console.log("holla");
+export const formatNumber = (number: number) => {
+  const formater = Intl.NumberFormat("en", { notation: "compact" });
+  return formater.format(number);
+};
+
+export const requisitionsToCSV = (data: Requisition[]) => {
+  const header = [
+    "Title",
+    "Raised By",
+    "Checked By",
+    "Budget Holder",
+    "Approved By",
+    "Date Raised",
+    "Date Approved",
+    "Beneficiaries",
+    "Items",
+    "Total",
+  ];
+  const reqData = data.map((requisition) => [
+    requisition.title,
+    requisition?.creator?.displayName || "-",
+    requisition?.checkedby?.displayName || "-",
+    requisition?.budgetHolderCheck?.displayName || "-",
+    requisition.approvedBy?.displayName || "-",
+    format(requisition.timestamp, "do LLL yyy"),
+    requisition?.approvedCheckedTimestamp
+      ? format(requisition.approvedCheckedTimestamp, "do LLL yyy")
+      : "-",
+    requisition?.beneficiaries
+      ?.map(
+        ({ accountNumber, bank, name }) => `${accountNumber}**${bank}**${name}`,
+      )
+      .join("***") || "-",
+    requisition.items
+      ?.map(
+        ({ amount, title, budget }) => `${title}**${budget || "-"}**${amount}`,
+      )
+      .join("***") || "-",
+    requisition.total,
+  ]);
+  const csvContent = Papa.unparse([header, ...reqData]);
+  return encodeURI(csvContent);
 };

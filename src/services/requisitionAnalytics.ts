@@ -8,11 +8,12 @@ import {
   isSameMonth,
   startOfMonth,
   startOfWeek,
+  startOfYear,
   sub,
 } from "date-fns";
-import { COLOR_SPECTRUM_TAGS } from "../constants";
+import { DataFilters } from "../pages/RequisitionAnalytics";
 import { Requisition } from "../types/Requisition";
-type CategoryData = {
+export type CategoryData = {
   count: number;
   value: number;
   id: string;
@@ -20,6 +21,9 @@ type CategoryData = {
 export const requisitionCategories = (requisitions: Requisition[]) => {
   const userCategories: Record<string, CategoryData> = {};
   const projectCategories: Record<string, CategoryData> = {};
+  let totalCount = 0;
+  let totalValue = 0;
+  let totalUsersCount = 0;
   requisitions.forEach((requisition) => {
     if (userCategories[requisition.creatorId]) {
       userCategories[requisition.creatorId].count += 1;
@@ -30,6 +34,7 @@ export const requisitionCategories = (requisitions: Requisition[]) => {
         value: requisition.total,
         id: requisition.creatorId,
       };
+      totalUsersCount += 1;
     }
     if (projectCategories[requisition.projectId]) {
       projectCategories[requisition.projectId].count += 1;
@@ -41,18 +46,23 @@ export const requisitionCategories = (requisitions: Requisition[]) => {
         id: requisition.projectId,
       };
     }
+    totalCount += 1;
+    totalValue += requisition.total;
   });
   return {
     userCategories,
     projectCategories,
+    totalCount,
+    totalValue,
+    totalUsersCount,
   };
 };
 export enum TimeFilter {
-  "This Week",
-  "This Month",
-  "Last 3 Month",
-  "Last 6 Months",
-  "This year",
+  "This Week" = "This Week",
+  "This Month" = "This Month",
+  "Last 3 Month" = "Last 3 Months",
+  "Last 6 Months" = "Last 6 Months",
+  "This year" = "This year",
 }
 
 const filterRequisitionCategory = (
@@ -79,31 +89,18 @@ const filterRequisitionCategory = (
 };
 export const timeSeries = (requisitions: Requisition[], filter: TimeFilter) => {
   const dates = filterToDates(filter);
-  const counts: number[] = [];
-  const values: number[] = [];
-  const labels: string[] = [];
+  const output: { date: string; count: number; value: number }[] = [];
   if (!dates) return;
   dates.forEach((d) => {
-    labels.push(format(d, "MMM yyy"));
+    const label = format(d, "MMM yyy");
     const metrics = filterRequisitionCategory(d, requisitions, filter);
-    counts.push(metrics.totalCount);
-    values.push(metrics.totalValue);
+    output.push({
+      date: label,
+      count: metrics.totalCount,
+      value: metrics.totalValue,
+    });
   });
-  return {
-    datasets: [
-      {
-        label: "Project Count",
-        data: counts,
-        borderColor: "rgb(53, 162, 235)",
-      },
-      {
-        label: "Project Value",
-        borderColor: COLOR_SPECTRUM_TAGS[0],
-        data: values,
-      },
-    ],
-    labels: labels,
-  };
+  return output;
 };
 
 export const filterToDates = (timeFilter: TimeFilter) => {
@@ -129,4 +126,54 @@ export const filterToDates = (timeFilter: TimeFilter) => {
     default:
       break;
   }
+};
+export const filterToInterval = (timeFilter: TimeFilter) => {
+  let start: Date;
+  let end: Date;
+  switch (timeFilter) {
+    case TimeFilter["This Week"]:
+      start = startOfWeek(new Date());
+      end = endOfWeek(new Date());
+      return { start, end };
+    case TimeFilter["This Month"]:
+      start = startOfMonth(new Date());
+      end = new Date();
+      return { start, end };
+    case TimeFilter["Last 3 Month"]:
+      end = new Date();
+      start = sub(end, { months: 3 });
+      return { start, end };
+    case TimeFilter["Last 6 Months"]:
+      end = new Date();
+      start = sub(end, { months: 6 });
+      return { start, end };
+    case TimeFilter["This year"]:
+      end = new Date();
+      start = startOfYear(end);
+      return { start, end };
+    default:
+      break;
+  }
+};
+
+export const timeFilterToAlgoliaFilter = (timeFilter: TimeFilter) => {
+  const { start, end } = filterToInterval(timeFilter) || {};
+  if (!start || !end) return "";
+  return `timestamp:${start.getTime()} TO ${end.getTime()}`;
+};
+
+export const elementToAlgoliaFilter = (element: string, values: string[]) => {
+  if (!values?.length) return [];
+  const data = values.map((val) => `${element}:${val}`);
+  // if (join) return data.join(" AND ");
+  return data;
+};
+
+export const consolidateFilter = (filter: DataFilters) => {
+  const data = Object.entries(filter)
+    .map(([key, value]) => {
+      return elementToAlgoliaFilter(key, value);
+    })
+    .filter((value) => !!value?.length);
+  return data;
 };
