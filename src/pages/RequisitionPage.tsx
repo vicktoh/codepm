@@ -110,16 +110,13 @@ export const RequisitionPage: FC = () => {
       requisition.approvedBy?.signatureUrl ||
         usersMap[approvedById].signatureUrl,
     ];
-    console.log(signatures);
     const signatureDataUrls = [];
     for (const sig of signatures) {
       if (!sig) {
         signatureDataUrls.push(null);
         continue;
       }
-      console.log("sig");
       const dataUrl = (await getBase64FromUrl(sig)) as string;
-      console.log({ dataUrl });
       signatureDataUrls.push(dataUrl);
     }
     const logoImage = await tobase64(codeLogo);
@@ -128,8 +125,6 @@ export const RequisitionPage: FC = () => {
       logoImage as string,
       signatureDataUrls,
     );
-    console.log(signatureDataUrls);
-    console.log(docDefinition);
     pdfMake.createPdf(docDefinition as any).open();
   };
   const downloadRequisition = (requisition: Requisition) => {
@@ -209,7 +204,6 @@ export const RequisitionPage: FC = () => {
   }, [auth, requisitions, dispatch, toast]);
   useEffect(() => {
     if (!auth?.uid || vendors) return;
-    console.log("whewwww");
     const unsub = listenOnVendors(auth.uid, (vend) => {
       dispatch(setVendors(vend));
     });

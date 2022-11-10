@@ -105,7 +105,7 @@ export const requisitionPrintDefinition = (
               { text: "Bank", style: "tableheader" },
               { text: "Account Number", style: "tableheader" },
             ],
-            ...(requisition.beneficiaries.length
+            ...(requisition.beneficiaries?.length
               ? requisition.beneficiaries.map(
                   ({ name, accountNumber, bank }) => [
                     { text: name },
