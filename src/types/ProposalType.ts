@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { ProjectDocument } from "./Project";
 
 export type ProposalStatus = {
   pending: "pending";
@@ -13,6 +14,6 @@ export type ProposalType = {
   description: string;
   dateAdded: number | Date | Timestamp;
   funder: string;
-  fileUrl: string;
+  documents: ProjectDocument[];
   status: typeof STATUSES[number];
 };

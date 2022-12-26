@@ -11,6 +11,8 @@ import {
   useBreakpointValue,
   Box,
   Badge,
+  Tr,
+  Td,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
 import React, { FC } from "react";
@@ -55,7 +57,7 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
           <VStack spacing={0} alignItems="flex-start">
             <Text fontSize="sm">Approved by</Text>
             <Heading fontSize="md">
-              {requisition.checkedby?.displayName}
+              {requisition.approvedBy?.displayName}
             </Heading>
           </VStack>
         );
@@ -88,75 +90,29 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
     }
   };
 
-  return (
-    <Flex
-      bg="white"
-      px={5}
-      my={1}
-      borderRadius="lg"
-      py={[5, 2]}
-      alignItems={isMobile ? "flex-start" : "center"}
-      gridGap={3}
-      direction={isMobile ? "column" : "row"}
-      justifyContent="space-between"
-      position="relative"
-    >
+  return isMobile ? (
+    <Flex direction="column" padding={3} my={3} borderRadius="md" bg="white">
       <HStack spacing={3} alignItems="center">
         <Avatar
           src={userDetails?.photoUrl}
           name={userDetails?.displayName}
-          size={isMobile ? "md" : "sm"}
+          size="sm"
         />
         <VStack alignItems="flex-start" spacing={0}>
-          <Heading fontSize={isMobile ? "md" : "md"}>
-            {userDetails?.displayName}
-          </Heading>
-          {isMobile ? null : (
-            <Text fontSize="sm" color="red.300">
-              {timeString}
-            </Text>
-          )}
+          <Heading fontSize="sm">{userDetails?.displayName}</Heading>
+          <Text fontSize="xs" color="red.300">
+            {timeString}
+          </Text>
         </VStack>
       </HStack>
-      {isMobile ? (
-        <Text
-          position="absolute"
-          top={3}
-          right={4}
-          fontSize="sm"
-          color="red.300"
-        >
-          {timeString}
-        </Text>
-      ) : null}
-      <Box>
-        <Tooltip alignSelf="center" label={requisition.title}>
-          <Text isTruncated noOfLines={1} fontSize="lg">
-            {requisition.title}
-          </Text>
-        </Tooltip>
-      </Box>
-      {!isMobile ? (
-        <>
-          {getStatus(requisition.status)}
-          <Heading fontSize="lg">{`${
-            requisition.currency
-          } ${requisition.total.toLocaleString()}`}</Heading>
-        </>
-      ) : (
-        <Flex
-          alignItems="center"
-          mb={[5, 0]}
-          width="100%"
-          justifyContent="space-between"
-        >
-          {getStatus(requisition.status)}
-          <Heading fontSize="xl">
-            {`${requisition.currency} ${requisition.total.toLocaleString()}`}
-          </Heading>
-        </Flex>
-      )}
-      <HStack>
+      <Text mt={3}>{requisition.title}</Text>
+      <Flex direction="row" justifyContent="space-between" mt={3}>
+        <Heading fontSize="lg">
+          {`${requisition.currency} ${requisition.total.toLocaleString()}`}
+        </Heading>
+        {getStatus(requisition.status)}
+      </Flex>
+      <HStack mt={3}>
         <Tooltip title="View Requisition">
           <IconButton
             onClick={onViewRequisition}
@@ -199,5 +155,82 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
         ) : null}
       </HStack>
     </Flex>
+  ) : (
+    <Tr bg="white">
+      <Td>
+        <HStack spacing={3} alignItems="center">
+          <Avatar
+            src={userDetails?.photoUrl}
+            name={userDetails?.displayName}
+            size={isMobile ? "md" : "sm"}
+          />
+          <VStack alignItems="flex-start" spacing={0}>
+            <Heading fontSize={isMobile ? "md" : "md"}>
+              {userDetails?.displayName}
+            </Heading>
+            {isMobile ? null : (
+              <Text fontSize="sm" color="red.300">
+                {timeString}
+              </Text>
+            )}
+          </VStack>
+        </HStack>
+      </Td>
+      <Td>
+        <Text isTruncated noOfLines={1} fontSize="lg">
+          {requisition.title}
+        </Text>
+      </Td>
+      <Td>{getStatus(requisition.status)}</Td>
+      <Td>
+        <Heading fontSize="lg">
+          {`${requisition.currency} ${requisition.total.toLocaleString()}`}
+        </Heading>
+      </Td>
+      <Td>
+        <HStack>
+          <Tooltip title="View Requisition">
+            <IconButton
+              onClick={onViewRequisition}
+              color="blue.300"
+              icon={<Icon as={BsEye} />}
+              aria-label="view Requisition"
+            />
+          </Tooltip>
+          <Tooltip title="Conversations">
+            <Box position="relative">
+              <IconButton
+                onClick={onOpenChat}
+                color="blue.300"
+                icon={<Icon as={BsChat} />}
+                aria-label="Requisition Converstation"
+              />
+              {unReadChat ? (
+                <Box position="absolute" top={0} right="-3px">
+                  <Badge
+                    bg="brand.500"
+                    color="white"
+                    borderRadius="full"
+                    fontSize="xs"
+                  >
+                    {unReadChat}
+                  </Badge>
+                </Box>
+              ) : null}
+            </Box>
+          </Tooltip>
+          {requisition.status === RequisitionStatus.retired ? (
+            <Tooltip title="View Retirement">
+              <IconButton
+                onClick={onOpenRetirement}
+                color="yellow.300"
+                icon={<Icon as={BsCalculator} />}
+                aria-label="View Retirement"
+              />
+            </Tooltip>
+          ) : null}
+        </HStack>
+      </Td>
+    </Tr>
   );
 };

@@ -1,4 +1,5 @@
 import {
+  addDoc,
   collection,
   collectionGroup,
   deleteDoc,
@@ -10,7 +11,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { Task } from "../types/Project";
+import { Task, TaskComment } from "../types/Project";
 import { db } from "./firebase";
 
 export const addTaskToDb = async (projectId: string, task: Task) => {
@@ -72,4 +73,37 @@ export const fetchProjectsTasks = async (projectId: string) => {
     tasks.push(task);
   });
   return tasks;
+};
+
+export const writeComment = async (
+  projectId: string,
+  taskId: string,
+  comment: TaskComment,
+) => {
+  const commentCollectionRef = collection(
+    db,
+    `projects/${projectId}/tasks/${taskId}/comments`,
+  );
+
+  return addDoc(commentCollectionRef, comment);
+};
+
+export const listenOnTaskComment = (
+  projectId: string,
+  taskId: string,
+  callback: (comments: TaskComment[]) => void,
+) => {
+  const commentCollectionRef = collection(
+    db,
+    `projects/${projectId}/tasks/${taskId}/comments`,
+  );
+  return onSnapshot(commentCollectionRef, (snapshot) => {
+    const taskComments: TaskComment[] = [];
+    snapshot.forEach((snap) => {
+      const taskComment = snap.data() as TaskComment;
+      taskComment.id = snap.id;
+      taskComments.push(taskComment);
+    });
+    callback(taskComments);
+  });
 };

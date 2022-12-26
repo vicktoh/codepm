@@ -181,7 +181,7 @@ export const requisitionPrintDefinition = (
             signatures[1] || "",
           ),
           signatureField(
-            "Checked by",
+            "Reviewed By",
             requisition.checkedby?.displayName || "",
             format(requisition.checkedTimeStamp || new Date(), "do MMM Y"),
             signatures[2] || "",

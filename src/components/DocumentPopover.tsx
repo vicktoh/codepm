@@ -7,12 +7,12 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import React, { FC } from "react";
-import { Document } from "../types/Project";
+import { Document, ProjectDocument } from "../types/Project";
 import { TaskDocumentForm } from "./TaskDocumentForm";
 
 type DocumentPopoverProps = {
   document?: Document;
-  onSubmit: (document: Document) => void;
+  onSubmit: (document: Document | ProjectDocument) => void;
 };
 
 export const DocumentPopover: FC<DocumentPopoverProps> = ({

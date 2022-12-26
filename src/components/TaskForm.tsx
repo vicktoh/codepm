@@ -29,6 +29,7 @@ import { useAppSelector } from "../reducers/types";
 import {
   Document,
   Task,
+  TaskComment,
   TaskStatus,
   TimePeriod,
   TodoItem,
@@ -41,9 +42,17 @@ import { StatusPopover } from "./StatusPopover";
 import { DocumentPopover } from "./DocumentPopover";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { TodoItemComponent } from "./TodoItemComponent";
-import { removeTask, updateDbTask } from "../services/taskServices";
+import {
+  listenOnTaskComment,
+  removeTask,
+  updateDbTask,
+  writeComment,
+} from "../services/taskServices";
 import { useRef } from "react";
 import { BsTrash } from "react-icons/bs";
+import { Timestamp } from "firebase/firestore";
+import { LoadingComponent } from "./LoadingComponent";
+import { EmptyState } from "./EmptyState";
 
 type TaskFormProps = {
   task: Task;
@@ -54,6 +63,8 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
   const [taskState, setTask] = useState<Task>(task);
   const [editModeTitle, setEditModeTitle] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [taskComments, setTaskComments] = useState<TaskComment[]>();
+  const [fetchingComments, setFetchingComments] = useState(false);
   const myRef = useRef();
   const [saving, setSaving] = useState<boolean>(false);
   const [editModeDescription, setEditModeDescription] =
@@ -62,13 +73,16 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
   const [description, setDescription] = useState<string>(
     task?.description || "",
   );
+
+  const [comments, setComments] = useState<string>("");
+
   const { users, auth } = useAppSelector(({ users, auth }) => ({
     users,
     auth,
   }));
   const glassEffect = useGlassEffect(true, "lg");
   const toast = useToast();
-
+  const { usersMap = {} } = users || {};
   useEffect(() => {
     const saveTask = async () => {
       if (myRef.current) {
@@ -91,6 +105,18 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
     };
     saveTask();
   }, [taskState, toast]);
+
+  useEffect(() => {
+    const fetchTaskComment = () => {
+      return listenOnTaskComment(task.projectId, task.id || "", (comments) => {
+        setTaskComments(comments);
+        setFetchingComments(false);
+      });
+    };
+    const unsub = fetchTaskComment();
+
+    return unsub;
+  }, [task.id, task.projectId]);
   const saveProjectTitle = async () => {
     setTask((task) => ({ ...task, title }));
     setEditModeTitle(false);
@@ -145,6 +171,16 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
     setTask((task) => ({ ...task, attachments }));
   };
 
+  const addComment = async () => {
+    if (!task.id) return;
+    const userComment: TaskComment = {
+      comment: comments,
+      userId: auth?.uid || "",
+      timestamp: Timestamp.now(),
+    };
+    await writeComment(task.projectId, task.id, userComment);
+    setComments("");
+  };
   // Todo list actions
 
   const checkTodoItem = (index: number, value: boolean) => {
@@ -465,6 +501,56 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
         ) : (
           <Text>No Todo Item yet</Text>
         )}
+      </Box>
+      <Box mt={3}>
+        <Heading fontSize="medium">💬 Comments</Heading>
+        <Flex direction="column" mt={3}>
+          <Textarea
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+          ></Textarea>
+          <Button alignSelf="flex-end" mt={3} onClick={addComment}>
+            Save
+          </Button>
+          <Flex direction="column">
+            {fetchingComments ? (
+              <LoadingComponent />
+            ) : taskComments?.length ? (
+              taskComments.map((taskComment, i) => (
+                <Flex
+                  direction="row"
+                  key={taskComment.id || `task-comment-${i}`}
+                  alignItems="center"
+                  mt={2}
+                >
+                  <Avatar
+                    src={usersMap[taskComment.userId].photoUrl || ""}
+                    name={usersMap[taskComment.userId].displayName}
+                    mr={3}
+                    size="sm"
+                  />
+                  <Flex direction="column">
+                    <Flex
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Heading fontSize="md">
+                        {usersMap[taskComment.userId]?.displayName}
+                      </Heading>
+                      <Text ml={8} fontSize="sm" color="brand.500">
+                        {format(taskComment.timestamp.toDate(), "do MMM")}
+                      </Text>
+                    </Flex>
+                    <Text>{taskComment.comment}</Text>
+                  </Flex>
+                </Flex>
+              ))
+            ) : (
+              <EmptyState title="No comments yet" />
+            )}
+          </Flex>
+        </Flex>
       </Box>
       {saving ? (
         <HStack position="absolute" right={5} top={5} spacing={4}>

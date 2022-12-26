@@ -50,8 +50,8 @@ export const ProposalForm: FC<ProposalFormType> = ({
     description: proposal?.description || "",
     funder: proposal?.funder || "",
     status: proposal?.status || "",
-    fileUrl: proposal?.fileUrl || "",
     file: undefined,
+    documents: proposal?.documents || [],
     dateAdded: 0,
   };
 
@@ -193,7 +193,7 @@ export const ProposalForm: FC<ProposalFormType> = ({
                   }
                 />
               </VisuallyHidden>
-              <FormLabel
+              {/* <FormLabel
                 htmlFor="file-input"
                 borderWidth={1}
                 textAlign="center"
@@ -203,7 +203,7 @@ export const ProposalForm: FC<ProposalFormType> = ({
                 {values?.file?.name ||
                   (values.fileUrl && values.title) ||
                   "Select File"}
-              </FormLabel>
+              </FormLabel> */}
               <FormErrorMessage>{touched.file && errors.file}</FormErrorMessage>
             </FormControl>
 

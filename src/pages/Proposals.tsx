@@ -36,14 +36,21 @@ import {
   useGlassEffect,
   useLoadingAnimation,
 } from "../hooks/useLoadingAnimation";
+import { ProposalEditor } from "../components/ProposalEditor";
 
 type ProposalRowType = {
   proposal: ProposalType;
   onEdit: () => void;
+  onView: () => void;
   onDelete: () => void;
 };
-const ProposalRow: FC<ProposalRowType> = ({ proposal, onEdit, onDelete }) => {
-  const { title, dateAdded, funder, status, fileUrl } = proposal;
+const ProposalRow: FC<ProposalRowType> = ({
+  proposal,
+  onEdit,
+  onDelete,
+  onView,
+}) => {
+  const { title, dateAdded, funder, status } = proposal;
   return (
     <Tr borderRadius="md">
       <Td borderLeftRadius="lg" bg="white" mb={2}>
@@ -70,12 +77,10 @@ const ProposalRow: FC<ProposalRowType> = ({ proposal, onEdit, onDelete }) => {
           </Tooltip>
           <Tooltip label="View Proposal Doc" bg="tetiary.200" placement="top">
             <IconButton
-              as={Link}
               aria-label="view proposal doc"
               color="purple.400"
               icon={<Icon as={AiOutlineEye} />}
-              href={fileUrl}
-              isExternal
+              onClick={onView}
             />
           </Tooltip>
           <Tooltip label="Delete proposal" bg="tetiary.200" placement="top">
@@ -93,9 +98,9 @@ const ProposalRow: FC<ProposalRowType> = ({ proposal, onEdit, onDelete }) => {
 };
 
 export const Proposals: FC = () => {
-  const [proposals, setProposals] = useState<ProposalType[]>();
   const [loadingProposals, setLoadingProposals] = useState<boolean>(true);
   const [isDeletingProposals, setDeletingProposals] = useState<boolean>();
+  const [proposals, setProposals] = useState<ProposalType[]>();
   const [selectedProposal, setSelectedProposal] = useState<ProposalType>();
   const [mode, setMode] = useState<"add" | "edit">("add");
   const [filter, setFilter] = useState<keyof ProposalStatus | "all">("all");
@@ -127,6 +132,11 @@ export const Proposals: FC = () => {
     onClose: onCloseDeleteModal,
     onOpen: onOpenDeleteModal,
   } = useDisclosure();
+  const {
+    isOpen: isViewModalOpen,
+    onClose: onCloseViewModal,
+    onOpen: onOpenViewModal,
+  } = useDisclosure();
 
   useEffect(() => {
     const unsub = listenOnProposals((data) => {
@@ -147,6 +157,11 @@ export const Proposals: FC = () => {
     setMode("edit");
     setSelectedProposal(proposal);
     onOpenProposalModal();
+  };
+
+  const viewProposalPrompt = (proposal: ProposalType) => {
+    setSelectedProposal(proposal);
+    onOpenViewModal();
   };
 
   const deletePrompt = (proposal: ProposalType) => {
@@ -242,6 +257,7 @@ export const Proposals: FC = () => {
                       onEdit={() => editProposalPrompt(proposal)}
                       proposal={proposal}
                       key={`proposal-${i}`}
+                      onView={() => viewProposalPrompt(proposal)}
                       onDelete={() => deletePrompt(proposal)}
                     />
                   ))
@@ -276,10 +292,10 @@ export const Proposals: FC = () => {
       <Modal
         isOpen={isProposalModalOpen}
         onClose={onCloseProposalModal}
-        size="lg"
+        size="2xl"
       >
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent {...glassEffect}>
           <ModalHeader>{`${mode} proposal`}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
@@ -322,6 +338,19 @@ export const Proposals: FC = () => {
               </Button>
             </Flex>
           </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <Modal isOpen={isViewModalOpen} onClose={onCloseViewModal} size="3xl">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            {selectedProposal ? (
+              <ProposalEditor proposal={selectedProposal} />
+            ) : null}
+          </ModalBody>
         </ModalContent>
       </Modal>
     </Flex>

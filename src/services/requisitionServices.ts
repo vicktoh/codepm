@@ -141,7 +141,10 @@ export const listenOnRequisitionAdmin = (
   callback: (requisitions: Requisition[]) => void,
   errorCallback: (error: FirebaseError) => void,
 ) => {
-  const q = query(collection(db, "requisitions"), orderBy("timestamp", "desc"));
+  const q = query(
+    collection(db, "requisitions"),
+    orderBy("lastUpdated", "desc"),
+  );
   const unsub = onSnapshot(
     q,
     (snapshot) => {
@@ -188,6 +191,11 @@ export const uploadInvoice = (
 export const removeInvoice = (name: string) => {
   const storage = getStorage(firebaseApp);
   const invoiceRef = ref(storage, `invoices/${name}`);
+  return deleteObject(invoiceRef);
+};
+export const removeDocument = (path: string) => {
+  const storage = getStorage(firebaseApp);
+  const invoiceRef = ref(storage, path);
   return deleteObject(invoiceRef);
 };
 
@@ -244,7 +252,6 @@ export const listenOnVendors = (
       const pres = snap.val() as Beneficiary;
       vendors[snap.key || ""] = pres;
     });
-    console.log({ vendors });
     callback(vendors);
   });
 };

@@ -138,7 +138,6 @@ function App() {
     if (logs || !auth?.uid) return;
     try {
       listenOnLogs(auth?.uid, (logs) => {
-        console.log({ logs });
         dispatch(setLog(logs));
       });
     } catch (error) {

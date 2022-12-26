@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 export type ConversationType = "private" | "group";
 export interface Conversation {
-  timestamp: Timestamp;
+  timestamp: Timestamp | number;
   lastUpdated: number;
   members: string[];
   creatorId: string;

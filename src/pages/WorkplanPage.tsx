@@ -50,7 +50,6 @@ export const WorkplanPage: FC = () => {
     async function fetchProject() {
       try {
         const proj = await getProject(projectId || "");
-        console.log(proj);
         setProject(proj);
       } catch (error) {
         const err: any = error;
@@ -68,7 +67,6 @@ export const WorkplanPage: FC = () => {
 
   useEffect(() => {
     const unsub = listenOnTasks(projectId, workplanId, (result) => {
-      console.log({ result });
       setFetchingTasks(false);
       setTasks(result);
     });
@@ -155,7 +153,7 @@ export const WorkplanPage: FC = () => {
       ) : null}
 
       {selectedTask && isOpen ? (
-        <Modal size="lg" isOpen={isOpen} onClose={onClose}>
+        <Modal size="2xl" isOpen={isOpen} onClose={onClose}>
           <ModalOverlay />
           <ModalContent {...glassEffect}>
             <ModalCloseButton />

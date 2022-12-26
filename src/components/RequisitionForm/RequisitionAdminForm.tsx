@@ -177,6 +177,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
             ![
               UserRole.budgetHolder,
               UserRole.finance,
+              UserRole.admin,
               UserRole.master,
             ].includes(auth?.role)
           ) {
@@ -185,6 +186,15 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               status: "error",
             });
             return;
+          }
+          if (
+            auth?.role === UserRole.finance &&
+            requisition.status === RequisitionStatus.pending
+          ) {
+            toast({
+              title: "Budget holder must check this requisition first",
+              status: "warning",
+            });
           }
           if (values.mode === "check") {
             const newRequisition: Requisition = {
@@ -273,7 +283,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                 <CheckedBy
                   {...requisition.checkedby}
                   timestamp={requisition.checkedTimeStamp}
-                  title={"Finance Checked"}
+                  title={"Reviewed By"}
                 />
               ) : null}
               {requisition.approvedBy ? (
@@ -292,8 +302,8 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               ].includes(requisition.status) &&
               !requisition.budgetHolderCheck ? (
                 <Button
-                  variant="outline"
-                  colorScheme="brand"
+                  variant="solid"
+                  colorScheme="green"
                   isLoading={values.mode === "check" && isSubmitting}
                   size={isMobile ? "sm" : "lg"}
                   onClick={() => {
@@ -308,8 +318,8 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               requisition.status !== RequisitionStatus.approved &&
               requisition.status !== RequisitionStatus.checked ? (
                 <Button
-                  colorScheme="brand"
-                  variant="outline"
+                  colorScheme="purple"
+                  variant="solid"
                   size={isMobile ? "sm" : "lg"}
                   isLoading={values.mode === "check" && isSubmitting}
                   onClick={() => {
@@ -317,10 +327,10 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                     submitForm();
                   }}
                 >
-                  Check as a Finance
+                  Mark as reviewed
                 </Button>
               ) : null}
-              {requisition.status === RequisitionStatus.approved ? null : (
+              {requisition.status === RequisitionStatus.checked ? (
                 <Button
                   isLoading={values.mode === "approve" && isSubmitting}
                   onClick={() => {
@@ -332,7 +342,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                 >
                   Approve
                 </Button>
-              )}
+              ) : null}
             </HStack>
           </Form>
         )}

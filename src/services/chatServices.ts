@@ -26,6 +26,7 @@ export const listenOnConversations = (
     snapshot.forEach((snap) => {
       const conversation = snap.data() as Conversation;
       conversation.id = snap.id;
+      conversation.timestamp = (conversation.timestamp as Timestamp).seconds;
       conversations.push(conversation);
     });
 
@@ -37,7 +38,6 @@ export const listenOnChats = (
   conversationId: string,
   callback: (chats: Chat[]) => void,
 ) => {
-  console.log(`/conversations/${conversationId}/chats`);
   const collectionRef = collection(
     db,
     `/conversations/${conversationId}/chats`,
@@ -71,7 +71,6 @@ export const listenOnPressence = (
       const pres = snap.val() as Presence;
       presence[snap.key || ""] = pres;
     });
-    console.log({ presence });
     callback(presence);
   });
 };

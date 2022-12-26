@@ -17,7 +17,7 @@ import {
   getDownloadURL,
   getStorage,
   ref,
-  uploadBytes,
+  uploadBytesResumable,
 } from "firebase/storage";
 import { Project, ProjectDocument, Task } from "../types/Project";
 import { ProposalType } from "../types/ProposalType";
@@ -42,19 +42,15 @@ export const listenOnProposals = (
 
 export const addProposal = async (proposal: ProposalType & { file?: File }) => {
   if (!proposal.file) return;
-  const storage = getStorage(firebaseApp);
   const proposalCollectionRef = collection(db, "proposals");
   const docRef = doc(proposalCollectionRef);
-  const storageRef = ref(storage, `proposals/${docRef.id}`);
-  const uploadTask = await uploadBytes(storageRef, proposal.file);
-  const url = await getDownloadURL(uploadTask.ref);
   const proposalData: ProposalType = {
     title: proposal.title,
     description: proposal.description,
     dateAdded: Timestamp.now(),
     status: proposal.status,
     funder: proposal.funder,
-    fileUrl: url,
+    documents: proposal?.documents || [],
   };
   await setDoc(docRef, proposalData);
 };
@@ -73,13 +69,13 @@ export const editProposal = async (
   if (!proposal.file) {
     await updateDoc(docRef, proposalData);
   } else {
-    const storage = getStorage(firebaseApp);
-    const storageRef = ref(storage, `proposals/${proposal.id}`);
-    const uploadTask = await uploadBytes(storageRef, proposal.file);
-    const url = await getDownloadURL(uploadTask.ref);
-    proposalData.fileUrl = url;
     await updateDoc(docRef, proposalData);
   }
+};
+
+export const updateFirebaseDoc = (path: string, obj: Record<string, any>) => {
+  const docRef = doc(db, path);
+  return updateDoc(docRef, { ...obj });
 };
 
 export const deleteProposal = async (proposal: ProposalType) => {
@@ -175,6 +171,38 @@ export const editDocument = async (
 export const updateProject = async (projectId: string, update: any) => {
   const documentRef = doc(db, `projects/${projectId}`);
   await updateDoc(documentRef, update);
+};
+export const updateProposal = async (
+  proposalId: string,
+  update: ProposalType,
+) => {
+  const documentRef = doc(db, `proposals/${proposalId}`);
+  await updateDoc(documentRef, update);
+};
+export const uploadDocumentToFirebase = (
+  path: string,
+  file: File,
+  setProgress: (per: number) => void,
+  success: (url: string) => void,
+  onError: (errorMessage: string) => void,
+) => {
+  const storage = getStorage(firebaseApp);
+  const storageRef = ref(storage, `${path}`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  uploadTask.on(
+    "state_changed",
+    (snapshot) => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      setProgress(progress);
+    },
+    (error) => {
+      onError(error?.message || "");
+    },
+    async () => {
+      const url = await getDownloadURL(uploadTask.snapshot.ref);
+      success(url);
+    },
+  );
 };
 
 export const listenOnTasks = (

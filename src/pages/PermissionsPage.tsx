@@ -51,7 +51,7 @@ const RequestRow: FC<RequestProps> = ({ request }) => {
       await approveRequest(request);
       toast({ title: "Request successfully Approved", status: "success" });
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       toast({ title: "Something went wrong", status: "error" });
     } finally {
       setApproving(false);

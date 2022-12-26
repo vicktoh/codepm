@@ -12,7 +12,13 @@ import {
   ModalHeader,
   ModalOverlay,
   SimpleGrid,
+  Table,
+  TableContainer,
+  Tbody,
   Text,
+  Th,
+  Thead,
+  Tr,
   useBreakpointValue,
   useDisclosure,
   useToast,
@@ -114,21 +120,59 @@ export const RequisitionAdminPage = () => {
       <Heading fontSize="lg" my={5}>
         Requisition List
       </Heading>
-      {loading ? (
-        <LoadingComponent title="Fetching requisitions" />
-      ) : requisitions?.length ? (
-        requisitions.map((requisition, i) => (
-          <RequisitionAdminComponent
-            key={`requisition-${i}`}
-            requisition={requisition}
-            onOpenRetirement={() => openRetirementModal(requisition)}
-            onViewRequisition={() => onViewRequisition(requisition)}
-            onOpenChat={() => onOpenConversation(requisition)}
-          />
-        ))
+      {isMobile ? (
+        <Flex direction="column">
+          {loading ? (
+            <LoadingComponent title="Fetching requisitions" />
+          ) : requisitions?.length ? (
+            <>
+              {requisitions.map((requisition, i) => (
+                <RequisitionAdminComponent
+                  key={`requisition-${i}`}
+                  requisition={requisition}
+                  onOpenRetirement={() => openRetirementModal(requisition)}
+                  onViewRequisition={() => onViewRequisition(requisition)}
+                  onOpenChat={() => onOpenConversation(requisition)}
+                />
+              ))}
+            </>
+          ) : (
+            <EmptyState title="Empty requisition list" />
+          )}
+        </Flex>
       ) : (
-        <EmptyState title="Empty requisition list" />
+        <TableContainer>
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Requested By</Th>
+                <Th>Title</Th>
+                <Th>Status</Th>
+                <Th>Amount</Th>
+                <Th>Action</Th>
+              </Tr>
+            </Thead>
+            {loading ? (
+              <LoadingComponent title="Fetching requisitions" />
+            ) : requisitions?.length ? (
+              <Tbody>
+                {requisitions.map((requisition, i) => (
+                  <RequisitionAdminComponent
+                    key={`requisition-${i}`}
+                    requisition={requisition}
+                    onOpenRetirement={() => openRetirementModal(requisition)}
+                    onViewRequisition={() => onViewRequisition(requisition)}
+                    onOpenChat={() => onOpenConversation(requisition)}
+                  />
+                ))}
+              </Tbody>
+            ) : (
+              <EmptyState title="Empty requisition list" />
+            )}
+          </Table>
+        </TableContainer>
       )}
+
       <Modal
         size="2xl"
         isOpen={isRequisitionModalOpen}

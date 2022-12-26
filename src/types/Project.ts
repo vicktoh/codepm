@@ -79,6 +79,13 @@ export interface Task {
   todo?: TodoItem[];
 }
 
+export type TaskComment = {
+  userId: string;
+  timestamp: Timestamp;
+  comment: string;
+  id?: string;
+};
+
 export type KanbanColumn = {
   id: string | number;
   title: string;
