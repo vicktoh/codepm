@@ -40,7 +40,6 @@ export const Beneficiary = () => {
       { name: "", bank: "", accountNumber: "" },
     ]);
   };
-  console.log({ vendors });
   const onSelectAttentionTo = (userId: string) => {
     if (!values.attentionTo) {
       setFieldValue("attentionTo", [userId]);
@@ -180,8 +179,8 @@ export const Beneficiary = () => {
               {values.attentionTo.map((userid, i) => (
                 <Avatar
                   key={`attention-${i}`}
-                  src={usersMap[userid].photoUrl || ""}
-                  name={usersMap[userid].displayName || ""}
+                  src={usersMap[userid]?.photoUrl || ""}
+                  name={usersMap[userid]?.displayName || ""}
                 />
               ))}
             </HStack>

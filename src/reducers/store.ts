@@ -40,7 +40,7 @@ export const store = configureStore({
 export type StoreType = {
   auth: Auth | null;
   profile: Profile | null;
-  users: { users: User[]; usersMap: Record<string, User> } | null;
+  users: { users: User[]; usersMap: Record<string, User | undefined> } | null;
   conversations: Conversation[] | null | [];
   presence: PresenceState | null;
   logs: LogState | null;

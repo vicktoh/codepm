@@ -19,14 +19,18 @@ import {
   Tag,
   IconButton,
   useBreakpointValue,
+  SimpleGrid,
 } from "@chakra-ui/react";
-import { Task } from "../types/Project";
+import { Task, TaskStatus } from "../types/Project";
 import { listenOnMyTasks } from "../services/taskServices";
 import { useAppSelector } from "../reducers/types";
 import { AiOutlineCalendar } from "react-icons/ai";
 import { STATUS_COLORSCHEME } from "../constants";
-import { BsChevronRight } from "react-icons/bs";
+import { BsCheckAll, BsChevronRight } from "react-icons/bs";
 import { Link } from "react-router-dom";
+import { MdCancel, MdPending } from "react-icons/md";
+import { FaFile } from "react-icons/fa";
+import { IconType } from "react-icons";
 
 const MyTaskRow: FC<{ task: Task }> = ({ task }) => {
   const { users } = useAppSelector(({ users }) => ({ users }));
@@ -106,12 +110,51 @@ const MyTaskRow: FC<{ task: Task }> = ({ task }) => {
     </Tr>
   );
 };
-
+export type TaskStats = {
+  count: number;
+  icon: IconType;
+  status: TaskStatus;
+  color: string;
+};
 export const MyTasks: FC = () => {
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [tasks, setTasks] = useState<Task[]>();
   const [loading, setLoading] = useState<boolean>(true);
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
+  const taskCategories: Record<TaskStatus, TaskStats> = useMemo(() => {
+    const categoryCount = {
+      completed: {
+        count: 0,
+        status: TaskStatus.completed,
+        icon: BsCheckAll,
+        color: "green.400",
+      },
+      "not-started": {
+        count: 0,
+        status: TaskStatus["not-started"],
+        icon: MdCancel,
+        color: "grey.500",
+      },
+      ongoing: {
+        count: 0,
+        status: TaskStatus.ongoing,
+        icon: MdPending,
+        color: "orange.500",
+      },
+      planned: {
+        count: 0,
+        status: TaskStatus.planned,
+        icon: FaFile,
+        color: "blue.500",
+      },
+    } as Record<TaskStatus, TaskStats>;
+
+    tasks?.length &&
+      tasks.forEach((task) => {
+        categoryCount[task.status].count += 1;
+      });
+    return categoryCount;
+  }, [tasks]);
   useEffect(() => {
     const unsub = listenOnMyTasks(auth?.uid || "", (tasks) => {
       setLoading(false);
@@ -126,6 +169,32 @@ export const MyTasks: FC = () => {
         My Tasks
       </Heading>
       <Skeleton isLoaded={!loading}>
+        <SimpleGrid columns={[1, 2, 4]} gap={3}>
+          {Object.values(TaskStatus).map((task, i) => (
+            <Flex
+              key={`task-icon-${i}`}
+              alignItems="center"
+              borderRadius="lg"
+              bg="white"
+              justifyContent="center"
+              p={3}
+            >
+              <Icon
+                boxSize={8}
+                as={taskCategories[task].icon}
+                color={taskCategories[task].color}
+              />
+              <Flex direction="column" alignItems="center">
+                <Heading fontSize="lg">{taskCategories[task].count}</Heading>
+                <Text size="sm">{task}</Text>
+              </Flex>
+            </Flex>
+          ))}
+        </SimpleGrid>
+        <Heading my={3} fontSize="md">
+          My tasks Overview
+        </Heading>
+        <SimpleGrid columns={[2, 4]}></SimpleGrid>
         <TableContainer whiteSpace={isMobile ? "nowrap" : "initial"}>
           <Table
             sx={{

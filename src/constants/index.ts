@@ -16,7 +16,7 @@ export const WORKPLAN_TYPES: WorkplanType[] = [
 ];
 
 export const WORKPLAN_COLORS: Record<WorkplanType, string> = {
-  Communications: "rgba(245, 235, 138, 1)",
+  Communications: "tertiary.400",
   Implementation: "rgba(161, 204, 217, 1)",
   Others: "rgba(234, 129, 129, 1)",
 };

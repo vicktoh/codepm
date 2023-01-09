@@ -10,6 +10,7 @@ import {
   ModalCloseButton,
   ModalContent,
   ModalOverlay,
+  SimpleGrid,
   Skeleton,
   Text,
   Tooltip,
@@ -18,16 +19,20 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import React, { FC, useEffect, useMemo, useState } from "react";
-import { BsKanban, BsTable } from "react-icons/bs";
+import { BsCheckAll, BsKanban, BsTable } from "react-icons/bs";
+import { FaFile } from "react-icons/fa";
+import { MdCancel, MdPending } from "react-icons/md";
 import { useParams } from "react-router-dom";
 import { KanbanWorkPlanView } from "../components/KanbanWorkPlanView";
+import { TaskStats } from "../components/MyTasks";
 import { TableViewWorkPlan } from "../components/TableViewWorkPlan";
 import { TaskForm } from "../components/TaskForm";
 import { WORKPLAN_COLORS } from "../constants";
+import { parseTasksToChartData } from "../helpers";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { getProject, listenOnTasks } from "../services/projectServices";
-import { Project, Task, WorkplanViewType } from "../types/Project";
-
+import { Project, Task, TaskStatus, WorkplanViewType } from "../types/Project";
+import { Doughnut } from "react-chartjs-2";
 export const WorkplanPage: FC = () => {
   const { projectId, workplanId } = useParams();
   const [project, setProject] = useState<Project>();
@@ -36,6 +41,10 @@ export const WorkplanPage: FC = () => {
     WorkplanViewType.table,
   );
   const [tasks, setTasks] = useState<(Task & { draft?: boolean })[]>();
+
+  const data = useMemo(() => {
+    return parseTasksToChartData(tasks || []);
+  }, [tasks]);
   const [isFetchTasks, setFetchingTasks] = useState<boolean>(true);
   const [selectedTask, setSelectedTask] = useState<Task>();
   const { isOpen, onClose, onOpen } = useDisclosure();
@@ -44,6 +53,40 @@ export const WorkplanPage: FC = () => {
     () => project?.workplans?.find(({ id }) => id === workplanId),
     [project, workplanId],
   );
+  const taskCategories: Record<TaskStatus, TaskStats> = useMemo(() => {
+    const categoryCount = {
+      completed: {
+        count: 0,
+        status: TaskStatus.completed,
+        icon: BsCheckAll,
+        color: "green.400",
+      },
+      "not-started": {
+        count: 0,
+        status: TaskStatus["not-started"],
+        icon: MdCancel,
+        color: "grey.500",
+      },
+      ongoing: {
+        count: 0,
+        status: TaskStatus.ongoing,
+        icon: MdPending,
+        color: "orange.500",
+      },
+      planned: {
+        count: 0,
+        status: TaskStatus.planned,
+        icon: FaFile,
+        color: "blue.500",
+      },
+    } as Record<TaskStatus, TaskStats>;
+
+    tasks?.length &&
+      tasks.forEach((task) => {
+        categoryCount[task.status].count += 1;
+      });
+    return categoryCount;
+  }, [tasks]);
 
   const toast = useToast();
   useEffect(() => {
@@ -95,6 +138,37 @@ export const WorkplanPage: FC = () => {
           </Heading>
         </VStack>
       </Skeleton>
+      <SimpleGrid columns={[1, 2]} width="100%">
+        <SimpleGrid columns={2} gap={3} width="100%" mt={3}>
+          {Object.values(TaskStatus).map((task, i) => (
+            <Flex
+              key={`task-icon-${i}`}
+              alignItems="center"
+              borderRadius="lg"
+              bg="white"
+              justifyContent="center"
+              p={3}
+            >
+              <Icon
+                boxSize={8}
+                as={taskCategories[task].icon}
+                color={taskCategories[task].color}
+              />
+              <Flex direction="column" alignItems="center">
+                <Heading fontSize="lg">{taskCategories[task].count}</Heading>
+                <Text size="sm">{task}</Text>
+              </Flex>
+            </Flex>
+          ))}
+        </SimpleGrid>
+        <Flex direction="column" alignItems="center">
+          <Box boxSize="200px">
+            <Heading>Stats</Heading>
+            <Doughnut data={data} />
+          </Box>
+        </Flex>
+      </SimpleGrid>
+
       <Box mt={5}>
         <Text mb={1} fontSize={["sm", "xs"]} fontWeight="bold">
           Toggle view

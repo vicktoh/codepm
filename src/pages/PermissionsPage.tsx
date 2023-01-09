@@ -72,13 +72,13 @@ const RequestRow: FC<RequestProps> = ({ request }) => {
         <Avatar
           size="sm"
           src={usersMap[request.userId]?.photoUrl || ""}
-          name={usersMap[request.userId].displayName}
+          name={usersMap[request.userId]?.displayName}
         />
         <VStack spacing={0} alignItems="flex-start">
           <Heading fontSize="lg">
             {usersMap[request.userId]?.displayName || "Unknown Name"}
           </Heading>
-          <Text>{usersMap[request.userId].designation || "Unknown User"}</Text>
+          <Text>{usersMap[request.userId]?.designation || "Unknown User"}</Text>
         </VStack>
       </HStack>
       {request.type === "leave" ? (
