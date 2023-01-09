@@ -66,13 +66,12 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
     setLoading(true);
     try {
       const unsub = listenOnChats(conversation.id, (chts) => {
-        console.log("I ran");
         setLoading(false);
         setChats(chts);
       });
       return () => unsub();
     } catch (error) {
-      console.log(error);
+      // console.log(error);
     }
   }, [conversation.id]);
 
@@ -83,7 +82,7 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
         try {
           markAsRead(auth?.uid || "", conversation.id || "");
         } catch (error) {
-          console.log(error);
+          // console.log(error);
         }
       }
     }, 1200);
@@ -132,7 +131,7 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
       await addNewMembersToConversation(conversation, members);
     } catch (error) {
       const err: any = error;
-      console.log(err);
+      // console.log(err);
     } finally {
       setAddingMembers(false);
     }
@@ -169,7 +168,7 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
         ) : null}
         <Heading fontSize="md">{`Conversation with ${
           conversation.title ||
-          (users?.usersMap ? users.usersMap[recipientId].displayName : "")
+          (users?.usersMap ? users.usersMap[recipientId]?.displayName : "")
         }`}</Heading>
         {conversation.type === "group" ? (
           <UserListPopover

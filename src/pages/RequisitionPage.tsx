@@ -103,12 +103,13 @@ export const RequisitionPage: FC = () => {
       approvedById = "",
     } = { ...requisition };
     const signatures = [
-      requisition.creator.signatureUrl || usersMap[creatorId].signatureUrl,
+      requisition.creator.signatureUrl || usersMap[creatorId]?.signatureUrl,
       requisition.budgetHolderCheck?.signatureUrl ||
-        usersMap[budgetHolderId].signatureUrl,
-      requisition.checkedby?.signatureUrl || usersMap[checkedById].signatureUrl,
+        usersMap[budgetHolderId]?.signatureUrl,
+      requisition.checkedby?.signatureUrl ||
+        usersMap[checkedById]?.signatureUrl,
       requisition.approvedBy?.signatureUrl ||
-        usersMap[approvedById].signatureUrl,
+        usersMap[approvedById]?.signatureUrl,
     ];
     const signatureDataUrls = [];
     for (const sig of signatures) {
@@ -191,7 +192,6 @@ export const RequisitionPage: FC = () => {
           dispatch(setRequisition(reqs));
         },
         (message) => {
-          console.log(message);
           setLoading(false);
           toast({
             title: "Could not fetch requisitions",

@@ -43,7 +43,6 @@ export const ConversationItem: FC<ConversationItemProps> = ({
   }, [conversation.members, auth?.uid]);
 
   const lastseen = useMemo(() => {
-    console.log({ presence });
     if (!presence || !presence[recipientId]) return "unavailable";
     if (presence[recipientId].state === "offline") {
       return formatDistance(
@@ -79,8 +78,8 @@ export const ConversationItem: FC<ConversationItemProps> = ({
                 <Avatar
                   size="sm"
                   key={`member-${i}`}
-                  src={usersMap[memberId].photoUrl}
-                  name={usersMap[memberId].displayName}
+                  src={usersMap[memberId]?.photoUrl || ""}
+                  name={usersMap[memberId]?.displayName || ""}
                 />
               ))}
           </AvatarGroup>

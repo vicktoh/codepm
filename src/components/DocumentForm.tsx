@@ -57,8 +57,7 @@ export const DocumentForm: FC<DocumentFormProps> = ({
       validationSchema={validationSchema}
       onSubmit={async (values, { setSubmitting }) => {
         const newDoc: ProjectDocument = {
-          title: values.title,
-          url: values.url,
+          ...values,
           dateAdded: Timestamp.now(),
           addedBy: auth?.displayName || "Unknown User",
           addedById: auth?.uid || "",

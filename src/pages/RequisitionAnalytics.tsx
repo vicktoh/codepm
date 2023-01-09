@@ -228,7 +228,7 @@ export const RequisitionAnalytics = () => {
                               <Avatar
                                 size="sm"
                                 name={
-                                  users?.usersMap[userId].displayName ||
+                                  users?.usersMap[userId]?.displayName ||
                                   "Unknown User"
                                 }
                                 src={users?.usersMap[userId]?.photoUrl || ""}
@@ -272,7 +272,7 @@ export const RequisitionAnalytics = () => {
                               <Avatar
                                 size="sm"
                                 name={
-                                  users?.usersMap[userId].displayName ||
+                                  users?.usersMap[userId]?.displayName ||
                                   "Unknown User"
                                 }
                                 src={users?.usersMap[userId]?.photoUrl || ""}
@@ -316,7 +316,7 @@ export const RequisitionAnalytics = () => {
                               <Avatar
                                 size="sm"
                                 name={
-                                  users?.usersMap[userId].displayName ||
+                                  users?.usersMap[userId]?.displayName ||
                                   "Unknown User"
                                 }
                                 src={users?.usersMap[userId]?.photoUrl || ""}

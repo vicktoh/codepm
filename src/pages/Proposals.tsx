@@ -6,7 +6,6 @@ import {
   HStack,
   Icon,
   IconButton,
-  Link,
   Modal,
   ModalBody,
   ModalCloseButton,

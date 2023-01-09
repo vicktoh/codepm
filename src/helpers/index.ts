@@ -32,7 +32,7 @@ export const conversationExist = (
 export const isInConversation = (
   search: string,
   members: string[],
-  users: Record<string, User>,
+  users: Record<string, User | undefined>,
   title?: string,
 ) => {
   let truthValue = false;
@@ -42,7 +42,7 @@ export const isInConversation = (
     else return false;
   }
   members.forEach((memberid) => {
-    const index = users[memberid].displayName
+    const index = (users[memberid]?.displayName || "")
       .toLowerCase()
       .indexOf(search.toLowerCase());
     if (index > -1) {
@@ -287,7 +287,6 @@ export const tobase64 = (url: string) => {
     const canvas = document.createElement("canvas");
     const img = document.createElement("img");
     const ctx = canvas.getContext("2d");
-    console.log(url);
     img.setAttribute("src", url);
     img.crossOrigin = "anonymous";
     img.onload = function () {
@@ -298,7 +297,6 @@ export const tobase64 = (url: string) => {
       resolve(dataUrl);
     };
     img.onerror = function (e) {
-      console.log(e);
       reject(e?.toString() || "");
     };
   });

@@ -6,9 +6,13 @@ import {
   FormErrorMessage,
   FormHelperText,
   FormLabel,
+  Heading,
+  HStack,
+  IconButton,
   Input,
   Select,
   Textarea,
+  Tooltip,
   useToast,
   VisuallyHidden,
 } from "@chakra-ui/react";
@@ -16,6 +20,9 @@ import * as yup from "yup";
 import { Form, Formik } from "formik";
 import { ProposalType, STATUSES } from "../types/ProposalType";
 import { addProposal, editProposal } from "../services/projectServices";
+import { BsEye, BsPlus, BsTrash } from "react-icons/bs";
+import { DocumentPopover } from "./DocumentPopover";
+import { Link } from "react-router-dom";
 
 type ProposalFormType = {
   onClose: () => void;
@@ -54,12 +61,10 @@ export const ProposalForm: FC<ProposalFormType> = ({
     documents: proposal?.documents || [],
     dateAdded: 0,
   };
-
   return (
     <Formik
       validationSchema={validationSchema}
       onSubmit={async (values, { setSubmitting }) => {
-        console.log("hey there");
         if (mode === "add") {
           try {
             await addProposal(values);
@@ -179,6 +184,60 @@ export const ProposalForm: FC<ProposalFormType> = ({
                 {touched.status && errors.status}
               </FormErrorMessage>
             </FormControl>
+
+            <FormControl>
+              <Flex direction="row">
+                <FormLabel>Documents</FormLabel>
+                <DocumentPopover
+                  onSubmit={(document) => {
+                    setFieldValue("documents", [
+                      ...(values.documents || []),
+                      document,
+                    ]);
+                  }}
+                >
+                  <IconButton
+                    icon={<BsPlus />}
+                    colorScheme="brand"
+                    borderRadius="full"
+                    aria-label="add document"
+                  />
+                </DocumentPopover>
+              </Flex>
+            </FormControl>
+            <Flex alignItems="center">
+              {values.documents.length ? (
+                values.documents.map((doc) => (
+                  <Flex direction="column" key={doc.title}>
+                    <Heading fontSize="md">{doc.title}</Heading>
+                    <HStack>
+                      <Tooltip title="view">
+                        <IconButton
+                          to={doc.url}
+                          size="sm"
+                          icon={<BsEye />}
+                          colorScheme={"blue"}
+                          as={Link}
+                          aria-label="blun"
+                        />
+                      </Tooltip>
+                      <Tooltip title="view">
+                        <IconButton
+                          to={doc.url}
+                          size="sm"
+                          icon={<BsTrash />}
+                          colorScheme={"blue"}
+                          as={Link}
+                          aria-label="blun"
+                        />
+                      </Tooltip>
+                    </HStack>
+                  </Flex>
+                ))
+              ) : (
+                <Heading fontSize="sm">No document yets</Heading>
+              )}
+            </Flex>
             <FormControl isRequired={mode === "edit" ? false : true}>
               <VisuallyHidden>
                 <Input

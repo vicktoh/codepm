@@ -141,7 +141,7 @@ export const RequisitionAdminPage = () => {
           )}
         </Flex>
       ) : (
-        <TableContainer>
+        <TableContainer maxWidth="100%" whiteSpace="normal">
           <Table>
             <Thead>
               <Tr>

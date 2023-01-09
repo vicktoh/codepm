@@ -53,6 +53,7 @@ import { BsTrash } from "react-icons/bs";
 import { Timestamp } from "firebase/firestore";
 import { LoadingComponent } from "./LoadingComponent";
 import { EmptyState } from "./EmptyState";
+import { TaskCommentComponent } from "./TaskCommentComponent";
 
 type TaskFormProps = {
   task: Task;
@@ -82,7 +83,6 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
   }));
   const glassEffect = useGlassEffect(true, "lg");
   const toast = useToast();
-  const { usersMap = {} } = users || {};
   useEffect(() => {
     const saveTask = async () => {
       if (myRef.current) {
@@ -338,10 +338,10 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
             {taskState.assignees.map((userId) => (
               <Avatar
                 key={`assignees-${userId}`}
-                src={users?.usersMap ? users.usersMap[userId].photoUrl : ""}
+                src={users?.usersMap ? users.usersMap[userId]?.photoUrl : ""}
                 name={
                   users?.usersMap
-                    ? users.usersMap[userId].displayName
+                    ? users.usersMap[userId]?.displayName
                     : "Unknow User"
                 }
                 size="md"
@@ -509,7 +509,13 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
             value={comments}
             onChange={(e) => setComments(e.target.value)}
           ></Textarea>
-          <Button alignSelf="flex-end" mt={3} onClick={addComment}>
+          <Button
+            colorScheme="brand"
+            size="sm"
+            alignSelf="flex-end"
+            mt={3}
+            onClick={addComment}
+          >
             Save
           </Button>
           <Flex direction="column">
@@ -517,34 +523,11 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
               <LoadingComponent />
             ) : taskComments?.length ? (
               taskComments.map((taskComment, i) => (
-                <Flex
-                  direction="row"
-                  key={taskComment.id || `task-comment-${i}`}
-                  alignItems="center"
-                  mt={2}
-                >
-                  <Avatar
-                    src={usersMap[taskComment.userId].photoUrl || ""}
-                    name={usersMap[taskComment.userId].displayName}
-                    mr={3}
-                    size="sm"
-                  />
-                  <Flex direction="column">
-                    <Flex
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Heading fontSize="md">
-                        {usersMap[taskComment.userId]?.displayName}
-                      </Heading>
-                      <Text ml={8} fontSize="sm" color="brand.500">
-                        {format(taskComment.timestamp.toDate(), "do MMM")}
-                      </Text>
-                    </Flex>
-                    <Text>{taskComment.comment}</Text>
-                  </Flex>
-                </Flex>
+                <TaskCommentComponent
+                  task={task}
+                  comment={taskComment}
+                  key={taskComment.id || i}
+                />
               ))
             ) : (
               <EmptyState title="No comments yet" />

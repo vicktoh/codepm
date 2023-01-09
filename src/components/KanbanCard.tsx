@@ -113,11 +113,11 @@ export const KanbanCard: FC<KanbanCardProps> = ({
           {task.assignees.map((userId) => (
             <Tooltip
               key={`avatar-${userId}`}
-              label={users?.usersMap[userId].displayName || ""}
+              label={users?.usersMap[userId]?.displayName || ""}
             >
               <Avatar
-                name={users?.usersMap[userId].displayName || ""}
-                src={users?.usersMap[userId].photoUrl}
+                name={users?.usersMap[userId]?.displayName || ""}
+                src={users?.usersMap[userId]?.photoUrl}
                 size="xs"
               />
             </Tooltip>

@@ -107,3 +107,29 @@ export const listenOnTaskComment = (
     callback(taskComments);
   });
 };
+
+export const updateTaskComment = (
+  projectId: string,
+  taskId: string,
+  commentId: string,
+  comment: string,
+) => {
+  const taskCommentRef = doc(
+    db,
+    `projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+  );
+
+  return updateDoc(taskCommentRef, { comment } as Partial<TaskComment>);
+};
+
+export const deleteTaskComment = (
+  projectId: string,
+  taskId: string,
+  commentId: string,
+) => {
+  const taskCommentRef = doc(
+    db,
+    `projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+  );
+  return deleteDoc(taskCommentRef);
+};
