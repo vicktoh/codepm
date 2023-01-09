@@ -13,7 +13,6 @@ import {
   Select,
   Textarea,
   Tooltip,
-  useDisclosure,
   useToast,
   VisuallyHidden,
 } from "@chakra-ui/react";
@@ -62,8 +61,6 @@ export const ProposalForm: FC<ProposalFormType> = ({
     documents: proposal?.documents || [],
     dateAdded: 0,
   };
-  const { isOpen: documentFormOpen, onClose: onCloseDocumentForm } =
-    useDisclosure();
   return (
     <Formik
       validationSchema={validationSchema}
