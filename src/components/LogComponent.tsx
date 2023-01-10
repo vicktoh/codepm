@@ -5,13 +5,14 @@ import {
   HStack,
   Icon,
   IconButton,
+  Link,
   ListItem,
   OrderedList,
   Text,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
 import React, { FC } from "react";
-import { BsPencil, BsTrash } from "react-icons/bs";
+import { BsLink, BsPencil, BsTrash } from "react-icons/bs";
 import { Log } from "../types/Log";
 
 type LogComponentType = {
@@ -76,6 +77,16 @@ export const LogComponent: FC<LogComponentType> = ({
           ))}
         </OrderedList>
       </Box>
+      {log.link ? (
+        <IconButton
+          boxSize={6}
+          as={Link}
+          isExternal={log.link}
+          variant="ghost"
+          icon={<Icon as={BsLink} />}
+          aria-label="remove activity"
+        />
+      ) : null}
     </Flex>
   );
 };

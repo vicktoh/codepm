@@ -6,6 +6,7 @@ export type Log = {
   dateUpdated: Timestamp;
   activity: string[];
   dateString: string;
+  link?: string;
 };
 
 export type LogState = {
@@ -15,4 +16,5 @@ export type LogState = {
 export type LogFormType = {
   title: string;
   date: string;
+  link?: string;
 };

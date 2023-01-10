@@ -53,10 +53,17 @@ export const LogForm: FC<LogFormProps> = ({ logIndex, actvityIndex, mode }) => {
           ? today
           : logList[logIndex].dateString
         : today,
+    link:
+      mode === "edit"
+        ? logIndex === undefined || actvityIndex === undefined
+          ? ""
+          : logList[logIndex].link
+        : "",
   };
   const validationSchema = yup.object().shape({
     title: yup.string().required("This field is required"),
     date: yup.string().required("This date is required"),
+    link: yup.string().url("Must be valid url"),
   });
   return (
     <Formik
@@ -86,6 +93,7 @@ export const LogForm: FC<LogFormProps> = ({ logIndex, actvityIndex, mode }) => {
                 auth?.uid || "",
                 values.date,
                 values.title,
+                values.link,
               );
             } else {
               await newLogDay(auth?.uid || "", values);
@@ -194,6 +202,17 @@ export const LogForm: FC<LogFormProps> = ({ logIndex, actvityIndex, mode }) => {
               <FormErrorMessage>
                 {touched.title && errors.title}
               </FormErrorMessage>
+            </FormControl>
+            <FormControl mb={5} isInvalid={!!touched.link && !!errors.link}>
+              <FormLabel>Link to Work done</FormLabel>
+              <Input
+                placeholder="link to the task"
+                name="link"
+                value={values.link}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              <FormErrorMessage>{touched.link && errors.link}</FormErrorMessage>
             </FormControl>
             <Button
               isFullWidth

@@ -14,6 +14,7 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import { link } from "fs";
 import { Log, LogFormType, LogState } from "../types/Log";
 import { Period, Request } from "../types/Permission";
 import { db } from "./firebase";
@@ -56,6 +57,7 @@ export const newLogDay = (userId: string, logformvalue: LogFormType) => {
     timeStamp: new Date(logformvalue.date).getTime(),
     dateUpdated: Timestamp.now(),
     activity: [logformvalue.title],
+    ...(logformvalue.link ? { link: logformvalue.link } : {}),
     userId,
   };
   const logRef = doc(db, `users/${userId}/logs/${logformvalue.date}`);
@@ -66,12 +68,13 @@ export const updateLogActivity = (
   userId: string,
   dateString: string,
   activity: string | string[],
+  link?: string,
 ) => {
   const logRef = doc(db, `users/${userId}/logs/${dateString}`);
   if (typeof activity === "string") {
     return updateDoc(logRef, { activity: arrayUnion(activity) });
   }
-  return updateDoc(logRef, { activity });
+  return updateDoc(logRef, { activity, ...(link ? { link } : {}) });
 };
 
 export const removeLogActivity = (
