@@ -31,6 +31,8 @@ export const SystemForm: FC<SystemFormProps> = ({ onClose }) => {
     studyLeaveDays: system?.studyLeaveDays || 0,
     logStartDate: system?.logStartDate || "",
     logAllowanceDay: system?.logAllowanceDay || 0,
+    studyLeaveWithoutPayDays: system?.studyLeaveWithoutPayDays || 0,
+    meditationLeaveDays: system?.meditationLeaveDays || 0,
   };
   return (
     <Flex direction="column" px={5} pt={5}>
@@ -80,6 +82,26 @@ export const SystemForm: FC<SystemFormProps> = ({ onClose }) => {
               <Input
                 value={values.studyLeaveDays}
                 name="studyLeaveDays"
+                type="number"
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+            </FormControl>
+            <FormControl mb={5}>
+              <FormLabel>{SystemFields["studyLeaveWithoutPayDays"]}</FormLabel>
+              <Input
+                value={values.studyLeaveWithoutPayDays}
+                name="studyLeaveWithoutPayDays"
+                type="number"
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+            </FormControl>
+            <FormControl mb={5}>
+              <FormLabel>{SystemFields["meditationLeaveDays"]}</FormLabel>
+              <Input
+                value={values.meditationLeaveDays}
+                name="meditationLeaveDays"
                 type="number"
                 onChange={handleChange}
                 onBlur={handleBlur}

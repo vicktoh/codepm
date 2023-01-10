@@ -17,7 +17,7 @@ import {
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
-import { BsCalendar, BsShield } from "react-icons/bs";
+import { BsCalendar, BsListCheck, BsShield } from "react-icons/bs";
 import { BiStats } from "react-icons/bi";
 import { LogFilterForm } from "../components/LogFilterForm";
 import { LogList } from "../components/LogList";
@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import { CalendarMonth } from "../components/Calendar/CalendarMonth";
 import { LogStats } from "../components/LogStats";
 import { LeaveRequestForm } from "../components/LeaveRequestForm";
+import RequestView from "../components/RequestView";
 
 export const LogsPage: FC = () => {
   const currentDate = useMemo(() => {
@@ -64,6 +65,11 @@ export const LogsPage: FC = () => {
     onOpen: onOpenAccessRequest,
     onClose: onCloseAccessRequest,
     isOpen: isAccessRequestOpen,
+  } = useDisclosure();
+  const {
+    onOpen: onOpenAccessViewRequest,
+    onClose: onCloseAccessViewRequest,
+    isOpen: isAccessViewRequestOpen,
   } = useDisclosure();
   const {
     onOpen: onOpenStatsModal,
@@ -119,6 +125,15 @@ export const LogsPage: FC = () => {
             >
               Request for Access
             </Button>
+            <Button
+              size={isMobile ? "sm" : "md"}
+              onClick={onOpenAccessViewRequest}
+              variant="outline"
+              leftIcon={<Icon as={BsListCheck} />}
+              mb={5}
+            >
+              View Requests
+            </Button>
             {isMobile ? (
               <Button
                 size={isMobile ? "sm" : "md"}
@@ -173,6 +188,20 @@ export const LogsPage: FC = () => {
           <ModalHeader>🔓 Request Access to Past Logs</ModalHeader>
           <ModalBody>
             <LogRequestForm type="leave" onSubmit={onAccessRequest} />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal
+        isOpen={isAccessViewRequestOpen}
+        onClose={onCloseAccessViewRequest}
+        size="4xl"
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton />
+          <ModalHeader>📝 Request List</ModalHeader>
+          <ModalBody>
+            <RequestView />
           </ModalBody>
         </ModalContent>
       </Modal>

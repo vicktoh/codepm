@@ -122,3 +122,23 @@ export const makeLeaveRequest = (
   };
   return setDoc(requestRef, newRequest);
 };
+
+export const listenUserRequests = (
+  userId: string,
+  callback: (requests: Request[]) => void,
+) => {
+  const requestsCollection = collection(db, "permissionRequests");
+  const q = query(
+    requestsCollection,
+    where("userId", "==", userId),
+    orderBy("timestamp", "desc"),
+  );
+  return onSnapshot(q, (snapshot) => {
+    const requests: Request[] = [];
+    snapshot.forEach((snap) => {
+      const request = snap.data() as Request;
+      requests.push(request);
+    });
+    callback(requests);
+  });
+};

@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Flex,
   HStack,
   Icon,
   Input,
@@ -67,38 +68,40 @@ export const UserListPopover: FC<UserListPopverProps> = ({
           />
         </PopoverHeader>
         <PopoverBody>
-          {users?.users
-            ? users.users
-                .filter((user) => {
-                  if (user.userId === auth?.uid) return false;
-                  if (!search) return true;
-                  const position = user.displayName
-                    .toLowerCase()
-                    .indexOf(search.toLowerCase());
-                  if (position > -1) return true;
-                  return false;
-                })
-                .map((user) => (
-                  <HStack
-                    alignItems="center"
-                    key={user.userId}
-                    cursor="pointer"
-                    onClick={() => selectCallBack(user.userId)}
-                    spacing={2}
-                    py={2}
-                  >
-                    <Avatar
-                      src={user.photoUrl}
-                      name={user.displayName}
-                      size="sm"
-                    />
-                    <Text fontSize="sm">{user.displayName}</Text>
-                    {assignees.includes(user.userId) ? (
-                      <Icon as={AiFillCheckCircle} color="green.300" />
-                    ) : null}
-                  </HStack>
-                ))
-            : null}
+          <Flex direction="column" maxHeight="300px" overflowY="auto">
+            {users?.users
+              ? users.users
+                  .filter((user) => {
+                    if (user.userId === auth?.uid) return false;
+                    if (!search) return true;
+                    const position = user.displayName
+                      .toLowerCase()
+                      .indexOf(search.toLowerCase());
+                    if (position > -1) return true;
+                    return false;
+                  })
+                  .map((user) => (
+                    <HStack
+                      alignItems="center"
+                      key={user.userId}
+                      cursor="pointer"
+                      onClick={() => selectCallBack(user.userId)}
+                      spacing={2}
+                      py={2}
+                    >
+                      <Avatar
+                        src={user.photoUrl}
+                        name={user.displayName}
+                        size="sm"
+                      />
+                      <Text fontSize="sm">{user.displayName}</Text>
+                      {assignees.includes(user.userId) ? (
+                        <Icon as={AiFillCheckCircle} color="green.300" />
+                      ) : null}
+                    </HStack>
+                  ))
+              : null}
+          </Flex>
         </PopoverBody>
       </PopoverContent>
     </Popover>

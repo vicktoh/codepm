@@ -13,6 +13,7 @@ import { User } from "../types/User";
 import * as _ from "lodash";
 import { WHITE_LIST } from "../constants";
 import { UserRole } from "../types/Profile";
+import { LeaveTypeMap, System } from "../types/System";
 export const conversationExist = (
   userId: string,
   conversations: Conversation[],
@@ -313,4 +314,19 @@ export const getBase64FromUrl = async (url: string) => {
       resolve(base64data);
     };
   });
+};
+
+export const leaveMapper = (system: System) => {
+  return {
+    "Study Leave": system.studyLeaveDays || 0,
+    "Annual Leave": system.leaveDays || 0,
+    "Casual Leave": system.casualLeaveDays || 0,
+    "Maternity Leave": system.maternityLeaveDays || 0,
+    "Compassionate Leave": system.compassionateLeaveDays || 0,
+    "Study Leave Without Pay": system.studyLeaveWithoutPayDays || 0,
+    "Sick Leave": system.sickLeaveDays || 0,
+    "Parternity Leave": system.paternityLeaveDays || 0,
+    "Leave of Absence": system.leaveOfAbsence || 0,
+    "Meditation Leave": system.meditationLeaveDays || 0,
+  } as LeaveTypeMap;
 };
