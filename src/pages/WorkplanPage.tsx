@@ -28,11 +28,10 @@ import { TaskStats } from "../components/MyTasks";
 import { TableViewWorkPlan } from "../components/TableViewWorkPlan";
 import { TaskForm } from "../components/TaskForm";
 import { WORKPLAN_COLORS } from "../constants";
-import { parseTasksToChartData } from "../helpers";
+// import { parseTasksToChartData } from "../helpers";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { getProject, listenOnTasks } from "../services/projectServices";
 import { Project, Task, TaskStatus, WorkplanViewType } from "../types/Project";
-import { Doughnut } from "react-chartjs-2";
 export const WorkplanPage: FC = () => {
   const { projectId, workplanId } = useParams();
   const [project, setProject] = useState<Project>();
@@ -42,9 +41,9 @@ export const WorkplanPage: FC = () => {
   );
   const [tasks, setTasks] = useState<(Task & { draft?: boolean })[]>();
 
-  const data = useMemo(() => {
-    return parseTasksToChartData(tasks || []);
-  }, [tasks]);
+  // const data = useMemo(() => {
+  //   return parseTasksToChartData(tasks || []);
+  // }, [tasks]);
   const [isFetchTasks, setFetchingTasks] = useState<boolean>(true);
   const [selectedTask, setSelectedTask] = useState<Task>();
   const { isOpen, onClose, onOpen } = useDisclosure();
@@ -161,12 +160,12 @@ export const WorkplanPage: FC = () => {
             </Flex>
           ))}
         </SimpleGrid>
-        <Flex direction="column" alignItems="center">
+        {/* <Flex direction="column" alignItems="center">
           <Box boxSize="200px">
             <Heading>Stats</Heading>
             <Doughnut data={data} />
           </Box>
-        </Flex>
+        </Flex> */}
       </SimpleGrid>
 
       <Box mt={5}>

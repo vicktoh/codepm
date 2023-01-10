@@ -57,4 +57,6 @@ export const SystemFields: Record<keyof System, string> = {
   publicHolidays: "Public Holidays in this year",
   leaveOfAbsence: "Number of leave of absence allowed",
   studyLeaveDays: "Number of study leave days allowed",
+  studyLeaveWithoutPayDays: "Number of study leave days without pay allowed",
+  meditationLeaveDays: "Number of meditation leave days without pay allowed",
 };

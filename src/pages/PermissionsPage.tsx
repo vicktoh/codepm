@@ -11,6 +11,7 @@ import {
 import { format } from "date-fns";
 import { FirebaseError } from "firebase/app";
 import React, { FC, useEffect, useState } from "react";
+import { BiCheckCircle } from "react-icons/bi";
 import { EmptyState } from "../components/EmptyState";
 import { LoadingComponent } from "../components/LoadingComponent";
 import { useAppSelector } from "../reducers/types";
@@ -26,8 +27,9 @@ type RequestProps = {
 };
 
 const RequestRow: FC<RequestProps> = ({ request }) => {
-  const { users } = useAppSelector(({ users }) => ({
+  const { users, auth } = useAppSelector(({ users, auth }) => ({
     users,
+    auth,
   }));
   const { usersMap = {} } = users || {};
   const [delclining, setDeclining] = useState<boolean>(false);
@@ -97,7 +99,12 @@ const RequestRow: FC<RequestProps> = ({ request }) => {
         )} - ${format(new Date(request.endDate), "dd MMM Y")}`}</Heading>
       </VStack>
       <Text>{request.status}</Text>
-      {request.status === "pending" ? (
+      {request.status === "pending" && request.attentionToId === auth?.uid ? (
+        <Button size="md" variant="outline" colorScheme="brand">
+          Approve as Dept. Head
+        </Button>
+      ) : null}
+      {request.status === "reviewed" ? (
         <HStack spacing={4}>
           <Button
             isLoading={delclining}
@@ -118,6 +125,7 @@ const RequestRow: FC<RequestProps> = ({ request }) => {
           </Button>
         </HStack>
       ) : null}
+      {request.status === "approved" ? <BiCheckCircle color="green" /> : null}
     </Flex>
   );
 };
