@@ -60,3 +60,5 @@ export const SystemFields: Record<keyof System, string> = {
   studyLeaveWithoutPayDays: "Number of study leave days without pay allowed",
   meditationLeaveDays: "Number of meditation leave days without pay allowed",
 };
+
+export const NUMBER_OF_PROJECTS_PERPAGE = 5;

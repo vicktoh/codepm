@@ -1,5 +1,5 @@
 import { useToast } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { algoliaIndex } from "../services/algolia";
 
 export function useSearchIndex<T>(
@@ -19,38 +19,38 @@ export function useSearchIndex<T>(
   }>();
   const [data, setData] = useState<T>();
   const toast = useToast();
-  useEffect(() => {
-    async function searchIndex() {
-      try {
-        setLoading(true);
-        const usersIndex = algoliaIndex(index);
-        const response = await usersIndex.search(query, {
-          page,
-          hitsPerPage: perpage || 10,
-          ...(filters ? { filters } : null),
-          facetFilters: facets,
-        });
-        const { hits, nbHits, page: currentPage, nbPages } = response;
-        setData(hits as any);
-        setpageStats({
-          total: nbHits,
-          pages: nbPages,
-          currentPage: currentPage,
-        });
-        setPage(currentPage);
-      } catch (error) {
-        const err: any = error;
-        toast({
-          title: `Unable to fetch the ${index}`,
-          description: err?.message || "Unknown Error",
-          status: "error",
-        });
-      } finally {
-        setLoading(false);
-      }
+  const search = useCallback(async () => {
+    try {
+      setLoading(true);
+      const usersIndex = algoliaIndex(index);
+      const response = await usersIndex.search(query, {
+        page,
+        hitsPerPage: perpage || 10,
+        ...(filters ? { filters } : null),
+        facetFilters: facets,
+      });
+      const { hits, nbHits, page: currentPage, nbPages } = response;
+      setData(hits as any);
+      setpageStats({
+        total: nbHits,
+        pages: nbPages,
+        currentPage: currentPage,
+      });
+      setPage(currentPage);
+    } catch (error) {
+      const err: any = error;
+      toast({
+        title: `Unable to fetch the ${index}`,
+        description: err?.message || "Unknown Error",
+        status: "error",
+      });
+    } finally {
+      setLoading(false);
     }
-    searchIndex();
   }, [page, query, toast, index, filters, facets, perpage]);
+  useEffect(() => {
+    search();
+  }, [search]);
 
   return {
     page,
@@ -62,5 +62,6 @@ export function useSearchIndex<T>(
     setFacets,
     data,
     setData,
+    search,
   };
 }
