@@ -169,7 +169,7 @@ export const ItemsForm = () => {
         </FormControl>
       </SimpleGrid>
       <FormControl mb={5}>
-        <FormLabel>Ammount In Words</FormLabel>
+        <FormLabel>Amount In Words</FormLabel>
         <Textarea
           value={total ? converNumtoWord(total, values.currency) : ""}
           readOnly

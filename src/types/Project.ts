@@ -23,6 +23,7 @@ export type ProjectWorkPlan = {
 };
 
 export interface Project {
+  creatorId: string;
   id: string;
   title: string;
   description: string;
@@ -35,6 +36,8 @@ export interface Project {
     date: number;
     creator: string;
   };
+  budgetAccess: string[];
+  writeAccess: string[];
 }
 
 export type WorkplanView = "table" | "kanban" | "calendar";

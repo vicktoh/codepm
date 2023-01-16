@@ -42,6 +42,8 @@ export enum RequisitionType {
   "travel request" = "travel request",
   "advance request" = "advance request",
   "per diem" = "per diem",
+  "operations request" = "operations request",
+  "others" = "others",
 }
 export interface Requisition {
   creatorId: string;

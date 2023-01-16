@@ -7,7 +7,9 @@ export type Request = {
   status: "pending" | "reviewed" | "approved" | "declined";
   type: "leave" | "log";
   leaveType?: LeaveType;
+  memo?: string;
   timestamp: number;
+  handoverId?: string;
 };
 
 export enum LeaveType {

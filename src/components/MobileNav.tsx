@@ -62,7 +62,7 @@ export const MobileNav: FC = () => {
       <Drawer isOpen={isOpen} onClose={onClose} size="xs" placement="left">
         <DrawerOverlay />
         <DrawerContent sx={{ width: "180px !important" }}>
-          <DrawerHeader>Connected</DrawerHeader>
+          <DrawerHeader>CODE</DrawerHeader>
           <DrawerBody>
             <VStack
               alignItems="flex-start"

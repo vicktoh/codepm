@@ -62,3 +62,5 @@ export const SystemFields: Record<keyof System, string> = {
 };
 
 export const NUMBER_OF_PROJECTS_PERPAGE = 5;
+export const NUMBER_OF_USERS_PERPAGE = 10;
+export const NUMBER_OF_PROJECTS_PER_PROJECT_PAGE = 10;

@@ -60,7 +60,7 @@ export const SideNav: FC<SideNavProps> = ({
       py={5}
     >
       <Heading fontSize="xl" my={3} alignSelf="center">
-        Connected
+        CODE
       </Heading>
       <VStack>
         <Avatar

@@ -61,7 +61,7 @@ export const RequisitionAnalytics = () => {
     setQuery,
     setFacets,
     setFilters: setAlgoliaFilter,
-  } = useSearchIndex<Requisition[]>(
+  } = useSearchIndex<Requisition>(
     "requisitions",
     timeFilter ? timeFilterToAlgoliaFilter(timeFilter) : "",
   );

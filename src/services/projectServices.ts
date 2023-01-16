@@ -124,6 +124,7 @@ export const deleteProject = async (project: Project) => {
 
 export const addProject = async (
   project: Omit<Project, "id" | "dateAdded">,
+  userId: string,
 ) => {
   const projectCollection = collection(db, "projects");
   const projectRef = doc(projectCollection);
@@ -131,9 +132,11 @@ export const addProject = async (
     id: projectRef.id,
     ...project,
     dateAdded: Timestamp.now(),
+    creatorId: userId,
   };
 
   await setDoc(projectRef, projectToAdd);
+  return projectRef.id;
 };
 
 export const editProject = async (project: Partial<Project>) => {
