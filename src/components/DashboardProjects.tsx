@@ -25,6 +25,8 @@ import { NUMBER_OF_PROJECTS_PERPAGE, WORKPLAN_COLORS } from "../constants";
 import { BsChevronRight } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import { useSearchIndex } from "../hooks/useSearchIndex";
+import { paginationArray } from "../helpers";
+import { LoadingComponent } from "./LoadingComponent";
 
 type ProjectListProps = {
   project: Project;
@@ -35,7 +37,6 @@ const ProjectList: FC<ProjectListProps> = ({ project }) => {
       <AccordionButton bg="white" _hover={{ bg: "white" }} borderRadius="lg">
         <Flex
           direction="row"
-          justifyContent="space-between"
           width="100%"
           bg="white"
           alignItems="center"
@@ -47,15 +48,29 @@ const ProjectList: FC<ProjectListProps> = ({ project }) => {
               {project.title}
             </Text>
           </Tooltip>
-          <Badge
-            bg="brand.300"
-            color="white"
-            rounded="lg"
-            alignItems="center"
-            justifyContent="center"
+          <Button
+            ml="auto"
+            mr={5}
+            size="xs"
+            colorScheme="brand"
+            variant="outline"
+            as={Link}
+            to={`projects/${project.id}`}
+            rightIcon={<BsChevronRight />}
           >
-            {project.workplans?.length || "No Workplans"}
-          </Badge>
+            View Project
+          </Button>
+          <Tooltip title="Number of workplans">
+            <Badge
+              bg="brand.300"
+              color="white"
+              rounded="lg"
+              alignItems="center"
+              justifyContent="center"
+            >
+              {project.workplans?.length || 0}
+            </Badge>
+          </Tooltip>
         </Flex>
       </AccordionButton>
       <AccordionPanel>
@@ -111,7 +126,7 @@ export const DashboardProjects: FC = () => {
     setQuery,
     setPage,
     pageStat,
-  } = useSearchIndex<Project[]>("projects", "", NUMBER_OF_PROJECTS_PERPAGE);
+  } = useSearchIndex<Project>("projects", "", NUMBER_OF_PROJECTS_PERPAGE);
   const [searchInput, setSearchInput] = useState("");
   useEffect(() => {
     const unsub = listenOnProjects((data) => {
@@ -119,28 +134,12 @@ export const DashboardProjects: FC = () => {
     });
     return unsub;
   }, []);
-
-  const paginationArray = useMemo(() => {
-    const pages = Math.ceil(
-      (pageStat?.total || 0) / NUMBER_OF_PROJECTS_PERPAGE,
-    );
-    const outputArray: number[] = [];
-    const currentPage = (pageStat?.currentPage || 0) + 1;
-    let counter = currentPage;
-    while (counter > 0 && counter >= currentPage - 3) {
-      outputArray.unshift(counter);
-      counter--;
-    }
-    let endCounter = currentPage;
-    const remaining = currentPage + 3 > pages ? pages : currentPage + 3;
-    while (endCounter <= remaining) {
-      if (endCounter > currentPage) {
-        outputArray.push(endCounter);
-      }
-      endCounter++;
-    }
-    return outputArray;
-  }, [pageStat]);
+  const pages = useMemo(() => {
+    return Math.ceil((pageStat?.total || 0) / NUMBER_OF_PROJECTS_PERPAGE);
+  }, [pageStat?.total]);
+  const pagination = useMemo(() => {
+    return paginationArray(pageStat?.currentPage || 0, pages);
+  }, [pageStat, pages]);
 
   const onSearch = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.keyCode === 13) {
@@ -148,7 +147,7 @@ export const DashboardProjects: FC = () => {
     }
   };
 
-  if (loading) {
+  if (loading && !projects?.length) {
     return (
       <Skeleton>
         <Skeleton
@@ -182,8 +181,9 @@ export const DashboardProjects: FC = () => {
     );
   }
   return projects?.length ? (
-    <Accordion my={4}>
+    <>
       <Input
+        bg="white"
         onKeyUp={onSearch}
         value={searchInput}
         onChange={(e) => setSearchInput(e.target.value)}
@@ -192,34 +192,48 @@ export const DashboardProjects: FC = () => {
         variant="filled"
         placeholder="search"
       />
-      {projects.map((project, i) => (
-        <ProjectList key={`projectlist-${i}`} project={project} />
-      ))}
-      <Flex alignItems="center" justifyContent="center" width="100%" mt={3}>
-        {paginationArray.map((number, i) => (
-          <Button
-            variant="link"
-            size="sm"
-            mx={2}
-            disabled={loading}
-            onClick={() => setPage(number - 1)}
-            bg={
-              (pageStat?.currentPage || 0) === number - 1
-                ? "brand.500"
-                : "white"
-            }
-            color={
-              (pageStat?.currentPage || 0) === number - 1
-                ? "white"
-                : "brand.500"
-            }
-            key={`pagination-link-${number}`}
-          >
-            {number}
-          </Button>
-        ))}
-      </Flex>
-    </Accordion>
+      {loading ? (
+        <LoadingComponent title="Please wait" />
+      ) : (
+        <Accordion my={4}>
+          {projects.map((project, i) => (
+            <ProjectList key={`projectlist-${i}`} project={project} />
+          ))}
+          <Flex alignItems="center" justifyContent="center" width="100%" mt={3}>
+            <Flex alignItems="center" ml="auto">
+              {pagination.map((number, i) => (
+                <Button
+                  variant="link"
+                  size="sm"
+                  mx={2}
+                  disabled={loading}
+                  onClick={() => setPage(number - 1)}
+                  bg={
+                    (pageStat?.currentPage || 0) === number - 1
+                      ? "brand.500"
+                      : "white"
+                  }
+                  color={
+                    (pageStat?.currentPage || 0) === number - 1
+                      ? "white"
+                      : "brand.500"
+                  }
+                  key={`pagination-link-${number}`}
+                >
+                  {number}
+                </Button>
+              ))}
+            </Flex>
+            <HStack ml="auto">
+              <Text>Showing</Text>
+              <Text>{(pageStat?.currentPage || 0) + 1}</Text>
+              <Text>of</Text>
+              <Text>{pages}</Text>
+            </HStack>
+          </Flex>
+        </Accordion>
+      )}
+    </>
   ) : (
     <EmptyState title="There are no projects here" />
   );

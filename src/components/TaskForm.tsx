@@ -62,6 +62,7 @@ type TaskFormProps = {
 
 export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
   const [taskState, setTask] = useState<Task>(task);
+  console.log({ taskState });
   const [editModeTitle, setEditModeTitle] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [taskComments, setTaskComments] = useState<TaskComment[]>();
@@ -443,6 +444,7 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
                 <IconButton
                   size="xs"
                   as={Link}
+                  href={document.url}
                   isExternal={document.url}
                   aria-label="view document"
                   icon={<Icon as={AiOutlineEye} color="blue.600" />}

@@ -330,3 +330,21 @@ export const leaveMapper = (system: System) => {
     "Meditation Leave": system.meditationLeaveDays || 0,
   } as LeaveTypeMap;
 };
+export const paginationArray = (currPage: number, pages: number) => {
+  const outputArray: number[] = [];
+  const currentPage = currPage + 1;
+  let counter = currentPage;
+  while (counter > 0 && counter >= currentPage - 3) {
+    outputArray.unshift(counter);
+    counter--;
+  }
+  let endCounter = currentPage;
+  const remaining = currentPage + 3 > pages ? pages : currentPage + 3;
+  while (endCounter <= remaining) {
+    if (endCounter > currentPage) {
+      outputArray.push(endCounter);
+    }
+    endCounter++;
+  }
+  return outputArray;
+};

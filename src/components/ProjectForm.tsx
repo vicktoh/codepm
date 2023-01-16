@@ -14,18 +14,26 @@ import * as yup from "yup";
 import { Form, Formik } from "formik";
 import { addProject, editProject } from "../services/projectServices";
 import { Project } from "../types/Project";
+import { useAppSelector } from "../reducers/types";
 
 type ProjectFormType = {
   onClose: () => void;
   mode: "add" | "edit";
+  onEdit: (project: Project) => void;
+  onAddProject: (project: Project) => void;
   project?: Project;
+  search?: () => void;
 };
 export const ProjectForm: FC<ProjectFormType> = ({
   onClose = () => null,
   mode,
   project,
+  onEdit,
+  search,
+  onAddProject,
 }) => {
   const toast = useToast();
+  const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const validationSchema = yup.object().shape({
     title: yup
       .string()
@@ -41,6 +49,9 @@ export const ProjectForm: FC<ProjectFormType> = ({
     title: project?.title || "",
     description: project?.description || "",
     funder: project?.funder || "",
+    budgetAccess: project?.budgetAccess || [],
+    writeAccess: project?.writeAccess || [],
+    creatorId: auth?.uid || "",
   };
 
   return (
@@ -49,8 +60,16 @@ export const ProjectForm: FC<ProjectFormType> = ({
       onSubmit={async (values, { setSubmitting }) => {
         if (mode === "add") {
           try {
-            await addProject(values);
+            const projectId = await addProject(values, auth?.uid || "");
+            const newProject: Project = {
+              ...values,
+              creatorId: auth?.uid || "",
+              dateAdded: new Date().getTime(),
+              id: projectId,
+            };
+            onAddProject(newProject);
             toast({ title: "Successfully added project", status: "success" });
+            // if (search) search();
           } catch (error) {
             const err: any = error;
             toast({
@@ -64,8 +83,10 @@ export const ProjectForm: FC<ProjectFormType> = ({
         }
         if (mode === "edit") {
           try {
-            await editProject({ ...project, ...values });
+            await editProject(values);
             toast({ title: "Successfully edited project", status: "success" });
+            const newProject = { ...project, ...values } as Project;
+            onEdit(newProject);
           } catch (error) {
             const err: any = error;
             toast({

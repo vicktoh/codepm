@@ -80,7 +80,7 @@ export const Beneficiary = () => {
   return (
     <Flex direction="column" px={5} pb={5}>
       <VStack alignItems="center" mb={5}>
-        <Heading fontSize="lg">Beneficiarys</Heading>
+        <Heading fontSize="lg">Beneficiaries</Heading>
         <Text>Step 3 of 3</Text>
       </VStack>
       <HStack spacing={3}>

@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useMemo, useState } from "react";
 import {
+  Avatar,
   Button,
   Flex,
   Heading,
@@ -20,6 +21,7 @@ import {
   Tbody,
   Td,
   Text,
+  Tfoot,
   Th,
   Thead,
   Tooltip,
@@ -37,26 +39,51 @@ import { Project } from "../types/Project";
 import { deleteProject, listenOnProjects } from "../services/projectServices";
 import { BsCalculator, BsTrash } from "react-icons/bs";
 import { useLoadingAnimation } from "../hooks/useLoadingAnimation";
-import { COLOR_SPECTRUM_TAGS } from "../constants";
+import {
+  COLOR_SPECTRUM_TAGS,
+  NUMBER_OF_PROJECTS_PER_PROJECT_PAGE,
+} from "../constants";
 import { ProjectForm } from "../components/ProjectForm";
 import { Link, useLocation } from "react-router-dom";
 import { useAppSelector } from "../reducers/types";
 import { useDispatch } from "react-redux";
 import { setProjects } from "../reducers/projectSlice";
+import { useSearchIndex } from "../hooks/useSearchIndex";
+import { format } from "date-fns";
+import { paginationArray } from "../helpers";
+import { Pagination } from "../components/Pagination";
+import { BiLockAlt } from "react-icons/bi";
+import { ProjectAccessForm } from "../components/ProjectAccessForm";
 
 type ProposalRowType = {
   index: number;
   project: Project;
   onEdit: () => void;
   onDelete: () => void;
+  onManageAccess: () => void;
 };
 const ProjectRow: FC<ProposalRowType> = ({
   project,
   onEdit,
   onDelete,
+  onManageAccess,
   index,
 }) => {
-  const { title, dateAdded, funder, documents, workplans } = project;
+  const { users, auth } = useAppSelector(({ users, auth }) => ({
+    users,
+    auth,
+  }));
+  const { usersMap = {} } = users || {};
+  const {
+    title,
+    dateAdded,
+    funder,
+    documents,
+    workplans,
+    creatorId,
+    writeAccess = [],
+    budgetAccess = [],
+  } = project;
   const tagColor = useMemo(
     () => COLOR_SPECTRUM_TAGS[index % COLOR_SPECTRUM_TAGS.length],
     [index],
@@ -70,10 +97,10 @@ const ProjectRow: FC<ProposalRowType> = ({
       <Td bg="white" mb={2}>
         {funder}
       </Td>
-      <Td bg="white" mb={2}>
-        {(dateAdded as Date).toDateString()}
+      <Td bg="white" mb={2} textAlign="center">
+        {format(new Date(project.dateAdded as number), "d MMM Y")}
       </Td>
-      <Td bg="white" mb={2}>
+      <Td bg="white" mb={2} textAlign="center">
         {documents && documents.length ? (
           <HStack spacing={2}>
             <Icon color="tetiary.400" as={AiOutlineFileText} />
@@ -86,7 +113,16 @@ const ProjectRow: FC<ProposalRowType> = ({
           </HStack>
         )}
       </Td>
-      <Td bg="white" mb={2}>
+      <Td bg="white" align="center" textAlign="center">
+        <Tooltip title={usersMap[creatorId]?.displayName || "Unknown user"}>
+          <Avatar
+            size="xs"
+            src={usersMap[creatorId]?.photoUrl}
+            name={usersMap[creatorId]?.displayName || ""}
+          />
+        </Tooltip>
+      </Td>
+      <Td bg="white" mb={2} textAlign="center">
         {workplans && workplans.length ? (
           <Tag whiteSpace="nowrap" bg={tagColor}>
             {`${workplans.length} workplans`}
@@ -97,35 +133,51 @@ const ProjectRow: FC<ProposalRowType> = ({
       </Td>
       <Td borderRightRadius="md" bg="white" mb={2}>
         <HStack alignItems="center" spacing={2}>
-          <Tooltip label="edit project " bg="tetiary.200" placement="top">
-            <IconButton
-              aria-label="edit project"
-              color="blue.400"
-              icon={<Icon as={AiOutlineEdit} />}
-              onClick={onEdit}
-            />
-          </Tooltip>
+          {creatorId === auth?.uid ? (
+            <Tooltip label="Manage Access " bg="tetiary.200" placement="top">
+              <IconButton
+                aria-label="manage access"
+                color="pink.400"
+                icon={<Icon as={BiLockAlt} />}
+                onClick={onManageAccess}
+              />
+            </Tooltip>
+          ) : null}
+          {creatorId === auth?.uid || writeAccess.includes(auth?.uid || "") ? (
+            <>
+              <Tooltip label="edit project " bg="tetiary.200" placement="top">
+                <IconButton
+                  aria-label="edit project"
+                  color="blue.400"
+                  icon={<Icon as={AiOutlineEdit} />}
+                  onClick={onEdit}
+                />
+              </Tooltip>
+              <Tooltip label="Delete project" bg="tetiary.200" placement="top">
+                <IconButton
+                  variant="outline"
+                  aria-label="view project"
+                  color="red.300"
+                  icon={<Icon as={BsTrash} />}
+                  onClick={onDelete}
+                />
+              </Tooltip>
+            </>
+          ) : null}
 
-          <Tooltip label="Delete project" bg="tetiary.200" placement="top">
-            <IconButton
-              variant="outline"
-              aria-label="view project"
-              color="red.300"
-              icon={<Icon as={BsTrash} />}
-              onClick={onDelete}
-            />
-          </Tooltip>
-          <Tooltip label="View Budget" bg="tetiary.200" placement="top">
-            <IconButton
-              as={Link}
-              variant="outline"
-              aria-label="View Budget"
-              color="yellow.300"
-              icon={<Icon as={BsCalculator} />}
-              onClick={onDelete}
-              to={`${pathname}/${project.id}/budget`}
-            />
-          </Tooltip>
+          {creatorId === auth?.uid || budgetAccess.includes(auth?.uid || "") ? (
+            <Tooltip label="View Budget" bg="tetiary.200" placement="top">
+              <IconButton
+                as={Link}
+                variant="outline"
+                aria-label="View Budget"
+                color="yellow.500"
+                icon={<Icon as={BsCalculator} />}
+                onClick={onDelete}
+                to={`${pathname}/${project.id}/budget`}
+              />
+            </Tooltip>
+          ) : null}
           <Tooltip
             label="View project details"
             bg="tetiary.200"
@@ -146,7 +198,26 @@ const ProjectRow: FC<ProposalRowType> = ({
 };
 
 export const Projects: FC = () => {
-  const { projects } = useAppSelector(({ projects }) => ({ projects }));
+  const { projects: appProjects } = useAppSelector(({ projects }) => ({
+    projects,
+  }));
+  const {
+    data: projects,
+    pageStat,
+    setPage,
+    setData,
+    search,
+    setQuery,
+    loading,
+  } = useSearchIndex<Project>("projects");
+  const pages = useMemo(() => {
+    return Math.ceil(
+      (pageStat?.total || 0) / NUMBER_OF_PROJECTS_PER_PROJECT_PAGE,
+    );
+  }, [pageStat?.total]);
+  const pagination = useMemo(() => {
+    return paginationArray(pageStat?.currentPage || 0, pages);
+  }, [pageStat, pages]);
   const [isDeletingProjects, setDeletingProjects] = useState<boolean>();
   const [selectedProject, setSelectedProject] = useState<Project>();
   const [mode, setMode] = useState<"add" | "edit">("add");
@@ -158,6 +229,11 @@ export const Projects: FC = () => {
     isOpen: isProposalModalOpen,
     onClose: onCloseProjectModal,
     onOpen: onOpenProposalModal,
+  } = useDisclosure();
+  const {
+    isOpen: isAccessModalOpen,
+    onClose: onCloseAccessModal,
+    onOpen: onOpenAccessModal,
   } = useDisclosure();
   const {
     isOpen: isDeleteModalOpen,
@@ -185,6 +261,23 @@ export const Projects: FC = () => {
     setSelectedProject(project);
     onOpenProposalModal();
   };
+  const manageAccessPrompt = (project: Project) => {
+    setSelectedProject(project);
+    onOpenAccessModal();
+  };
+  const onEditProjectCache = (project: Project) => {
+    const index = (projects || []).findIndex((proj) => project.id === proj.id);
+    if (index < 0) {
+      return;
+    }
+    const newData = [...(projects || [])];
+    newData[index] = project;
+    setData(newData);
+  };
+
+  const addProjectCache = (project: Project) => {
+    setData([...(projects || []), project]);
+  };
 
   const deletePrompt = (project: Project) => {
     setMode("edit");
@@ -197,6 +290,13 @@ export const Projects: FC = () => {
     setDeletingProjects(true);
     await deleteProject(selectedProject);
     setDeletingProjects(false);
+    const index = (projects || []).findIndex(
+      (proj) => proj.id === selectedProject.id,
+    );
+    if (index < 0) return;
+    const newData = [...(projects || [])];
+    newData.splice(index);
+    setData(newData);
     onCloseDeleteModal();
   };
   return (
@@ -233,6 +333,7 @@ export const Projects: FC = () => {
                 <Th>Funder</Th>
                 <Th>Date Added</Th>
                 <Th whiteSpace="pre-wrap">Documents</Th>
+                <Th>Added by</Th>
                 <Th>Workplans</Th>
               </Tr>
             </Thead>
@@ -256,6 +357,7 @@ export const Projects: FC = () => {
                     project={project}
                     onDelete={() => deletePrompt(project)}
                     onEdit={() => editProjectPrompt(project)}
+                    onManageAccess={() => manageAccessPrompt(project)}
                   />
                 ))
               ) : (
@@ -272,6 +374,14 @@ export const Projects: FC = () => {
               )}
             </Tbody>
           </Table>
+          <Flex display="flex" justifyContent="center">
+            <Pagination
+              pagination={pagination}
+              pages={pages}
+              setPage={setPage}
+              currentPage={pageStat?.currentPage || 0}
+            />
+          </Flex>
         </TableContainer>
       </Flex>
       <Modal
@@ -285,6 +395,9 @@ export const Projects: FC = () => {
           <ModalCloseButton />
           <ModalBody>
             <ProjectForm
+              search={search}
+              onEdit={onEditProjectCache}
+              onAddProject={addProjectCache}
               project={selectedProject}
               onClose={onCloseProjectModal}
               mode={mode}
@@ -292,15 +405,31 @@ export const Projects: FC = () => {
           </ModalBody>
         </ModalContent>
       </Modal>
+      <Modal isOpen={isAccessModalOpen} onClose={onCloseAccessModal} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>🔐 Manage Project Access</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {selectedProject ? (
+              <ProjectAccessForm
+                project={selectedProject}
+                onUpdate={onEditProjectCache}
+                onClose={onCloseAccessModal}
+              />
+            ) : null}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
       <Modal isOpen={isDeleteModalOpen} onClose={onCloseDeleteModal} size="sm">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader py={8}>{`Delete Proposal ${
+          <ModalHeader textAlign="center" py={8}>{`Delete Proposal ${
             selectedProject?.title || ""
           }`}</ModalHeader>
           <ModalCloseButton size="sm" />
           <ModalBody>
-            <Text>{`Are you sure you want to delete this project named ${
+            <Text textAlign="center">{`Are you sure you want to delete this project named ${
               selectedProject?.title || "unknown name"
             } and all associated documents, workplans and files`}</Text>
           </ModalBody>

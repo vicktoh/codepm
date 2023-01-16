@@ -12,6 +12,8 @@ import {
   PopoverBody,
   Button,
   useToast,
+  useBreakpoint,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import React, { FC, useState } from "react";
 import { Link } from "react-router-dom";
@@ -38,8 +40,8 @@ export const UserRow: FC<UserRowProps> = ({
   const { onClose, onOpen, isOpen } = useDisclosure();
   const [loading, setLoading] = useState<boolean>(false);
   const toast = useToast();
+  const isMobile = useBreakpointValue({ lg: false, md: false, base: true });
   const setRole = async (role: UserRole) => {
-    console.log(role);
     try {
       onClose();
       setLoading(true);
@@ -61,9 +63,8 @@ export const UserRow: FC<UserRowProps> = ({
   };
   return (
     <Flex
-      justifyContent="space-between"
-      alignItems="center"
-      direction="row"
+      alignItems={isMobile ? "flex-start" : "center"}
+      direction={isMobile ? "column" : "row"}
       py={3}
       px={5}
       my={1}
@@ -78,8 +79,10 @@ export const UserRow: FC<UserRowProps> = ({
         </VStack>
       </HStack>
 
-      <Text textAlign="left">{designation || "user"}</Text>
-      <HStack spacing={3}>
+      <Text ml={isMobile ? 0 : "auto"} mt={isMobile ? 3 : 0} mr={3}>
+        {designation || "user"}
+      </Text>
+      <HStack spacing={3} mt={isMobile ? 5 : 0}>
         <Popover onOpen={onOpen} isOpen={isOpen} onClose={onClose}>
           <PopoverTrigger>
             <Button isLoading={loading} size="md">

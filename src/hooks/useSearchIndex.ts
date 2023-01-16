@@ -10,6 +10,8 @@ export function useSearchIndex<T>(
   const [query, setQuery] = useState<string>("");
   const [filters, setFilters] = useState<string>(initialFilter || "");
   const [facets, setFacets] = useState<(string | string[])[]>();
+  const [groups, setGroups] =
+    useState<Record<keyof T, Record<string, number> | undefined>>();
   const [page, setPage] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [pageStat, setpageStats] = useState<{
@@ -17,8 +19,9 @@ export function useSearchIndex<T>(
     pages: number;
     currentPage: number;
   }>();
-  const [data, setData] = useState<T>();
+  const [data, setData] = useState<T[]>();
   const toast = useToast();
+  console.log("facet", facets);
   const search = useCallback(async () => {
     try {
       setLoading(true);
@@ -28,8 +31,15 @@ export function useSearchIndex<T>(
         hitsPerPage: perpage || 10,
         ...(filters ? { filters } : null),
         facetFilters: facets,
+        facets: ["*"],
       });
-      const { hits, nbHits, page: currentPage, nbPages } = response;
+      const {
+        hits,
+        nbHits,
+        page: currentPage,
+        nbPages,
+        facets: categories,
+      } = response;
       setData(hits as any);
       setpageStats({
         total: nbHits,
@@ -37,6 +47,7 @@ export function useSearchIndex<T>(
         currentPage: currentPage,
       });
       setPage(currentPage);
+      if (!groups) setGroups(categories as any);
     } catch (error) {
       const err: any = error;
       toast({
@@ -47,7 +58,7 @@ export function useSearchIndex<T>(
     } finally {
       setLoading(false);
     }
-  }, [page, query, toast, index, filters, facets, perpage]);
+  }, [page, query, toast, index, groups, filters, facets, perpage]);
   useEffect(() => {
     search();
   }, [search]);
@@ -63,5 +74,6 @@ export function useSearchIndex<T>(
     data,
     setData,
     search,
+    groups,
   };
 }

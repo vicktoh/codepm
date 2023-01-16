@@ -9,6 +9,8 @@ import {
   Heading,
   Input,
   Select,
+  SimpleGrid,
+  Textarea,
   useToast,
 } from "@chakra-ui/react";
 import { Form, Formik } from "formik";
@@ -50,6 +52,7 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
     attentionToId: "",
   };
   const validationSchema = yup.object().shape({
+    memo: yup.string().required("You must provide a leave memo"),
     startDate: yup
       .date()
       .max(yup.ref("endDate"), "Must be before end date")
@@ -60,6 +63,7 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
       .required(),
     leaveType: yup.string().required(),
     attentionToId: yup.string().required("Must select a supervisor to approve"),
+    handoverId: yup.string().required("Must select who you will handover to"),
   });
   return (
     <Formik
@@ -95,38 +99,51 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
       }) => (
         <Form>
           <Flex direction="column" py={4} px={1}>
-            <FormControl
-              mb={3}
-              isInvalid={!!touched.startDate && !!errors.startDate}
-            >
-              <FormLabel>Start Date</FormLabel>
-              <Input
-                name="startDate"
-                onChange={handleChange}
-                type="date"
-                onBlur={handleBlur}
-                value={values.startDate}
-              />
-              <FormErrorMessage>
-                {touched.startDate && touched.startDate}
-              </FormErrorMessage>
-            </FormControl>
-            <FormControl
-              mb={3}
-              isInvalid={!!touched.startDate && !!errors.startDate}
-            >
-              <FormLabel>End Date</FormLabel>
-              <Input
-                type="date"
-                name="endDate"
+            <FormControl mb={3} isInvalid={!!touched.memo && !!errors.memo}>
+              <FormLabel>Leave Memo</FormLabel>
+              {console.log({ errors })}
+              <Textarea
+                name="memo"
+                value={values.memo}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                value={values.endDate}
-              />
-              <FormErrorMessage>
-                {touched.endDate && errors.endDate}
-              </FormErrorMessage>
+              ></Textarea>
+              <FormErrorMessage>{touched.memo && errors.memo}</FormErrorMessage>
             </FormControl>
+            <SimpleGrid columns={[1, 2]} gap={3}>
+              <FormControl
+                mb={3}
+                isInvalid={!!touched.startDate && !!errors.startDate}
+              >
+                <FormLabel>Start Date</FormLabel>
+                <Input
+                  name="startDate"
+                  onChange={handleChange}
+                  type="date"
+                  onBlur={handleBlur}
+                  value={values.startDate}
+                />
+                <FormErrorMessage>
+                  {touched.startDate && touched.startDate}
+                </FormErrorMessage>
+              </FormControl>
+              <FormControl
+                mb={3}
+                isInvalid={!!touched.startDate && !!errors.startDate}
+              >
+                <FormLabel>End Date</FormLabel>
+                <Input
+                  type="date"
+                  name="endDate"
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  value={values.endDate}
+                />
+                <FormErrorMessage>
+                  {touched.endDate && errors.endDate}
+                </FormErrorMessage>
+              </FormControl>
+            </SimpleGrid>
             <FormControl
               mb={3}
               isInvalid={!!touched.leaveType && !!errors.leaveType}
@@ -158,13 +175,50 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
             </FormControl>
             <FormControl
               mb={3}
-              isInvalid={!!touched.leaveType && !!errors.leaveType}
+              isInvalid={!!touched.attentionToId && !!errors.attentionToId}
+            >
+              <FormLabel>Handing Over to</FormLabel>
+              <Flex direction="column">
+                {values.handoverId ? (
+                  <Flex direction="column" justifyContent="center" padding={3}>
+                    <Avatar
+                      size="sm"
+                      src={usersMap[values.handoverId]?.photoUrl}
+                      name={
+                        usersMap[values.handoverId]?.displayName ||
+                        "Unknown User"
+                      }
+                    />
+                    <Heading fontSize="sm" mt={3}>
+                      {usersMap[values.handoverId]?.displayName ||
+                        "Unknown User"}
+                    </Heading>
+                  </Flex>
+                ) : null}
+              </Flex>
+              <UserListPopover
+                onSelectUser={(userId) => {
+                  setFieldValue("handoverId", userId);
+                }}
+                assignees={values.handoverId ? [values.handoverId] : []}
+                closeOnSelect={true}
+              >
+                <Input readOnly placeholder="Select Colleauge" />
+              </UserListPopover>
+              <FormErrorMessage>
+                {touched.handoverId && errors.handoverId}
+              </FormErrorMessage>
+            </FormControl>
+            <FormControl
+              mb={3}
+              isInvalid={!!touched.attentionToId && !!errors.attentionToId}
             >
               <FormLabel>Department Head</FormLabel>
               <Flex direction="column">
                 {values.attentionToId ? (
                   <Flex direction="column" justifyContent="center" padding={3}>
                     <Avatar
+                      size="sm"
                       src={usersMap[values.attentionToId]?.photoUrl}
                       name={
                         usersMap[values.attentionToId]?.displayName ||
@@ -188,7 +242,7 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
                 <Input readOnly placeholder="Select Dept. Head" />
               </UserListPopover>
               <FormErrorMessage>
-                {touched.leaveType && errors.leaveType}
+                {touched.attentionToId && errors.attentionToId}
               </FormErrorMessage>
             </FormControl>
             <Button
