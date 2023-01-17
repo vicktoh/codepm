@@ -66,19 +66,16 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
       .min(1, "You must add at least one requisition item"),
     date: yup.date().required(),
     projectId: yup.string().required("Project must be selected"),
-    beneficiaries: yup
-      .array()
-      .of(
-        yup.object().shape({
-          accountNumber: yup
-            .string()
-            .required()
-            .length(10, "Must be 10 characters"),
-          bank: yup.string().required("field required"),
-          name: yup.string().required("Required"),
-        }),
-      )
-      .min(1, "At least one beneficiary must be added"),
+    beneficiaries: yup.array().of(
+      yup.object().shape({
+        accountNumber: yup
+          .string()
+          .required()
+          .length(10, "Must be 10 characters"),
+        bank: yup.string().required("field required"),
+        name: yup.string().required("Required"),
+      }),
+    ),
     currency: yup.string().required(),
   });
   const renderFormStep = (step: number) => {

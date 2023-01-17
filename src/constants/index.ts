@@ -1,6 +1,7 @@
 import { TaskStatus, WorkplanType } from "../types/Project";
 import { System } from "../types/System";
-
+export const APP_ENV: "dev" | "prod" =
+  (process.env.REACT_APP_APP_ENV as "dev" | "prod") || "dev";
 export const COLOR_SPECTRUM_TAGS = [
   "#FFA096",
   "#66B1F3",
@@ -33,8 +34,18 @@ export const MISSED_DAY_COLOR = "#EA8181";
 export const PUBLIC_HOLIDAY_COLOR = "#5AB7D4";
 export const LEAVE_DAY_COLOR = "#E7D74C";
 export const CALENDAR_HEADER = ["S", "M", "T", "W", "T", "F", "S"];
-export const ALGOLIA_APP_ID = "UO4LVZ6V72";
-export const ALGOLIA_SEARCH_API_KEY = "4df18395c02e8cda29ac8aae7a22b0d4";
+export const ALGOLIA_APP_ID = APP_ENV === "dev" ? "UO4LVZ6V72" : "FMT2TKS845";
+export const ALGOLIA_SEARCH_API_KEY =
+  APP_ENV === "dev"
+    ? "4df18395c02e8cda29ac8aae7a22b0d4"
+    : "ab0261aecb9c338551c64d05a4530ecd";
+
+console.log({
+  APP_ENV,
+  ALGOLIA_APP_ID,
+  ALGOLIA_SEARCH_API_KEY,
+  process: process.env.REACT_APP_APP_ENV,
+});
 export const WHITE_LIST = [
   "connecteddevelopment.org",
   "ifollowthemoney.org",

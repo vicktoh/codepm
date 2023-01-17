@@ -338,7 +338,7 @@ export const Projects: FC = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {!projects ? (
+              {loading ? (
                 <Tr bg="white" borderRadius="xl" animation={loadingAnimation}>
                   <Td
                     colSpan={5}

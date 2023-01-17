@@ -16,5 +16,6 @@ export enum UserRole {
   finance = "finance",
   user = "user",
   budgetHolder = "budgetHolder",
+  reviewer = "reviewer",
   master = "master",
 }

@@ -52,27 +52,27 @@ export const CheckedBy: FC<
         <HStack spacing={3}>
           <Avatar
             name={usersMap[userId]?.displayName || displayName}
-            size="sm"
+            size="xs"
             src={usersMap[userId]?.photoUrl || photoUrl}
           />
           <VStack spacing={0} alignItems="flex-start">
-            <Heading fontSize="md">
+            <Heading fontSize="sm">
               {usersMap[userId]?.displayName || displayName}
             </Heading>
-            <Text>{usersMap[userId]?.designation}</Text>
+            <Text fontSize="xs">{usersMap[userId]?.designation}</Text>
           </VStack>
         </HStack>
-        <Text color="tetiary.200" fontSize="md" fontWeight="bold">
+        <Text color="tetiary.200" fontSize="sm" fontWeight="bold">
           {title}
         </Text>
         {timestamp ? (
-          <Text my={1} fontSize="sm" color="brand.400" fontWeight="bold">
+          <Text my={1} fontSize="xs" color="brand.400" fontWeight="bold">
             {format(timestamp, "dd MMM Y")}
           </Text>
         ) : null}
         <Image
-          width="80px"
-          height="50px"
+          width="60px"
+          height="30px"
           src={usersMap[userId]?.signatureUrl || signatureUrl}
           alt="Signature"
         />
@@ -179,6 +179,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               UserRole.finance,
               UserRole.admin,
               UserRole.master,
+              UserRole.reviewer,
             ].includes(auth?.role)
           ) {
             toast({
@@ -188,11 +189,20 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
             return;
           }
           if (
-            auth?.role === UserRole.finance &&
+            auth?.role === UserRole.reviewer &&
             requisition.status === RequisitionStatus.pending
           ) {
             toast({
               title: "Budget holder must check this requisition first",
+              status: "warning",
+            });
+          }
+          if (
+            auth?.role === UserRole.finance &&
+            requisition.status === RequisitionStatus.pending
+          ) {
+            toast({
+              title: "This requisition must be reviewed first",
               status: "warning",
             });
           }
@@ -210,6 +220,18 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                     budgetHolderId: auth?.uid || "",
                     budgetHolderCheckedTimestamp: new Date().getTime(),
                     status: RequisitionStatus.budgetholder,
+                  }
+                : null),
+              ...(auth?.role === UserRole.reviewer
+                ? {
+                    reviewedBy: {
+                      userId: auth?.uid || "",
+                      photoUrl: profile?.photoUrl || "",
+                      displayName: profile?.displayName || "",
+                    },
+                    reviewedById: auth?.uid || "",
+                    reviewedTimestamp: new Date().getTime(),
+                    status: RequisitionStatus.reviewed,
                   }
                 : null),
               ...(auth?.role === UserRole.finance
@@ -279,11 +301,18 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                   title={"Budget Holder Check"}
                 />
               ) : null}
+              {requisition.reviewedBy ? (
+                <CheckedBy
+                  {...requisition.reviewedBy}
+                  timestamp={requisition.reviewedTimestamp}
+                  title={"Reviewed By"}
+                />
+              ) : null}
               {requisition.checkedby ? (
                 <CheckedBy
                   {...requisition.checkedby}
                   timestamp={requisition.checkedTimeStamp}
-                  title={"Reviewed By"}
+                  title={"Finance Check"}
                 />
               ) : null}
               {requisition.approvedBy ? (
@@ -314,7 +343,8 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                   Check as a BudgetHolder
                 </Button>
               ) : null}
-              {auth?.role === UserRole.finance &&
+              {auth?.role === UserRole.reviewer &&
+              requisition.status !== RequisitionStatus.reviewed &&
               requisition.status !== RequisitionStatus.approved &&
               requisition.status !== RequisitionStatus.checked ? (
                 <Button
@@ -328,6 +358,22 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                   }}
                 >
                   Mark as reviewed
+                </Button>
+              ) : null}
+              {auth?.role === UserRole.finance &&
+              requisition.status !== RequisitionStatus.approved &&
+              requisition.status !== RequisitionStatus.checked ? (
+                <Button
+                  colorScheme="purple"
+                  variant="solid"
+                  size={isMobile ? "sm" : "lg"}
+                  isLoading={values.mode === "check" && isSubmitting}
+                  onClick={() => {
+                    setFieldValue("mode", "check");
+                    submitForm();
+                  }}
+                >
+                  Finance Check
                 </Button>
               ) : null}
               {requisition.status === RequisitionStatus.checked ? (

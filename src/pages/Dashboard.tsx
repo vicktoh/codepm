@@ -71,17 +71,16 @@ export const Dashboard: FC = () => {
           >
             Dashboard
           </Text>
-          {auth?.role === UserRole.user ? null : (
-            <Text
-              fontSize={["sm", "md"]}
-              as={Link}
-              to="/dashboard/projects"
-              textDecor="underline"
-              color={isProjectRoute ? "brand.300" : "tetiary.500"}
-            >
-              Projects
-            </Text>
-          )}
+
+          <Text
+            fontSize={["sm", "md"]}
+            as={Link}
+            to="/dashboard/projects"
+            textDecor="underline"
+            color={isProjectRoute ? "brand.300" : "tetiary.500"}
+          >
+            Projects
+          </Text>
 
           <Text
             fontSize={["sm", "md"]}

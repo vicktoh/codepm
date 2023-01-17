@@ -101,7 +101,6 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
           <Flex direction="column" py={4} px={1}>
             <FormControl mb={3} isInvalid={!!touched.memo && !!errors.memo}>
               <FormLabel>Leave Memo</FormLabel>
-              {console.log({ errors })}
               <Textarea
                 name="memo"
                 value={values.memo}

@@ -143,7 +143,9 @@ export const SideNav: FC<SideNavProps> = ({
             Requisition
           </Text>
         </HStack>
-        {role === UserRole.admin || role === UserRole.master ? (
+        {role === UserRole.admin ||
+        role === UserRole.master ||
+        role === UserRole.reviewer ? (
           <HStack
             as={Link}
             to="/users"
@@ -162,6 +164,7 @@ export const SideNav: FC<SideNavProps> = ({
         {role === UserRole.admin ||
         role === UserRole.master ||
         role === UserRole.budgetHolder ||
+        role === UserRole.reviewer ||
         role === UserRole.finance ? (
           <HStack
             as={Link}

@@ -1,4 +1,4 @@
-import { add, eachDayOfInterval, format } from "date-fns";
+import { add, eachDayOfInterval, format, isWeekend } from "date-fns";
 import {
   arrayUnion,
   collection,
@@ -53,6 +53,10 @@ export const declineRequest = (id: string) => {
   const permissionDoc = doc(db, `permissionRequests/${id}`);
   return updateDoc(permissionDoc, { status: "declined" });
 };
+export const reviewRequest = (id: string) => {
+  const permissionDoc = doc(db, `permissionRequests/${id}`);
+  return updateDoc(permissionDoc, { status: "reviewed" });
+};
 
 export const approveRequest = async (request: Request) => {
   const { leaveType, startDate, endDate, type, userId } = request;
@@ -62,10 +66,12 @@ export const approveRequest = async (request: Request) => {
     const leaveDays = eachDayOfInterval({
       start: new Date(startDate),
       end: new Date(endDate),
-    }).map((date) => ({
-      date: format(date, "y-MM-dd"),
-      type: leaveType,
-    }));
+    })
+      .filter((date) => !isWeekend(date))
+      .map((date) => ({
+        date: format(date, "y-MM-dd"),
+        type: leaveType,
+      }));
     await runTransaction(db, async (tranaction) => {
       const permissionSnap = await tranaction.get(permissionRef);
 
