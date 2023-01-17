@@ -25,6 +25,7 @@ export enum RequisitionStatus {
   "pending" = "pending",
   "approved" = "approved",
   "budgetholder" = "budgetholder",
+  "reviewed" = "reviewed",
   "checked" = "checked",
   "paid" = "paid",
   "retirement-approved" = "retirement-approved",
@@ -67,6 +68,9 @@ export interface Requisition {
   budgetHolderId?: string;
   approvedBy?: UserReference;
   retirementApproved?: UserReference;
+  reviewedById?: string;
+  reviewedTimestamp?: number;
+  reviewedBy?: UserReference;
   approvedById?: string;
   checkedTimeStamp?: number;
   budgetHolderCheckedTimestamp?: number;

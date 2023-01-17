@@ -104,6 +104,15 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
             </Heading>
           </VStack>
         );
+      case "reviewed":
+        return (
+          <VStack spacing={0} alignItems="flex-start">
+            <Text fontSize="sm">Reviewed By</Text>
+            <Heading fontSize="md">
+              {requisition.reviewedBy?.displayName}
+            </Heading>
+          </VStack>
+        );
       case "checked":
         return (
           <VStack spacing={0} alignItems="flex-start">
@@ -146,6 +155,7 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
     if (
       status === "pending" ||
       status === "budgetholder" ||
+      status === "reviewed" ||
       status === "checked"
     ) {
       return (

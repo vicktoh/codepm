@@ -177,7 +177,12 @@ export const ProfilePage: FC = () => {
           </Heading>
           <Box position="relative">
             <VisuallyHidden>
-              <Input type="file" onChange={onFileChange} id="fileInput" />
+              <Input
+                type="file"
+                // value={fileInput?.name}
+                onChange={onFileChange}
+                id="fileInput"
+              />
             </VisuallyHidden>
             <Avatar
               name={auth?.displayName}
@@ -232,7 +237,7 @@ export const ProfilePage: FC = () => {
             <Input
               onClick={(e) => onInputClick()}
               ref={sigRef}
-              value={fileInput?.name}
+              // value={fileInput?.name}
               type="file"
               onChange={onSigFileChange}
               id="sigFileInput"
@@ -281,7 +286,7 @@ export const ProfilePage: FC = () => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Edit Profile</ModalHeader>
+          <ModalHeader>Manage Request</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <ProfileForm onClose={onCloseProfileModal} />

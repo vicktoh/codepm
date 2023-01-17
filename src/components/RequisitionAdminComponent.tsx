@@ -70,10 +70,19 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
             </Heading>
           </VStack>
         );
+      case "reviewed":
+        return (
+          <VStack spacing={0} alignItems="flex-start">
+            <Text fontSize="sm">Reviewed By</Text>
+            <Heading fontSize="md">
+              {requisition.reviewedBy?.displayName}
+            </Heading>
+          </VStack>
+        );
       case "checked":
         return (
           <VStack spacing={0} alignItems="flex-start">
-            <Text fontSize="sm">Checked by</Text>
+            <Text fontSize="sm">Finance Checked by</Text>
             <Heading fontSize="md">
               {requisition.checkedby?.displayName}
             </Heading>

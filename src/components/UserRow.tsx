@@ -17,6 +17,7 @@ import {
 } from "@chakra-ui/react";
 import React, { FC, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAppSelector } from "../reducers/types";
 import { setUserRole } from "../services/userServices";
 import { UserRole } from "../types/Profile";
 import { User } from "../types/User";
@@ -38,6 +39,7 @@ export const UserRow: FC<UserRowProps> = ({
   updateUser,
 }) => {
   const { onClose, onOpen, isOpen } = useDisclosure();
+  const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [loading, setLoading] = useState<boolean>(false);
   const toast = useToast();
   const isMobile = useBreakpointValue({ lg: false, md: false, base: true });
@@ -85,7 +87,11 @@ export const UserRow: FC<UserRowProps> = ({
       <HStack spacing={3} mt={isMobile ? 5 : 0}>
         <Popover onOpen={onOpen} isOpen={isOpen} onClose={onClose}>
           <PopoverTrigger>
-            <Button isLoading={loading} size="md">
+            <Button
+              isLoading={loading}
+              size="md"
+              disabled={auth?.role !== UserRole.master}
+            >
               {role || "User"}
             </Button>
           </PopoverTrigger>

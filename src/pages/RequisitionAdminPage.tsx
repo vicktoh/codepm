@@ -174,7 +174,7 @@ export const RequisitionAdminPage = () => {
       )}
 
       <Modal
-        size="2xl"
+        size="3xl"
         isOpen={isRequisitionModalOpen}
         onClose={onCloseRequisitionModal}
       >
