@@ -12,6 +12,8 @@ import { useAppSelector } from "../reducers/types";
 import homeLogo from "../assets/images/homelogo.svg";
 import { MobileNav } from "../components/MobileNav";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
+import { MembersOnline } from "../components/MembersOnline";
+import { Notifications } from "../components/Notifications";
 export const MainLayout: FC = () => {
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
@@ -66,7 +68,17 @@ export const MainLayout: FC = () => {
           my="auto"
           width="100%"
           overflowY={"auto"}
+          position="relative"
         >
+          <Flex
+            alignItems="centr"
+            justifyContent="space-between"
+            px={5}
+            py={[0, 5]}
+          >
+            {isMobile ? null : <MembersOnline />}
+            <Notifications />
+          </Flex>
           {isMobile ? <MobileNav /> : null}
           <Outlet />
         </Box>

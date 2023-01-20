@@ -29,29 +29,6 @@ export const Dashboard: FC = () => {
     <Flex width="100%" direction="column" p={[2, 5]}>
       <Flex direction="row" justifyContent="space-between" alignItems="center">
         <Heading fontSize="md">{date.toDateString()}</Heading>
-        <VStack alignItems="flex-end">
-          <Text>Member Online</Text>
-          {presence && users?.usersMap ? (
-            <HStack spacing="-.5rem">
-              {Object.entries(presence)
-                .filter(([key, presence]) => presence.state === "online")
-                .map(([userId, presence]) => (
-                  <Tooltip
-                    key={`userPresence-${userId}`}
-                    label={users.usersMap[userId]?.displayName}
-                  >
-                    <Avatar
-                      size="sm"
-                      src={users.usersMap[userId]?.photoUrl}
-                      name={users.usersMap[userId]?.displayName}
-                    />
-                  </Tooltip>
-                ))}
-            </HStack>
-          ) : (
-            <Text>None</Text>
-          )}
-        </VStack>
       </Flex>
       <Flex direction="column" my={3}>
         <HStack

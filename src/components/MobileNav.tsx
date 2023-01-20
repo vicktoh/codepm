@@ -25,6 +25,7 @@ import { useLogout } from "../hooks/useLoadingAnimation";
 import { UserRole } from "../types/Profile";
 import { FaUsersCog } from "react-icons/fa";
 import { GiTakeMyMoney } from "react-icons/gi";
+import { MembersOnline } from "./MembersOnline";
 
 export const MobileNav: FC = () => {
   const auth = useAppSelector(({ auth }) => auth);
@@ -36,6 +37,8 @@ export const MobileNav: FC = () => {
       <Flex
         position="sticky"
         marginTop={0}
+        top={0}
+        zIndex={3}
         px={3}
         bg="white"
         width="100%"
@@ -62,7 +65,12 @@ export const MobileNav: FC = () => {
       <Drawer isOpen={isOpen} onClose={onClose} size="xs" placement="left">
         <DrawerOverlay />
         <DrawerContent sx={{ width: "180px !important" }}>
-          <DrawerHeader>CODE</DrawerHeader>
+          <DrawerHeader>
+            <Heading fontSize="md" mb={3}>
+              CODE
+            </Heading>
+            <MembersOnline />
+          </DrawerHeader>
           <DrawerBody>
             <VStack
               alignItems="flex-start"

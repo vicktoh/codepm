@@ -62,8 +62,18 @@ export const UserTaskStats: FC<UserTaskStatsProps> = ({ userId }) => {
 
   if (loading) return <LoadingComponent title="Fetching task stats" />;
   return (
-    <Flex alignSelf="center" direction="column">
-      <Heading my={5} fontSize="lg">
+    <Flex
+      alignSelf="center"
+      direction="column"
+      bg="white"
+      py={3}
+      px={3}
+      maxHeight="350px"
+      overflowY="auto"
+      overflowX="hidden"
+      borderRadius="lg"
+    >
+      <Heading my={5} mx="auto" fontSize="lg">
         Assigned Tasks
       </Heading>
       {task ? (

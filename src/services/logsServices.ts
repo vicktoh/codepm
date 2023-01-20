@@ -13,6 +13,7 @@ import {
   deleteDoc,
   where,
   getDocs,
+  getDoc,
 } from "firebase/firestore";
 import { link } from "fs";
 import { Log, LogFormType, LogState } from "../types/Log";
@@ -37,6 +38,18 @@ export const listenOnLogs = (
   });
 };
 
+export const fetchUserLogs = async (userId: string) => {
+  const logRef = collection(db, `users/${userId}/logs`);
+  const q = query(logRef, orderBy("timeStamp", "desc"), limit(400));
+  const snapshot = await getDocs(q);
+  const logMap: Record<string, Log> = {};
+  snapshot.forEach((snap) => {
+    const log = snap.data() as Log;
+    logMap[snap.id] = log;
+  });
+  return logMap;
+};
+
 export const fetchLogs = async (userId: string, startDate: string) => {
   const logRef = collection(db, `users/${userId}/logs`);
   const timeStamp = new Date(startDate).getTime();
@@ -49,6 +62,18 @@ export const fetchLogs = async (userId: string, startDate: string) => {
   });
 
   return logs;
+};
+
+export const fetchLogOfParticularDay = async (userId: string, date: string) => {
+  const logRef = doc(db, `users/${userId}/logs/${date}`);
+  console.log("fetching", `users/${userId}/logs/${date}`);
+  const logSnapShot = await getDoc(logRef);
+  if (logSnapShot.exists()) {
+    const log = logSnapShot.data() as Log;
+    console.log("log", log);
+    return log;
+  }
+  return undefined;
 };
 
 export const newLogDay = (userId: string, logformvalue: LogFormType) => {

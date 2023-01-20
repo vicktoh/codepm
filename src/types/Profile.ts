@@ -1,6 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 
 export type Profile = {
+  email: string;
   displayName: string;
   photoUrl: string;
   designation: string;

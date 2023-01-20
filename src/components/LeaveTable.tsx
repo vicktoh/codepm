@@ -50,7 +50,17 @@ export const LeaveTable: FC<LeaveTableProps> = ({ userId }) => {
   }
 
   return (
-    <Flex direction="column" height="100%" flex="1 1">
+    <Flex
+      direction="column"
+      height="100%"
+      flex="1 1"
+      bg="white"
+      py={2}
+      px={3}
+      overflowY="auto"
+      overflowX="hidden"
+      borderRadius="lg"
+    >
       <Table mt={8}>
         <Thead>
           <Tr>

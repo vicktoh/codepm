@@ -17,9 +17,11 @@ import { converNumtoWord, requisitonTotal } from "../../helpers";
 import { useToast } from "@chakra-ui/react";
 import {
   addNewRequisition,
+  newRequisitionNotification,
   updateRequisition,
   updateVendorsList,
 } from "../../services/requisitionServices";
+import { sendMultipleNotification } from "../../services/notificationServices";
 
 type RequisitionFormProps = {
   requisition?: Requisition;
@@ -32,10 +34,14 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
   mode,
   onClose,
 }) => {
-  const { auth, vendors } = useAppSelector(({ auth, vendors }) => ({
-    auth,
-    vendors,
-  }));
+  const { auth, vendors, users } = useAppSelector(
+    ({ auth, vendors, users }) => ({
+      auth,
+      vendors,
+      users,
+    }),
+  );
+  const { usersMap = {} } = users || {};
   const toast = useToast();
   const initialValues: RequisitionFormValues = {
     title: requisition?.title || "",
@@ -93,7 +99,6 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={async (values) => {
-        console.log("Hello");
         if (!auth) return;
         const { date, step, ...rest } = values;
         const total = requisitonTotal(rest.items);
@@ -121,6 +126,21 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
               vendors || {},
               newRequisition.beneficiaries,
             );
+            if (newRequisition.attentionTo?.length) {
+              newRequisitionNotification(
+                {
+                  raisedBy: auth.displayName,
+                  title: "Requisition Alert",
+                  ids: newRequisition.attentionTo || [],
+                },
+                usersMap,
+              );
+              sendMultipleNotification(newRequisition.attentionTo, {
+                title: "Requisition Alert",
+                linkTo: "/requisition-admin",
+                description: `${auth.displayName} request your attention to the requesition titled "${newRequisition.title}"`,
+              });
+            }
             onClose();
           } catch (error) {
             console.log(error);
