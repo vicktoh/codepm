@@ -14,6 +14,7 @@ import {
 import { format, getDay, getDaysInMonth } from "date-fns";
 import React, { FC } from "react";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import { string } from "yup";
 import {
   CALENDAR_HEADER,
   FILL_DAY_COLOR,
@@ -21,12 +22,15 @@ import {
   MISSED_DAY_COLOR,
   PUBLIC_HOLIDAY_COLOR,
 } from "../../constants";
+import { Log } from "../../types/Log";
 import { CalendarCell, CalendarRow } from "./calendarParts";
 type CalendarMonthProps = {
   year: number;
   month: number;
   nextMonth: () => void;
   previousMonth: () => void;
+  onClick?: (date: Date) => void;
+  userLogs?: Record<string, Log>;
 };
 const TABLE_KEY_COLORS = [
   {
@@ -51,6 +55,8 @@ export const CalendarMonth: FC<CalendarMonthProps> = ({
   month,
   nextMonth,
   previousMonth,
+  onClick,
+  userLogs,
 }) => {
   const dateObj = new Date(year, month);
   const date = format(dateObj, "MMM Y");
@@ -70,6 +76,8 @@ export const CalendarMonth: FC<CalendarMonthProps> = ({
               year={year}
               month={year}
               key={`week-${row}-${column}`}
+              onClick={onClick}
+              userLogs={userLogs}
             />,
           );
         } else {
@@ -79,6 +87,8 @@ export const CalendarMonth: FC<CalendarMonthProps> = ({
               year={year}
               month={month}
               key={`week-${row}-${column}`}
+              onClick={onClick}
+              userLogs={userLogs}
             />,
           );
           iterDate++;
@@ -90,6 +100,8 @@ export const CalendarMonth: FC<CalendarMonthProps> = ({
             year={year}
             month={month}
             key={`week-${row}-${week.length}`}
+            onClick={onClick}
+            userLogs={userLogs}
           />,
         );
       }

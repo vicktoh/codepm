@@ -3,23 +3,45 @@ import {
   Box,
   Flex,
   Heading,
+  Icon,
+  IconButton,
   SimpleGrid,
   Text,
   VStack,
 } from "@chakra-ui/react";
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { format } from "date-fns";
+import React, { useEffect, useMemo, useState } from "react";
+import { BiLeftArrow } from "react-icons/bi";
+import { useNavigate, useParams } from "react-router-dom";
+import { CalendarMonth } from "../components/Calendar/CalendarMonth";
 import { LeaveTable } from "../components/LeaveTable";
 import { LoadingComponent } from "../components/LoadingComponent";
 import { UserLogStats } from "../components/UserLogStats";
 import { UserTaskStats } from "../components/UserTaskStats";
+import {
+  fetchLogOfParticularDay,
+  fetchUserLogs,
+} from "../services/logsServices";
 import { fetchProfile } from "../services/profileServices";
+import { Log } from "../types/Log";
 import { Profile } from "../types/Profile";
 
 export const UserProfilePage = () => {
   const params = useParams();
   const [loadingUser, setLoadingUser] = useState<boolean>();
   const [profile, setProfile] = useState<Profile>();
+  const [fetchingLog, setFetchingLog] = useState<boolean>();
+  const [userLogs, setUserLogs] = useState<Record<string, Log>>();
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [log, setLog] = useState<Log>();
+  const currentDate = useMemo(() => {
+    const date = new Date();
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth(),
+    };
+  }, []);
+  const [month, setMonth] = useState<number>(currentDate.month);
   useEffect(() => {
     const getUserProfile = async () => {
       if (!params.userId) return;
@@ -34,8 +56,47 @@ export const UserProfilePage = () => {
     };
     getUserProfile();
   }, [params.userId]);
+
+  useEffect(() => {
+    const getLogs = async () => {
+      try {
+        if (!params.userId) return;
+        setFetchingLog(true);
+        const logs = await fetchUserLogs(params.userId);
+        setUserLogs(logs);
+      } catch (error) {
+        console.log({ error });
+      } finally {
+        setFetchingLog(false);
+      }
+    };
+    getLogs();
+  }, [params.userId]);
+  const previousMonth = () => {
+    const newmonth = month - 1 < 0 ? 0 : month - 1;
+    setMonth(newmonth);
+  };
+  const nextMonth = () => {
+    const newMonth = month + 1 > 11 ? 11 : month + 1;
+    setMonth(newMonth);
+  };
+  const onClickCalenderCell = async (date: Date) => {
+    if (!params.userId || !userLogs) return;
+    setSelectedDate(date);
+    const dateString = format(date, "y-MM-dd");
+    const log = userLogs[dateString] || {};
+    setLog(log);
+  };
   return (
     <Flex direction="column" flex="1 1" height="100%">
+      <IconButton
+        alignSelf="flex-start"
+        size="md"
+        my={5}
+        icon={<Icon as={BiLeftArrow} />}
+        aria-label="goBack"
+        onClick={() => window.history.back()}
+      />
       <SimpleGrid gridGap={5} columns={[1, 2]} flex="1 1">
         {loadingUser ? (
           <LoadingComponent title="Fetching Profile" />
@@ -46,12 +107,9 @@ export const UserProfilePage = () => {
             </Heading>
             <Flex
               px={5}
-              border="1px solid white"
               mt={5}
-              background="rgba(255, 255, 255, .32)"
-              borderRadius={["none", "2xl"]}
-              backdropFilter="blur(5.8px)"
-              boxShadow="0 4px 30px rgba(0, 0, 0, 0.1)"
+              bg="white"
+              borderRadius="lg"
               direction="column"
               alignItems="flex-start"
               pb={5}
@@ -109,6 +167,75 @@ export const UserProfilePage = () => {
       <SimpleGrid mt={5} gridGap={5} columns={[1, 2]} flex="1 1">
         <LeaveTable userId={params?.userId || ""} />
         <UserTaskStats userId={params?.userId || ""} />
+      </SimpleGrid>
+      <SimpleGrid mt={5} gridGap={3} columns={[1, 2]} flex="1 1">
+        <Flex
+          bg="white"
+          direction="column"
+          borderRadius="lg"
+          py={5}
+          px={3}
+          alignItems="center"
+        >
+          <Heading fontSize="lg" mt={4}>
+            📝User Logs
+          </Heading>
+          <CalendarMonth
+            nextMonth={nextMonth}
+            previousMonth={previousMonth}
+            year={currentDate.year}
+            month={month}
+            onClick={onClickCalenderCell}
+            userLogs={userLogs}
+          />
+        </Flex>
+        <Flex direction="column" px={5} bg="white" borderRadius="lg" py={5}>
+          <Heading alignSelf="center" fontSize="lg" mb={1}>
+            Daily Log
+          </Heading>
+          {selectedDate ? (
+            <Text
+              as="span"
+              color="brand.300"
+              fontSize="md"
+              fontWeight="medium"
+              mb={3}
+              alignSelf="center"
+            >
+              <Text
+                as="span"
+                fontWeight="bold"
+              >{`${profile?.displayName}  `}</Text>
+              {` activities on ${format(selectedDate, "do LLL Y")}`}
+            </Text>
+          ) : null}
+          {fetchingLog ? (
+            <Text>Please wait....</Text>
+          ) : log?.activity?.length ? (
+            log.activity.map((activity, i) => (
+              <Text key={`${params.userId}-activity-${i}`}>{`${
+                i + 1
+              }. ${activity}`}</Text>
+            ))
+          ) : (
+            <Flex
+              bg="white"
+              direction="column"
+              borderRadius="lg"
+              py={5}
+              px={3}
+              alignItems="center"
+              flex="1 1"
+              width="100%"
+              justifyContent="center"
+            >
+              <VStack>
+                <Heading>📝</Heading>
+                <Heading fontSize="md">No Log filled for this day</Heading>
+              </VStack>
+            </Flex>
+          )}
+        </Flex>
       </SimpleGrid>
     </Flex>
   );

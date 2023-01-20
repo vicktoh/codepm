@@ -28,6 +28,8 @@ import { setPermisson } from "./reducers/permissionSlice";
 import { getRoleFromClaims, isEmailAllowed } from "./helpers";
 import { listenOnProjects } from "./services/projectServices";
 import { setProjects } from "./reducers/projectSlice";
+import { listenOnNofification } from "./services/notificationServices";
+import { setNotification } from "./reducers/notificationSlice";
 const codeLogo = require("./assets/images/logo.png");
 
 function App() {
@@ -41,6 +43,7 @@ function App() {
     system,
     permission,
     projects,
+    notifications,
   } = useAppSelector(
     ({
       auth,
@@ -51,6 +54,7 @@ function App() {
       system,
       permission,
       projects,
+      notifications,
     }) => ({
       auth,
       users,
@@ -60,6 +64,7 @@ function App() {
       system,
       permission,
       projects,
+      notifications,
     }),
   );
   const dispatch = useDispatch();
@@ -178,6 +183,18 @@ function App() {
     }
   }, [system, dispatch]);
 
+  // Notification
+  useEffect(() => {
+    if (notifications || !auth) return;
+    try {
+      listenOnNofification(auth.uid, (notifications) => {
+        dispatch(setNotification(notifications));
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [notifications, auth, dispatch]);
+
   useEffect(() => {
     if (permission || !auth?.uid) return;
     try {
@@ -188,6 +205,7 @@ function App() {
       console.log(error);
     }
   }, [permission, dispatch, auth]);
+
   useEffect(() => {
     if (projects) return;
     try {

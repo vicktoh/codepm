@@ -14,10 +14,14 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
+import { Timestamp } from "firebase/firestore";
 import { Form, Formik } from "formik";
 import React, { FC } from "react";
+import { BASE_URL } from "../../constants";
 import { useAppSelector } from "../../reducers/types";
+import { sendNotification } from "../../services/notificationServices";
 import { updateRequisition } from "../../services/requisitionServices";
+import { sendEmailNotification } from "../../services/userServices";
 import { UserRole } from "../../types/Profile";
 import { Requisition, RequisitionStatus } from "../../types/Requisition";
 import { UserReference } from "../../types/User";
@@ -247,11 +251,32 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                   }
                 : null),
             };
+            const message = `Your requisition titled "${newRequisition.title}" has been checked by ${auth.displayName} as a ${auth.role}`;
+            const today = format(new Date(), "do LLL Y");
             await updateRequisition(
               requisition.creatorId,
               requisition.id || "",
               newRequisition,
             );
+            sendEmailNotification({
+              to: `${newRequisition.creator.displayName} <${
+                usersMap[requisition.creatorId]?.email
+              }>`,
+              data: {
+                action: `${BASE_URL}`,
+                date: today,
+                message: message,
+                title,
+              },
+            });
+            sendNotification({
+              read: false,
+              reciepientId: newRequisition.creatorId,
+              title,
+              timestamp: Timestamp.now(),
+              description: message,
+              linkTo: "/requisitions",
+            });
             onClose();
           }
           if (values.mode === "approve") {
@@ -281,6 +306,27 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               requisition.id || "",
               newRequisition,
             );
+            const message = `Your requisition titled "${newRequisition.title}" has been approved by ${auth.displayName} as a ${auth.role}`;
+            const today = format(new Date(), "do LLL Y");
+            sendEmailNotification({
+              to: `${usersMap[requisition.creatorId]?.displayName || ""} <${
+                usersMap[requisition.creatorId]?.email
+              }>`,
+              data: {
+                action: `${BASE_URL}`,
+                date: today,
+                message: message,
+                title,
+              },
+            });
+            sendNotification({
+              read: false,
+              reciepientId: newRequisition.creatorId,
+              title,
+              timestamp: Timestamp.now(),
+              description: message,
+              linkTo: "/requisitions",
+            });
             onClose();
           }
         }}
@@ -294,7 +340,8 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
             <RequisitionBeneficiaryTable beneficiaries={beneficiaries} />
             <RequisitionAttachmentForm />
             <SimpleGrid columns={[1, 3]} mt={5} mb={3}>
-              {requisition.budgetHolderCheck ? (
+              {requisition.status !== RequisitionStatus.pending &&
+              requisition.budgetHolderCheck ? (
                 <CheckedBy
                   {...requisition.budgetHolderCheck}
                   timestamp={requisition.budgetHolderCheckedTimestamp}
@@ -325,11 +372,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
             </SimpleGrid>
             <HStack spacing={3} my={3}>
               {auth?.role === UserRole.budgetHolder &&
-              ![
-                RequisitionStatus.approved,
-                RequisitionStatus.budgetholder,
-              ].includes(requisition.status) &&
-              !requisition.budgetHolderCheck ? (
+              [RequisitionStatus.pending].includes(requisition.status) ? (
                 <Button
                   variant="solid"
                   colorScheme="green"

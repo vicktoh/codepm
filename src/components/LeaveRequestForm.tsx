@@ -13,13 +13,18 @@ import {
   Textarea,
   useToast,
 } from "@chakra-ui/react";
+import { format } from "date-fns";
+import { Timestamp } from "firebase/firestore";
 import { Form, Formik } from "formik";
 import React, { FC, useMemo } from "react";
 
 import * as yup from "yup";
+import { BASE_URL } from "../constants";
 import { leaveMapper } from "../helpers";
 import { useLeaveData } from "../hooks/useLeaveData";
 import { useAppSelector } from "../reducers/types";
+import { sendNotification } from "../services/notificationServices";
+import { sendEmailNotification } from "../services/userServices";
 import { LeaveType, Request } from "../types/Permission";
 import { LeaveTypeMap } from "../types/System";
 import { UserListPopover } from "./UserListPopover";
@@ -72,6 +77,34 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
       onSubmit={async (values) => {
         try {
           await onSubmit(values);
+          if (values.attentionToId) {
+            const attentionToName =
+              usersMap[values.attentionToId]?.displayName || "";
+            const message = `${attentionToName} is requesting for leave from ${format(
+              new Date(values.startDate),
+              "do MMM yyy",
+            )} to ${format(new Date(values.endDate), "do MMM yyy")}`;
+            const today = format(new Date(), "do MMM yyy");
+            const emailAttentionTo = `${attentionToName} <${
+              usersMap[values.attentionToId]?.email || ""
+            }>`;
+            sendEmailNotification({
+              to: values.attentionToId,
+              data: {
+                action: `${BASE_URL}/users/requests`,
+                title: "Leave Request",
+                message,
+                date: today,
+              },
+            });
+            sendNotification({
+              read: false,
+              reciepientId: values.attentionToId,
+              title: "Leave Request",
+              timestamp: Timestamp.now(),
+              linkTo: "/users/requests",
+            });
+          }
           toast({
             title: "Request successfully submitted",
             description:

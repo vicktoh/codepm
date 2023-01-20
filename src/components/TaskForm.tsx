@@ -54,6 +54,7 @@ import { Timestamp } from "firebase/firestore";
 import { LoadingComponent } from "./LoadingComponent";
 import { EmptyState } from "./EmptyState";
 import { TaskCommentComponent } from "./TaskCommentComponent";
+import { sendNotification } from "../services/notificationServices";
 
 type TaskFormProps = {
   task: Task;
@@ -134,6 +135,16 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
       assignees.splice(index, 1);
     } else {
       assignees.push(userId);
+      sendNotification({
+        reciepientId: userId,
+        title: `New Task: (${task.projectTitle})`,
+        read: false,
+        timestamp: Timestamp.now(),
+        description: `You have been assigned a task ${task.title} by ${
+          auth?.displayName || "Unknown user"
+        } click the link to view`,
+        linkTo: `dashboard/projects/${task.projectId}/${task.workplanId}`,
+      });
     }
     setTask((task) => ({ ...task, assignees }));
   };

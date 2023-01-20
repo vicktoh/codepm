@@ -20,6 +20,7 @@ import { getAuth, updateProfile } from "firebase/auth";
 import { updateUserProfile } from "../services/profileServices";
 import { setProfile } from "../reducers/profileSlice";
 import { updateAuth } from "../reducers/authSlice";
+import { firebaseAuth } from "../services/firebase";
 
 const departments: string[] = require("../constants/departments.json");
 
@@ -47,6 +48,7 @@ export const ProfileForm: FC<{ onClose: () => void }> = ({
     designation: profile?.designation || "",
     department: profile?.department || "",
     dateOfBirth: profile?.dateOfBirth || "",
+    email: firebaseAuth.currentUser?.email || "",
   };
 
   return (
@@ -57,6 +59,7 @@ export const ProfileForm: FC<{ onClose: () => void }> = ({
           await updateUserProfile(auth?.uid || "", {
             ...(profile || {}),
             ...values,
+            ...{ email: firebaseAuth.currentUser?.email || "" },
           });
           const fireAuth = getAuth();
           fireAuth.currentUser &&

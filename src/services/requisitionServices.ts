@@ -30,6 +30,14 @@ import {
 } from "../types/Requisition";
 import { db, firebaseApp } from "./firebase";
 import { BudgetItem } from "../types/Project";
+import { StoreType } from "../reducers/store";
+import { User } from "../types/User";
+
+import { EmailPayLoad, NotificationPayload } from "../types/Notification";
+import { BASE_URL } from "../constants";
+import { format } from "date-fns";
+import { sendEmailVerification } from "firebase/auth";
+import { sendEmailNotification } from "./userServices";
 
 export const listenOnRequisition = (
   userId: string,
@@ -314,4 +322,37 @@ export const updateRetirementStatus = (
   batch.update(requisitionRef, updates);
   batch.update(userRequisitionRef, updates);
   return batch.commit();
+};
+type NewReqProps = {
+  raisedBy: string;
+  title: string;
+  ids: string[];
+};
+export const newRequisitionNotification = async (
+  { raisedBy, title, ids }: NewReqProps,
+  usersMap: Record<string, User | undefined>,
+) => {
+  const message = `${raisedBy} is requesting your attention on the requisition "${title}". 
+  Go on the codepm platform to view it.`;
+  const receipient = ids
+    .map(
+      (userId) =>
+        `${usersMap[userId]?.displayName || "User"} <${
+          usersMap[userId]?.email || ""
+        }>`,
+    )
+    .join(", ");
+  console.log(receipient);
+  const payload = {
+    to: receipient,
+    data: {
+      title: "Requisition Alert",
+      message,
+      action: `${BASE_URL}/requisition-admin`,
+      date: (new Date(), "do MMM yyy"),
+    },
+  } as EmailPayLoad;
+  try {
+    await sendEmailNotification(payload);
+  } catch (error) {}
 };
