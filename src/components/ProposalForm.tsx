@@ -15,6 +15,7 @@ import * as yup from "yup";
 import { Form, Formik } from "formik";
 import { ProposalType, STATUSES } from "../types/ProposalType";
 import { addProposal, editProposal } from "../services/projectServices";
+import { useAppSelector } from "../reducers/types";
 
 type ProposalFormType = {
   onClose: () => void;
@@ -27,6 +28,7 @@ export const ProposalForm: FC<ProposalFormType> = ({
   proposal,
 }) => {
   const toast = useToast();
+  const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const validationSchema = yup.object().shape({
     title: yup
       .string()
@@ -39,19 +41,17 @@ export const ProposalForm: FC<ProposalFormType> = ({
       .max(300, "Cannot be above 300 characters"),
     funder: yup.string().required("This field is required"),
     status: yup.string().required("This field is required"),
-    file:
-      mode === "edit"
-        ? yup.string()
-        : yup.string().required("This field is required"),
+    // file: yup.string(),
   });
-  const initialValues: ProposalType & { file: File | undefined } = {
+  const initialValues: ProposalType = {
     title: proposal?.title || "",
     description: proposal?.description || "",
     funder: proposal?.funder || "",
     status: proposal?.status || "",
-    file: undefined,
+    // file: undefined,
     documents: proposal?.documents || [],
     dateAdded: 0,
+    creatorId: auth?.uid || "",
   };
   return (
     <Formik
@@ -59,7 +59,7 @@ export const ProposalForm: FC<ProposalFormType> = ({
       onSubmit={async (values, { setSubmitting }) => {
         if (mode === "add") {
           try {
-            await addProposal(values);
+            await addProposal(values, auth?.uid || "");
             toast({ title: "Successfully added proposal", status: "success" });
           } catch (error) {
             const err: any = error;

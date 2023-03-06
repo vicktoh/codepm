@@ -286,7 +286,7 @@ export const ProfilePage: FC = () => {
       >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Manage Request</ModalHeader>
+          <ModalHeader>Edit Profile</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <ProfileForm onClose={onCloseProfileModal} />

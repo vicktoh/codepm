@@ -57,7 +57,7 @@ export const WHITE_LIST = [
 
 export const SystemFields: Record<keyof System, string> = {
   casualLeaveDays: "Number of Casual Leave days allowed",
-  leaveDays: "Number of anual leave days allowed",
+  leaveDays: "Number of annual leave days allowed",
   compassionateLeaveDays: "Number of compassionate leave days allowed",
   maternityLeaveDays: "Number of maternity leave days allowed",
   paternityLeaveDays: "Number of paternity leave days allowed",

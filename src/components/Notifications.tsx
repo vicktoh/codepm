@@ -4,6 +4,7 @@ import {
   ChakraProps,
   Flex,
   Heading,
+  HStack,
   Icon,
   IconButton,
   Popover,
@@ -29,7 +30,13 @@ import { Notification } from "../types/Notification";
 type NotificationBoxProps = {
   notification: Notification;
 };
-const NotifcationBox: FC<NotificationBoxProps> = ({ notification }) => {
+
+const iconMap: Record<Notification["type"], string> = {
+  request: "📝",
+  requisition: "🤑",
+  tasks: "💼",
+};
+export const NotifcationBox: FC<NotificationBoxProps> = ({ notification }) => {
   const { title, timestamp, description, linkTo, read } = notification;
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
 
@@ -51,24 +58,29 @@ const NotifcationBox: FC<NotificationBoxProps> = ({ notification }) => {
       pt={8}
       pb={3}
       my={2}
-      bg={read ? "transparent" : "orange"}
-      textColor={read ? "black" : "white"}
+      bg={read ? "transparent" : "red.50"}
+      textColor="black"
       onClick={onReadNotifications}
       cursor="pointer"
       position="relative"
       border={read ? "1px solid red" : "none"}
+      borderColor={read ? "red.100" : "none"}
+      shadow="sm"
     >
-      <Heading color={read ? "black" : "white"} fontSize="lg" mb={1}>
-        {title}
-      </Heading>
-      <Text color={read ? "black" : "white"} fontSize="sm">
+      <HStack alignItems="center" spacing={4} mb={2}>
+        <Heading fontSize="md">{iconMap[notification.type] || "🔔"}</Heading>
+        <Heading color={"black"} fontSize="md">
+          {title}
+        </Heading>
+      </HStack>
+      <Text color={"black"} fontSize="xs">
         {description}
       </Text>
       {linkTo ? (
         <Button
           alignSelf="flex-end"
           color="red.300"
-          bg="white"
+          variant="solid"
           size="xs"
           mt={3}
           as={Link}

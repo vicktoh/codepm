@@ -7,6 +7,7 @@ export function useSearchIndex<T>(
   initialFilter?: string,
   perpage?: number,
 ) {
+  console.log({ initialFilter });
   const [query, setQuery] = useState<string>("");
   const [filters, setFilters] = useState<string>(initialFilter || "");
   const [facets, setFacets] = useState<(string | string[])[]>();

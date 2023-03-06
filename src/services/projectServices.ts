@@ -40,11 +40,11 @@ export const listenOnProposals = (
   });
 };
 
-export const addProposal = async (proposal: ProposalType & { file?: File }) => {
-  if (!proposal.file) return;
+export const addProposal = async (proposal: ProposalType, authId: string) => {
   const proposalCollectionRef = collection(db, "proposals");
   const docRef = doc(proposalCollectionRef);
   const proposalData: ProposalType = {
+    creatorId: authId,
     title: proposal.title,
     description: proposal.description,
     dateAdded: Timestamp.now(),

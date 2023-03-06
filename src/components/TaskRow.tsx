@@ -13,6 +13,7 @@ import {
   Avatar,
   Icon,
   useToast,
+  Link as Anchor,
 } from "@chakra-ui/react";
 import { Timestamp } from "firebase/firestore";
 import { AiOutlineCalendar, AiOutlineFileText } from "react-icons/ai";
@@ -21,12 +22,14 @@ import { useLoadingAnimation } from "../hooks/useLoadingAnimation";
 import { useAppSelector } from "../reducers/types";
 import { addTaskToDb } from "../services/taskServices";
 import { Project, Task, TaskStatus } from "../types/Project";
+import { Link } from "react-router-dom";
 
 type TaskRowProps = {
   task: Task & { draft?: boolean };
-  project: Project;
+  project: Pick<Project, "id" | "funder" | "title">;
   workplanId: string;
   openTask: (task: Task) => void;
+  showProject?: boolean;
 };
 
 export const TaskRow: FC<TaskRowProps> = ({
@@ -34,12 +37,23 @@ export const TaskRow: FC<TaskRowProps> = ({
   project,
   workplanId,
   openTask,
+  showProject = false,
 }) => {
-  const { users, auth } = useAppSelector(({ users, auth }) => ({
-    users,
-    auth,
-  }));
+  const { users, auth, projects } = useAppSelector(
+    ({ users, auth, projects }) => ({
+      users,
+      auth,
+      projects,
+    }),
+  );
   const [title, setTitle] = useState<string>("");
+  const projectsMap = useMemo(() => {
+    const map: Record<string, Project> = {};
+    projects?.forEach((project) => {
+      map[project.id] = project;
+    });
+    return map;
+  }, [projects]);
   const [isSaving, setSaving] = useState<boolean>(false);
   const loadingAnimation = useLoadingAnimation();
   const inputSize = useBreakpointValue({ base: "xs", md: "sm", lg: "sm" });
@@ -71,7 +85,10 @@ export const TaskRow: FC<TaskRowProps> = ({
     };
     try {
       setSaving(true);
-      await addTaskToDb(project.id, newTask);
+      const taskId = await addTaskToDb(project.id, newTask);
+      // if (onSaveTask) {
+      //   onSaveTask({ ...newTask, id: taskId });
+      // }
     } catch (error) {
       const err: any = error;
       toast({
@@ -98,6 +115,7 @@ export const TaskRow: FC<TaskRowProps> = ({
         </Td>
         <Td>Not assigned</Td>
         <Td>-</Td>
+        <Td>-</Td>
         <Td>No attachements</Td>
         <Td borderRightRadius="lg">
           <Tag colorScheme={STATUS_COLORSCHEME[task.status]}>{task.status}</Tag>
@@ -108,9 +126,9 @@ export const TaskRow: FC<TaskRowProps> = ({
   return (
     <Tr bg="white">
       <Td cursor="pointer" borderLeftRadius="lg" onClick={() => openTask(task)}>
-        <Tooltip label={task.title}>
+        <Tooltip label={task?.title}>
           <Text color="red.500" textDecor="underline" isTruncated noOfLines={1}>
-            {task.title}
+            {task?.title}
           </Text>
         </Tooltip>
       </Td>
@@ -159,6 +177,13 @@ export const TaskRow: FC<TaskRowProps> = ({
           "No due dates assigned"
         )}
       </Td>
+      {showProject ? (
+        <Td>
+          <Anchor as={Link} to={`/projects/${task.projectId}`}>
+            {projectsMap[task.projectId]?.title || "General Task"}
+          </Anchor>
+        </Td>
+      ) : null}
       <Td borderRightRadius="lg">
         <Tag colorScheme={STATUS_COLORSCHEME[task.status]}>{task.status}</Tag>
       </Td>

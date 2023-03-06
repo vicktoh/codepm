@@ -3,6 +3,7 @@ import {
   arrayUnion,
   collection,
   doc,
+  FieldValue,
   getDoc,
   onSnapshot,
   orderBy,
@@ -10,6 +11,7 @@ import {
   runTransaction,
   updateDoc,
 } from "firebase/firestore";
+import { Chat } from "../types/Chat";
 import { Permission, Request } from "../types/Permission";
 import { db } from "./firebase";
 
@@ -49,9 +51,9 @@ export const listenOnPermissionRequests = (
   return unsub;
 };
 
-export const declineRequest = (id: string) => {
+export const declineRequest = (id: string, comments?: Request["comments"]) => {
   const permissionDoc = doc(db, `permissionRequests/${id}`);
-  return updateDoc(permissionDoc, { status: "declined" });
+  return updateDoc(permissionDoc, { status: "declined", comments });
 };
 export const reviewRequest = (id: string) => {
   const permissionDoc = doc(db, `permissionRequests/${id}`);
@@ -59,7 +61,7 @@ export const reviewRequest = (id: string) => {
 };
 
 export const approveRequest = async (request: Request) => {
-  const { leaveType, startDate, endDate, type, userId } = request;
+  const { leaveType, startDate, endDate, type, userId, comments } = request;
   const permissionRef = doc(db, `permissions/${userId}`);
   const requestRef = doc(db, `permissionRequests/${request.id}`);
   if (type === "leave" && leaveType) {
@@ -82,7 +84,10 @@ export const approveRequest = async (request: Request) => {
       } else {
         tranaction.set(permissionRef, { leaveDays, logAllowance: {} });
       }
-      tranaction.update(requestRef, { status: "approved" });
+      tranaction.update(requestRef, {
+        status: "approved",
+        ...(comments ? { comments } : null),
+      });
     });
   }
   if (type === "log") {
@@ -102,7 +107,32 @@ export const approveRequest = async (request: Request) => {
       } else {
         tranaction.set(permissionRef, { leaveDays: [], logAllowance });
       }
-      tranaction.update(requestRef, { status: "approved" });
+      tranaction.update(requestRef, {
+        status: "approved",
+        ...(comments ? { comments } : null),
+      });
     });
   }
+};
+
+export const markRequestChatAsRead = (
+  requestId: string,
+  conversation: Record<string, number>,
+  chatCount: number,
+) => {
+  const requestRef = doc(db, `permissionRequests/${requestId}`);
+  return updateDoc(requestRef, {
+    chatCount,
+    conversation,
+  });
+};
+
+export const sendRequestChat = (
+  comments: Request["comments"],
+  requestId: string,
+) => {
+  const requestRef = doc(db, `permissionRequests/${requestId}`);
+  return updateDoc(requestRef, {
+    comments,
+  });
 };

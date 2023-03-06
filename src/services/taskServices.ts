@@ -5,7 +5,9 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   setDoc,
   updateDoc,
@@ -15,10 +17,14 @@ import { Task, TaskComment } from "../types/Project";
 import { db } from "./firebase";
 
 export const addTaskToDb = async (projectId: string, task: Task) => {
-  const collectionRef = collection(db, `projects/${projectId}/tasks`);
+  const collectionRef = collection(
+    db,
+    `${projectId ? `projects/${projectId}/` : ""}tasks`,
+  );
   const docRef = doc(collectionRef);
   task.id = docRef.id;
-  return setDoc(docRef, task);
+  await setDoc(docRef, task);
+  return task.id;
 };
 
 export const updateDbTask = async (
@@ -26,12 +32,18 @@ export const updateDbTask = async (
   taskId: string,
   change: any,
 ) => {
-  const docRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
+  const docRef = doc(
+    db,
+    `${projectId ? `projects/${projectId}/` : ""}tasks/${taskId}`,
+  );
   await updateDoc(docRef, change);
 };
 
 export const removeTask = async (projectId: string, task: Task) => {
-  const docRef = doc(db, `projects/${projectId}/tasks/${task.id}`);
+  const docRef = doc(
+    db,
+    `${projectId ? `projects/${projectId}/` : ""}tasks/${task.id}`,
+  );
   return deleteDoc(docRef);
 };
 export const listenOnMyTasks = (
@@ -39,13 +51,39 @@ export const listenOnMyTasks = (
   callback: (task: Task[]) => void,
 ) => {
   const collectionRef = collectionGroup(db, "tasks");
-  const q = query(collectionRef, where("assignees", "array-contains", userId));
+  const q = query(
+    collectionRef,
+    where("assignees", "array-contains", userId),
+    orderBy("timestamp", "desc"),
+    limit(100),
+  );
   return onSnapshot(q, (snapshot) => {
     const tasks: Task[] = [];
     snapshot.forEach((snap) => {
       const task = snap.data() as Task;
       tasks.push(task);
     });
+    callback(tasks);
+  });
+};
+export const listenOnCreatedTasks = (
+  userId: string,
+  callback: (task: Task[]) => void,
+) => {
+  const collectionRef = collection(db, "tasks");
+  const q = query(
+    collectionRef,
+    where("creatorId", "==", userId),
+    orderBy("timestamp", "desc"),
+    limit(100),
+  );
+  return onSnapshot(q, (snapshot) => {
+    const tasks: Task[] = [];
+    snapshot.forEach((snap) => {
+      const task = snap.data() as Task;
+      tasks.push(task);
+    });
+    console.log("snap", tasks);
     callback(tasks);
   });
 };
@@ -64,7 +102,10 @@ export const fetchUserTasks = async (userId: string) => {
 };
 
 export const fetchProjectsTasks = async (projectId: string) => {
-  const collectionRef = collection(db, `projects/${projectId}/tasks`);
+  const collectionRef = collection(
+    db,
+    `${projectId ? `projects/${projectId}/` : ""}tasks`,
+  );
   const snapshot = await getDocs(collectionRef);
   const tasks: Task[] = [];
   snapshot.forEach((snap) => {
@@ -82,7 +123,9 @@ export const writeComment = async (
 ) => {
   const commentCollectionRef = collection(
     db,
-    `projects/${projectId}/tasks/${taskId}/comments`,
+    projectId
+      ? `projects/${projectId}/tasks/${taskId}/comments`
+      : `tasks/${taskId}/comments`,
   );
 
   return addDoc(commentCollectionRef, comment);
@@ -95,7 +138,9 @@ export const listenOnTaskComment = (
 ) => {
   const commentCollectionRef = collection(
     db,
-    `projects/${projectId}/tasks/${taskId}/comments`,
+    projectId
+      ? `projects/${projectId}/tasks/${taskId}/comments`
+      : `tasks/${taskId}/comments`,
   );
   return onSnapshot(commentCollectionRef, (snapshot) => {
     const taskComments: TaskComment[] = [];
@@ -116,7 +161,9 @@ export const updateTaskComment = (
 ) => {
   const taskCommentRef = doc(
     db,
-    `projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+    projectId
+      ? `projects/${projectId}/tasks/${taskId}/comments/${commentId}`
+      : `tasks/${taskId}/comments/${commentId}`,
   );
 
   return updateDoc(taskCommentRef, { comment } as Partial<TaskComment>);
@@ -129,7 +176,9 @@ export const deleteTaskComment = (
 ) => {
   const taskCommentRef = doc(
     db,
-    `projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+    projectId
+      ? `projects/${projectId}/tasks/${taskId}/comments/${commentId}`
+      : `tasks/${taskId}/comments/${commentId}`,
   );
   return deleteDoc(taskCommentRef);
 };

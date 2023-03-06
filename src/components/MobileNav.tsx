@@ -26,6 +26,7 @@ import { UserRole } from "../types/Profile";
 import { FaUsersCog } from "react-icons/fa";
 import { GiTakeMyMoney } from "react-icons/gi";
 import { MembersOnline } from "./MembersOnline";
+import { NotificationBar } from "./NotificationBar";
 
 export const MobileNav: FC = () => {
   const auth = useAppSelector(({ auth }) => auth);
@@ -61,6 +62,7 @@ export const MobileNav: FC = () => {
           size="sm"
           to="/profile"
         />
+        <NotificationBar />
       </Flex>
       <Drawer isOpen={isOpen} onClose={onClose} size="xs" placement="left">
         <DrawerOverlay />

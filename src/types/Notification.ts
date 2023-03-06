@@ -7,6 +7,7 @@ export type Notification = {
   linkTo?: string;
   reciepientId: string;
   timestamp: number | Timestamp;
+  type: "tasks" | "requisition" | "request";
   read: boolean;
 };
 

@@ -139,6 +139,7 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
                 title: "Requisition Alert",
                 linkTo: "/requisition-admin",
                 description: `${auth.displayName} request your attention to the requesition titled "${newRequisition.title}"`,
+                type: "requisition",
               });
             }
             onClose();

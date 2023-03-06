@@ -54,7 +54,10 @@ import { Timestamp } from "firebase/firestore";
 import { LoadingComponent } from "./LoadingComponent";
 import { EmptyState } from "./EmptyState";
 import { TaskCommentComponent } from "./TaskCommentComponent";
-import { sendNotification } from "../services/notificationServices";
+import {
+  sendMultipleNotification,
+  sendNotification,
+} from "../services/notificationServices";
 
 type TaskFormProps = {
   task: Task;
@@ -62,8 +65,8 @@ type TaskFormProps = {
 };
 
 export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
-  const [taskState, setTask] = useState<Task>(task);
-  console.log({ taskState });
+  const { _highlightResult, ...restTask } = task as any;
+  const [taskState, setTask] = useState<Task>(restTask);
   const [editModeTitle, setEditModeTitle] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [taskComments, setTaskComments] = useState<TaskComment[]>();
@@ -144,6 +147,7 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
           auth?.displayName || "Unknown user"
         } click the link to view`,
         linkTo: `dashboard/projects/${task.projectId}/${task.workplanId}`,
+        type: "tasks",
       });
     }
     setTask((task) => ({ ...task, assignees }));
@@ -184,13 +188,23 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
   };
 
   const addComment = async () => {
-    if (!task.id) return;
+    if (task.id === undefined) return;
     const userComment: TaskComment = {
       comment: comments,
       userId: auth?.uid || "",
       timestamp: Timestamp.now(),
     };
     await writeComment(task.projectId, task.id, userComment);
+
+    task.assignees &&
+      sendMultipleNotification(task.assignees, {
+        title: `Comment: (${task.projectTitle}) - ${task.title}`,
+        description: `${
+          auth?.displayName || "Unknown user"
+        } says "${userComment}"`,
+        linkTo: `dashboard/projects/${task.projectId}/${task.workplanId}`,
+        type: "tasks",
+      });
     setComments("");
   };
   // Todo list actions

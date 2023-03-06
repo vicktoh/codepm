@@ -33,8 +33,16 @@ type LeaveRequestFormProps = {
   onSubmit: (
     values: Omit<Request, "status" | "type" | "userId" | "timestamp">,
   ) => Promise<void>;
+  mode?: "add" | "edit";
+  request?: Request;
+  onEdit?: (values: Request) => Promise<void>;
 };
-export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
+export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
+  onSubmit,
+  request,
+  onEdit,
+  mode,
+}) => {
   const toast = useToast();
   const { users, auth, system } = useAppSelector(({ users, auth, system }) => ({
     users,
@@ -51,10 +59,12 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
     Request,
     "status" | "type" | "userId" | "timestamp"
   > = {
-    startDate: "",
-    endDate: "",
-    leaveType: undefined,
-    attentionToId: "",
+    startDate: request?.startDate || "",
+    endDate: request?.endDate || "",
+    leaveType: request?.leaveType || undefined,
+    attentionToId: request?.attentionToId || "",
+    memo: request?.memo || "",
+    handoverId: request?.handoverId || "",
   };
   const validationSchema = yup.object().shape({
     memo: yup.string().required("You must provide a leave memo"),
@@ -76,7 +86,12 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
       validationSchema={validationSchema}
       onSubmit={async (values) => {
         try {
-          await onSubmit(values);
+          if (mode === "add") {
+            await onSubmit(values);
+          }
+          if (mode === "edit" && onEdit && request) {
+            await onEdit({ ...(request || {}), ...values });
+          }
           if (values.attentionToId) {
             const attentionToName =
               usersMap[values.attentionToId]?.displayName || "";
@@ -89,7 +104,7 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
               usersMap[values.attentionToId]?.email || ""
             }>`;
             sendEmailNotification({
-              to: values.attentionToId,
+              to: emailAttentionTo,
               data: {
                 action: `${BASE_URL}/users/requests`,
                 title: "Leave Request",
@@ -100,13 +115,19 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({ onSubmit }) => {
             sendNotification({
               read: false,
               reciepientId: values.attentionToId,
+              description: `Your attention is needed in a leave request by ${
+                auth?.displayName || ""
+              }`,
               title: "Leave Request",
               timestamp: Timestamp.now(),
               linkTo: "/users/requests",
+              type: "request",
             });
           }
           toast({
-            title: "Request successfully submitted",
+            title: `Request successfully ${
+              mode === "edit" ? "edited" : "submitted"
+            }`,
             description:
               "Your request has been submitted you'll get a notificaiton when it is approved or declined",
             status: "success",

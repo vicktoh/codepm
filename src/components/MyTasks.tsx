@@ -20,19 +20,37 @@ import {
   IconButton,
   useBreakpointValue,
   SimpleGrid,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  useDisclosure,
+  ModalOverlay,
+  Modal,
+  ModalContent,
+  ModalCloseButton,
+  ModalBody,
+  Tfoot,
 } from "@chakra-ui/react";
 import { Task, TaskStatus } from "../types/Project";
-import { listenOnMyTasks } from "../services/taskServices";
+import {
+  listenOnCreatedTasks,
+  listenOnMyTasks,
+} from "../services/taskServices";
 import { useAppSelector } from "../reducers/types";
 import { AiOutlineCalendar } from "react-icons/ai";
 import { STATUS_COLORSCHEME } from "../constants";
-import { BsCheckAll, BsChevronRight } from "react-icons/bs";
+import { BsCheckAll, BsChevronRight, BsPlus } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import { MdCancel, MdPending } from "react-icons/md";
 import { FaFile } from "react-icons/fa";
 import { IconType } from "react-icons";
+import { useSearchIndex } from "../hooks/useSearchIndex";
+import { BiChevronLeft, BiChevronRight, BiSearchAlt } from "react-icons/bi";
+import { TaskRow } from "./TaskRow";
+import { TaskForm } from "./TaskForm";
+import { Timestamp } from "firebase/firestore";
 
-const MyTaskRow: FC<{ task: Task }> = ({ task }) => {
+const MyTaskRow: FC<{ task: Task & { draft?: boolean } }> = ({ task }) => {
   const { users } = useAppSelector(({ users }) => ({ users }));
   const assigneeesTorender = useMemo(() => {
     if (!task?.assignees) return null;
@@ -116,10 +134,36 @@ export type TaskStats = {
   status: TaskStatus;
   color: string;
 };
+const TASK_PER_PAGE = 10;
 export const MyTasks: FC = () => {
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
+  const [selectedTask, setSelectedTask] = useState<
+    Task & { draft?: boolean }
+  >();
+  const { isOpen, onClose, onOpen } = useDisclosure();
+  const [searchInput, setSearchInput] = useState("");
   const [tasks, setTasks] = useState<Task[]>();
+  const [createdTask, setCreatedTasks] = useState<Task[]>();
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingCreated, setLoadingLoadingCreated] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
+  const taskPage = useMemo(() => {
+    let totalData = [...(createdTask || []), ...(tasks || [])];
+    if (searchInput) {
+      totalData = totalData.filter(
+        (task) =>
+          task.title.toLowerCase().indexOf(searchInput.toLowerCase()) > -1,
+      );
+    }
+    const total = totalData.length;
+    const pages = Math.ceil(total / TASK_PER_PAGE);
+    const start = (page - 1) * TASK_PER_PAGE;
+    const end = start + TASK_PER_PAGE;
+    if (end > totalData.length) {
+      return { pages, total, tasksToRender: totalData };
+    }
+    return { tasksToRender: totalData.slice(start, end), pages, total };
+  }, [createdTask, tasks, page, searchInput]);
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
   const taskCategories: Record<TaskStatus, TaskStats> = useMemo(() => {
     const categoryCount = {
@@ -149,26 +193,77 @@ export const MyTasks: FC = () => {
       },
     } as Record<TaskStatus, TaskStats>;
 
-    tasks?.length &&
-      tasks.forEach((task) => {
+    taskPage.tasksToRender?.length &&
+      taskPage.tasksToRender.forEach((task) => {
         categoryCount[task.status].count += 1;
       });
     return categoryCount;
-  }, [tasks]);
+  }, [taskPage]);
+
+  const onOpenTask = (task: Task & { draft?: boolean }) => {
+    setSelectedTask(task);
+    onOpen();
+  };
+  const addNewTaskDraft = () => {
+    const newTask: Task & { draft: boolean } = {
+      title: "",
+      draft: true,
+      status: TaskStatus.planned,
+      timestamp: Timestamp.now(),
+      workplanId: "",
+      projectId: "",
+      projectFunder: "none",
+      creatorId: "",
+      projectTitle: "General Task",
+    };
+    setCreatedTasks([newTask, ...(createdTask || [])]);
+  };
+
   useEffect(() => {
     const unsub = listenOnMyTasks(auth?.uid || "", (tasks) => {
+      if (!tasks) return;
       setLoading(false);
       setTasks(tasks);
+    });
+    return () => unsub();
+  }, [auth?.uid]);
+  useEffect(() => {
+    const unsub = listenOnCreatedTasks(auth?.uid || "", (tasks) => {
+      if (!tasks) return;
+      setLoading(false);
+      setCreatedTasks(tasks);
     });
     return () => unsub();
   }, [auth?.uid]);
 
   return (
     <Flex direction="column" mt={5}>
-      <Heading my={3} fontSize="lg">
-        My Tasks
-      </Heading>
-      <Skeleton isLoaded={!loading}>
+      <Flex direction="row" alignItems="center" my={4}>
+        <HStack spacing={3} alignItems="center">
+          <Heading my={3} fontSize="lg">
+            My Tasks
+          </Heading>
+          <IconButton
+            rounded="full"
+            aria-label="add Task"
+            onClick={addNewTaskDraft}
+            icon={<BsPlus />}
+            colorScheme="brand"
+          />
+        </HStack>
+        <InputGroup maxWidth="224px" ml="auto">
+          <InputLeftElement pointerEvents="none">
+            <BiSearchAlt color="brand.300" />
+          </InputLeftElement>
+          <Input
+            placeholder="Search task"
+            variant="filled"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+        </InputGroup>
+      </Flex>
+      <Skeleton isLoaded={!!tasks && !loading}>
         <SimpleGrid columns={[1, 2, 4]} gap={3}>
           {Object.values(TaskStatus).map((task, i) => (
             <Flex
@@ -191,9 +286,11 @@ export const MyTasks: FC = () => {
             </Flex>
           ))}
         </SimpleGrid>
-        <Heading my={3} fontSize="md">
-          My tasks Overview
-        </Heading>
+        <Flex>
+          <Heading my={3} fontSize="md">
+            My tasks Overview
+          </Heading>
+        </Flex>
         <SimpleGrid columns={[2, 4]}></SimpleGrid>
         <TableContainer whiteSpace={isMobile ? "nowrap" : "initial"}>
           <Table
@@ -206,15 +303,27 @@ export const MyTasks: FC = () => {
               <Tr>
                 <Th>Title</Th>
                 <Th>Assignees</Th>
+                <Th>Attachements</Th>
                 <Th>Due Dates</Th>
+                <Th>Project</Th>
                 <Th>Status</Th>
-                <Th>Action</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {tasks?.length ? (
-                tasks.map((task, i) => (
-                  <MyTaskRow key={`task-id-${i}`} task={task} />
+              {taskPage.tasksToRender?.length ? (
+                taskPage.tasksToRender.map((task, i) => (
+                  <TaskRow
+                    key={`task-id-${i}`}
+                    project={{
+                      id: task.projectId,
+                      funder: task.projectFunder,
+                      title: task.projectTitle,
+                    }}
+                    showProject={true}
+                    openTask={() => onOpenTask(task)}
+                    task={task}
+                    workplanId={task.workplanId}
+                  />
                 ))
               ) : (
                 <Tr>
@@ -224,9 +333,36 @@ export const MyTasks: FC = () => {
                 </Tr>
               )}
             </Tbody>
+            <Tfoot display="flex" alignItems="cent" py={3}>
+              <HStack spacing={2} alignSelf="center">
+                <IconButton
+                  aria-label="prev"
+                  icon={<BiChevronLeft />}
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                />
+                <IconButton
+                  aria-label="prev"
+                  icon={<BiChevronRight />}
+                  disabled={page >= taskPage.pages}
+                  onClick={() => setPage(page + 1)}
+                />
+              </HStack>
+            </Tfoot>
           </Table>
         </TableContainer>
       </Skeleton>
+      {selectedTask && isOpen ? (
+        <Modal size="2xl" isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent bg="white">
+            <ModalCloseButton />
+            <ModalBody>
+              <TaskForm onClose={onClose} task={selectedTask} />
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+      ) : null}
     </Flex>
   );
 };

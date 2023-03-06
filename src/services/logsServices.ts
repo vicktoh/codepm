@@ -66,7 +66,6 @@ export const fetchLogs = async (userId: string, startDate: string) => {
 
 export const fetchLogOfParticularDay = async (userId: string, date: string) => {
   const logRef = doc(db, `users/${userId}/logs/${date}`);
-  console.log("fetching", `users/${userId}/logs/${date}`);
   const logSnapShot = await getDoc(logRef);
   if (logSnapShot.exists()) {
     const log = logSnapShot.data() as Log;
@@ -119,17 +118,13 @@ export const removeLog = (userId: string, dateString: string) => {
 
 export const makeRequest = (
   userId: string,
-  period: Period,
-  type: Request["type"],
+  values: Omit<Request, "status" | "userId" | "timestamp">,
 ) => {
   const requestRef = doc(collection(db, `permissionRequests`));
-  const { startDate, endDate } = period;
   const newRequest: Request = {
     userId,
-    startDate,
-    endDate,
+    ...values,
     status: "pending",
-    type,
     timestamp: new Date().getTime(),
   };
   return setDoc(requestRef, newRequest);
@@ -151,6 +146,11 @@ export const makeLeaveRequest = (
   return setDoc(requestRef, newRequest);
 };
 
+export const updateRequest = async (req: Request) => {
+  const requestRef = doc(db, `permissionRequests/${req.id}`);
+  return updateDoc(requestRef, req);
+};
+
 export const listenUserRequests = (
   userId: string,
   callback: (requests: Request[]) => void,
@@ -165,8 +165,20 @@ export const listenUserRequests = (
     const requests: Request[] = [];
     snapshot.forEach((snap) => {
       const request = snap.data() as Request;
+      request.id = snap.id;
       requests.push(request);
     });
     callback(requests);
+  });
+};
+
+export const listenOnRequest = (
+  id: string,
+  callback: (req: Request) => void,
+) => {
+  const requestRef = doc(db, `permissionRequests/${id}`);
+  return onSnapshot(requestRef, (snapshot) => {
+    const request = snapshot.data() as Request;
+    callback(request);
   });
 };

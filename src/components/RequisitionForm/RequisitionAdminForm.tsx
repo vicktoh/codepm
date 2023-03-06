@@ -276,6 +276,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               timestamp: Timestamp.now(),
               description: message,
               linkTo: "/requisitions",
+              type: "requisition",
             });
             onClose();
           }
@@ -326,6 +327,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               timestamp: Timestamp.now(),
               description: message,
               linkTo: "/requisitions",
+              type: "requisition",
             });
             onClose();
           }

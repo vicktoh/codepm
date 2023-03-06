@@ -16,4 +16,5 @@ export type ProposalType = {
   funder: string;
   documents: ProjectDocument[];
   status: typeof STATUSES[number];
+  creatorId: string;
 };
