@@ -38,11 +38,11 @@ export const sendVehicleRequest = async (request: VehicleRequest) => {
 };
 
 export const updateVehicleRquest = (request: Partial<VehicleRequest>) => {
-  const docRef = doc(db, `vehicleRequest/${request.id}`);
+  const docRef = doc(db, `vehicleRequests/${request.id}`);
   return updateDoc(docRef, { ...request });
 };
 
 export const deleteVehicleRequest = (id: string) => {
-  const docRef = doc(db, `vehicleRequest/${id}`);
+  const docRef = doc(db, `vehicleRequests/${id}`);
   return deleteDoc(docRef);
 };

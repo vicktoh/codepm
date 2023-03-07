@@ -9,8 +9,8 @@ import {
   Textarea,
   useToast,
 } from "@chakra-ui/react";
+import { format } from "date-fns";
 import { Form, Formik } from "formik";
-import { request } from "http";
 import React, { FC } from "react";
 
 import * as yup from "yup";
@@ -29,8 +29,14 @@ type VehicleRequestFormProps = {
 };
 type VehicleFormRequest = Omit<
   VehicleRequest,
-  "id" | "userId" | "timestamp" | "status"
->;
+  | "id"
+  | "userId"
+  | "timestamp"
+  | "status"
+  | "startTime"
+  | "endTime"
+  | "datetimestamp"
+> & { startTime: string; endTime: string };
 export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
   onClose,
   request,
@@ -38,18 +44,19 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
 }) => {
   const toast = useToast();
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
-  const { userId, status, timestamp, ...rest } = request || {};
+  const { userId, status, timestamp, startTime, endTime, ...rest } =
+    request || {};
   const initialValues: VehicleFormRequest = {
     date: "",
-    startTime: "",
-    endTime: "",
+    startTime: startTime ? format(startTime, "kk:mm") : "",
+    endTime: endTime ? format(endTime, "kk:mm") : "",
     destination: "",
     origin: "",
     purpose: "",
     ...(rest || {}),
   };
   const validationSchema = yup.object().shape({
-    startTime: yup.string().required(),
+    startTime: yup.string().required("This is a required field"),
     purpose: yup.string().min(10, "Must be at least 10 characters"),
     date: yup
       .date()
@@ -57,7 +64,7 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
       .required("You must select a date"),
     destination: yup.string().required("Destination is required"),
     origin: yup.string().required("Location is required"),
-    endTime: yup.string().required(),
+    endTime: yup.string().required("This is a required field"),
   });
   return (
     <Formik
@@ -66,18 +73,30 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
       onSubmit={async (values) => {
         try {
           if (mode === "add") {
+            const { startTime, endTime, ...rest } = values;
+
             const vehRequest: VehicleRequest = {
-              ...values,
+              ...rest,
               timestamp: new Date().getTime(),
               userId: auth?.uid || "",
               status: "pending",
               id: "",
+              startTime: new Date(`${values.date} ${startTime}`).getTime(),
+              endTime: new Date(`${values.date} ${endTime}`).getTime(),
+              datetimestamp: new Date(`${values.date}`).getTime(),
             };
             await sendVehicleRequest(vehRequest);
             onClose();
           }
           if (mode === "edit") {
-            await updateVehicleRquest(values);
+            const { startTime, endTime, ...rest } = values;
+            const edit: Partial<VehicleRequest> = {
+              ...rest,
+              startTime: new Date(`${values.date} ${startTime}`).getTime(),
+              endTime: new Date(`${values.date} ${endTime}`).getTime(),
+              datetimestamp: new Date(`${values.date}`).getTime(),
+            };
+            await updateVehicleRquest(edit);
             onClose();
           }
           toast({
@@ -109,12 +128,19 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
       }) => (
         <Form>
           <Flex direction="column" py={4} px={1}>
+            {console.log(values)}
             <FormControl
               mb={3}
               isInvalid={!!touched.purpose && !!errors.purpose}
             >
               <FormLabel>Purpose</FormLabel>
-              <Input type="text" name="purpose" value={values.purpose} />
+              <Input
+                type="text"
+                name="purpose"
+                value={values.purpose}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
             </FormControl>
             <FormControl mb={3} isInvalid={!!touched.date && !!errors.date}>
               <FormLabel>Date</FormLabel>
@@ -134,7 +160,7 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
               <FormControl
                 isInvalid={!!touched.startTime && !!errors.startTime}
               >
-                <FormLabel>Start time</FormLabel>
+                <FormLabel>From time</FormLabel>
                 <Input
                   type="time"
                   name="startTime"
@@ -150,7 +176,7 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
                 mb={3}
                 isInvalid={!!touched.endTime && !!errors.endTime}
               >
-                <FormLabel>End Date</FormLabel>
+                <FormLabel>End time</FormLabel>
                 <Input
                   type="time"
                   name="endTime"

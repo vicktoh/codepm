@@ -37,6 +37,7 @@ const REQ_STATUS_ICONS: Record<VehicleRequest["status"], ReactElement> = {
 export const VehicleRequests = () => {
   const [myVehicleRequest, setMyVehicleRequests] = useState<VehicleRequest[]>();
   const [selectedRequest, setSelectedRequest] = useState<VehicleRequest>();
+  const [mode, setMode] = useState<"add" | "edit">("add");
   const {
     onOpen: onOpenVehModal,
     onClose: onCloseVehModal,
@@ -46,7 +47,14 @@ export const VehicleRequests = () => {
   const [loading, setLoading] = useState(false);
 
   const onMakeVehRequest = () => {
+    setMode("add");
     setSelectedRequest(undefined);
+    onOpenVehModal();
+  };
+
+  const onEditRequest = (request: VehicleRequest) => {
+    setSelectedRequest(request);
+    setMode("edit");
     onOpenVehModal();
   };
   useEffect(() => {
@@ -97,7 +105,10 @@ export const VehicleRequests = () => {
                 myVehicleRequest.map((req) => (
                   <Tr key={`vehicle-request-${req.id}`}>
                     <Td>{format(req.timestamp, "Do MMM Y")}</Td>
-                    <Td>{`${req.startTime} - ${req.endTime}`}</Td>
+                    <Td>{`${format(req.startTime, "KK:mm aaa")} - ${format(
+                      req.endTime,
+                      "KK:mm aaa",
+                    )}`}</Td>
                     <Td>
                       <HStack alignItems="center" spacing={2}>
                         <Text>{req.status}</Text>
@@ -105,7 +116,15 @@ export const VehicleRequests = () => {
                       </HStack>
                     </Td>
                     <Td>
-                      <Button size="sm">Edit</Button>
+                      <Button
+                        size="sm"
+                        mx={2}
+                        bg="blue.300"
+                        color="white"
+                        onClick={() => onEditRequest(req)}
+                      >
+                        Edit
+                      </Button>
                       <Button size="sm">Print Approval</Button>
                       <Button size="sm">Delete</Button>
                       <Button size="sm">Comments</Button>
@@ -138,6 +157,7 @@ export const VehicleRequests = () => {
             <VehicleRequestForm
               request={selectedRequest}
               onClose={onCloseVehModal}
+              mode={mode}
             />
           </ModalBody>
         </ModalContent>
