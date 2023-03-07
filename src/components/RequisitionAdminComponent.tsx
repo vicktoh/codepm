@@ -185,10 +185,12 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
           </VStack>
         </HStack>
       </Td>
-      <Td>
-        <Text isTruncated noOfLines={1} fontSize="lg">
-          {requisition.title}
-        </Text>
+      <Td maxWidth="200px">
+        <Tooltip label={requisition.title}>
+          <Text isTruncated noOfLines={1} fontSize="md">
+            {requisition.title}
+          </Text>
+        </Tooltip>
       </Td>
       <Td>{getStatus(requisition.status)}</Td>
       <Td>

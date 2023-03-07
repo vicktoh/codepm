@@ -51,7 +51,7 @@ export const sendNotification = (notification: Notification) => {
 };
 export const sendMultipleNotification = (
   userIds: string[],
-  payload: Pick<Notification, "description" | "title" | "linkTo">,
+  payload: Pick<Notification, "description" | "title" | "linkTo" | "type">,
 ) => {
   const batch = writeBatch(db);
   const { title, description, linkTo } = payload;
@@ -59,9 +59,7 @@ export const sendMultipleNotification = (
     const collectionRef = collection(db, `users/${userId}/notifications`);
     const docRef = doc(collectionRef);
     batch.set(docRef, {
-      title,
-      description,
-      linkTo,
+      ...payload,
       id: docRef.id,
       timestamp: Timestamp.now(),
       read: false,

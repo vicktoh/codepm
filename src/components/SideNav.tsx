@@ -13,7 +13,11 @@ import {
 import React, { FC, useMemo } from "react";
 import { Link, useMatch } from "react-router-dom";
 import { Auth } from "../types/Auth";
-import { AiOutlineCheckSquare, AiOutlineDashboard } from "react-icons/ai";
+import {
+  AiOutlineCheckSquare,
+  AiOutlineDashboard,
+  AiOutlineRead,
+} from "react-icons/ai";
 import { BsChat, BsCurrencyDollar, BsPower } from "react-icons/bs";
 import { useLogout } from "../hooks/useLoadingAnimation";
 import { FaUsersCog } from "react-icons/fa";
@@ -38,6 +42,7 @@ export const SideNav: FC<SideNavProps> = ({
   const isHomePath = !!useMatch("/");
   const isAdminReqPath = !!useMatch("/requisition-admin");
   const isSettingPath = !!useMatch("/system-settings");
+  const isRequestsPath = !!useMatch("/requests");
   const unreadMessages = useMemo(() => {
     let count = 0;
     (conversations || []).forEach((converastion) => {
@@ -127,6 +132,20 @@ export const SideNav: FC<SideNavProps> = ({
             fontWeight={!!useMatch("/logs") ? "extrabold" : "medium"}
           >
             Logs
+          </Text>
+        </HStack>
+        <HStack
+          as={Link}
+          to="/requests"
+          spacing={2}
+          color={!!useMatch("/requests") ? "brand.400" : "tetiary"}
+        >
+          <Icon as={AiOutlineRead} />
+          <Text
+            color={!!useMatch("/requests") ? "brand.400" : "tetiary"}
+            fontWeight={!!useMatch("/requests") ? "extrabold" : "medium"}
+          >
+            Requests
           </Text>
         </HStack>
         <HStack

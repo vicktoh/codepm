@@ -28,6 +28,7 @@ import {
 } from "@chakra-ui/react";
 import { format } from "date-fns";
 import { FirebaseError } from "firebase/app";
+import { request } from "http";
 import { is } from "immer/dist/internal";
 import React, { FC, useEffect, useMemo, useState } from "react";
 import { BiCheckCircle } from "react-icons/bi";
@@ -49,6 +50,12 @@ import { Request } from "../types/Permission";
 type RequestProps = {
   request: Request;
   onViewRequest: () => void;
+};
+
+const ModalLabel: Record<Request["type"], string> = {
+  leave: "Leave Request",
+  log: "Log Access",
+  car: "Vehicle Request",
 };
 
 const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
@@ -145,8 +152,8 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
         <HStack spacing={4} mt={3} alignItems="center">
           {request.type === "leave" ? (
             <VStack spacing={0} alignItems="flex-start">
-              <Text fontSize="xs">Leave type</Text>
-              <Heading fontSize="sm">{request.leaveType}</Heading>
+              <Text fontSize="xx-small">Leave type</Text>
+              <Heading fontSize="xs">{request.leaveType}</Heading>
             </VStack>
           ) : (
             <Text fontSize="md">Access to Log</Text>
@@ -208,10 +215,10 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
             name={usersMap[request.userId]?.displayName}
           />
           <VStack spacing={0} alignItems="flex-start">
-            <Heading fontSize="md">
+            <Heading fontSize="sm">
               {usersMap[request.userId]?.displayName || "Unknown Name"}
             </Heading>
-            <Text fontSize="sm">
+            <Text fontSize="xs">
               {usersMap[request.userId]?.designation || "Unknown User"}
             </Text>
           </VStack>
@@ -220,17 +227,17 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
       <Td>
         {request.type === "leave" ? (
           <VStack spacing={0} alignItems="flex-start">
-            <Text>Leave type</Text>
-            <Heading fontSize="lg">{request.leaveType}</Heading>
+            <Text fontSize="xs">Leave type</Text>
+            <Heading fontSize="sm">{request.leaveType}</Heading>
           </VStack>
         ) : (
-          <Text>Access to Log</Text>
+          <Text fontSize="sm">{request.type}</Text>
         )}
       </Td>
       <Td>
         <VStack spacing={0} alignItems="flex-start">
-          <Text>Duration</Text>
-          <Heading fontSize="md">{`${format(
+          <Text fontSize="xs">Duration</Text>
+          <Heading fontSize="sm">{`${format(
             new Date(request.startDate),
             "dd MMM Y",
           )} - ${format(new Date(request.endDate), "dd MMM Y")}`}</Heading>
@@ -242,10 +249,10 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
           <Button variant="outline" onClick={onViewRequest} colorScheme="blue">
             View
           </Button>
-          {request.status === "pending" ? (
+          {request.status === "pending" && request.type === "leave" ? (
             <>
               <Button
-                size="md"
+                size="sm"
                 variant="outline"
                 colorScheme="success"
                 disabled={request.attentionToId !== auth?.uid}
@@ -253,7 +260,7 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
                 Approve
               </Button>
               <Button
-                size="md"
+                size="sm"
                 variant="outline"
                 colorScheme="brand"
                 onClick={decline}
@@ -268,7 +275,7 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
             <>
               <Button
                 isLoading={delclining}
-                size="md"
+                size="sm"
                 colorScheme="brand"
                 variant="outline"
                 onClick={decline}
@@ -278,7 +285,7 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
               <Button
                 onClick={approve}
                 isLoading={approving}
-                size="md"
+                size="sm"
                 colorScheme="brand"
               >
                 Approve
@@ -292,75 +299,6 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
       </Td>
     </Tr>
   );
-  // return (
-  //   <Flex
-  //     direction="row"
-  //     borderRadius="lg"
-  //     bg="white"
-  //     py={3}
-  //     px={5}
-  //     alignItems="center"
-  //     justifyContent="space-around"
-  //     my={1}
-  //   >
-  //     <HStack alignItems="center">
-  //       <Avatar
-  //         size="sm"
-  //         src={usersMap[request.userId]?.photoUrl || ""}
-  //         name={usersMap[request.userId]?.displayName}
-  //       />
-  //       <VStack spacing={0} alignItems="flex-start">
-  //         <Heading fontSize="lg">
-  //           {usersMap[request.userId]?.displayName || "Unknown Name"}
-  //         </Heading>
-  //         <Text>{usersMap[request.userId]?.designation || "Unknown User"}</Text>
-  //       </VStack>
-  //     </HStack>
-  //     {request.type === "leave" ? (
-  //       <VStack spacing={0} alignItems="flex-start">
-  //         <Text>Leave type</Text>
-  //         <Heading fontSize="lg">{request.leaveType}</Heading>
-  //       </VStack>
-  //     ) : (
-  //       <Text>Access to Log</Text>
-  //     )}
-  //     <VStack spacing={0} alignItems="flex-start">
-  //       <Text>Duration</Text>
-  //       <Heading fontSize="md">{`${format(
-  //         new Date(request.startDate),
-  //         "dd MMM Y",
-  //       )} - ${format(new Date(request.endDate), "dd MMM Y")}`}</Heading>
-  //     </VStack>
-  //     <Text>{request.status}</Text>
-  //     {request.status === "pending" && request.attentionToId === auth?.uid ? (
-  //       <Button size="md" variant="outline" colorScheme="brand">
-  //         Approve as Dept. Head
-  //       </Button>
-  //     ) : null}
-  //     {request.status === "reviewed" ? (
-  //       <HStack spacing={4}>
-  //         <Button
-  //           isLoading={delclining}
-  //           size="md"
-  //           colorScheme="brand"
-  //           variant="outline"
-  //           onClick={decline}
-  //         >
-  //           Decline
-  //         </Button>
-  //         <Button
-  //           onClick={approve}
-  //           isLoading={approving}
-  //           size="md"
-  //           colorScheme="brand"
-  //         >
-  //           Approve
-  //         </Button>
-  //       </HStack>
-  //     ) : null}
-  //     {request.status === "approved" ? <BiCheckCircle color="green" /> : null}
-  //   </Flex>
-  // );
 };
 
 export const PermissionsPage: FC = () => {
@@ -435,11 +373,13 @@ export const PermissionsPage: FC = () => {
         <Modal
           isOpen={isViewRequestOpen}
           onClose={onCloseViewRequest}
-          size="md"
+          size="xl"
         >
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>Edit Profile</ModalHeader>
+            <ModalHeader textAlign="center">
+              {selectedRequest?.type ? ModalLabel[selectedRequest.type] : ""}
+            </ModalHeader>
             <ModalCloseButton />
             <ModalBody>
               {selectedRequest ? (
@@ -475,7 +415,9 @@ export const PermissionsPage: FC = () => {
       <Modal isOpen={isViewRequestOpen} onClose={onCloseViewRequest} size="md">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Edit Profile</ModalHeader>
+          <ModalHeader>
+            {selectedRequest?.type ? ModalLabel[selectedRequest?.type] : ""}{" "}
+          </ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             {selectedRequest ? (

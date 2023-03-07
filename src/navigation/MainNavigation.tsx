@@ -22,6 +22,9 @@ import { RequisitionAdminPage } from "../pages/RequisitionAdminPage";
 import { RequisitionAnalytics } from "../pages/RequisitionAnalytics";
 import { SystemPage } from "../pages/SystemPage";
 import { BudgetPage } from "../pages/BudgetPage";
+import { RequestLayout } from "../layout/RequestLayout";
+import { RequestsPage } from "../pages/RequestsPage";
+import { VehicleRequests } from "../pages/VehicleRequests";
 
 export const MainNavigation = () => {
   return (
@@ -43,6 +46,10 @@ export const MainNavigation = () => {
         <Route path="tasks" element={<TasksPage />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="logs" element={<LogsPage />} />
+        <Route path="requests" element={<RequestLayout />}>
+          <Route index element={<RequestsPage />} />
+          <Route path="vehicle" element={<VehicleRequests />} />
+        </Route>
         <Route path="requisitions" element={<RequisitionLayout />}>
           <Route index element={<RequisitionPage />} />
           <Route path="archive" element={<RequisitionPage />} />

@@ -1,3 +1,5 @@
+import { Chat } from "./Chat";
+import { TaskComment } from "./Project";
 export type Request = {
   id?: string;
   userId: string;
@@ -5,11 +7,15 @@ export type Request = {
   startDate: string;
   endDate: string;
   status: "pending" | "reviewed" | "approved" | "declined";
-  type: "leave" | "log";
+  type: "leave" | "log" | "car";
   leaveType?: LeaveType;
   memo?: string;
   timestamp: number;
   handoverId?: string;
+  comments?: Chat[];
+  conversation?: Record<string, number>;
+  chats?: Chat[];
+  chatCount?: number;
 };
 
 export enum LeaveType {

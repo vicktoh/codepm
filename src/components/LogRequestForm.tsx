@@ -5,29 +5,49 @@ import {
   FormErrorMessage,
   FormLabel,
   Input,
+  Textarea,
   useToast,
 } from "@chakra-ui/react";
 import { Form, Formik } from "formik";
+import { request } from "http";
 import React, { FC } from "react";
 
 import * as yup from "yup";
-import { Period } from "../types/Permission";
+import { Period, Request } from "../types/Permission";
 
 type LogRequestFormProps = {
-  type: "leave" | "access";
-  onSubmit: (duration: Period) => Promise<void>;
+  request?: Request;
+  mode?: "add" | "edit";
+  onEdit?: (log: Request) => Promise<void>;
+  type: Request["type"];
+  onSubmit: (
+    duration: Omit<Request, "userId" | "status" | "timestamp">,
+  ) => Promise<void>;
+  onClose: () => void;
 };
-export const LogRequestForm: FC<LogRequestFormProps> = ({ type, onSubmit }) => {
+export const LogRequestForm: FC<LogRequestFormProps> = ({
+  type,
+  onSubmit,
+  onClose,
+  request,
+  onEdit,
+  mode = "add",
+}) => {
   const toast = useToast();
-  const initialValues: Period = {
+  const { userId, status, timestamp, ...rest } = request || {};
+  const initialValues: Omit<Request, "userId" | "status" | "timestamp"> = {
     startDate: "",
     endDate: "",
+    type,
+    memo: "",
+    ...(rest || {}),
   };
   const validationSchema = yup.object().shape({
     startDate: yup
       .date()
       .max(yup.ref("endDate"), "Must be before end date")
       .required(),
+    memo: yup.string().min(10, "Must be at least 10 characters"),
     endDate: yup
       .date()
       .min(yup.ref("startDate"), "Cannot be before start date")
@@ -39,13 +59,21 @@ export const LogRequestForm: FC<LogRequestFormProps> = ({ type, onSubmit }) => {
       validationSchema={validationSchema}
       onSubmit={async (values) => {
         try {
-          await onSubmit(values);
+          if (mode === "add") {
+            await onSubmit(values);
+          }
+          if (mode === "edit" && request && onEdit) {
+            await onEdit({ ...request, ...values });
+          }
           toast({
-            title: "Request successfully submitted",
+            title: `Request successfully ${
+              mode === "edit" ? "edited" : "submitted"
+            }`,
             description:
               "Your request has been submitted you'll get a notificaiton when it is approved or declined",
             status: "success",
           });
+          onClose();
         } catch (error) {
           const err: any = error;
           toast({
@@ -66,6 +94,15 @@ export const LogRequestForm: FC<LogRequestFormProps> = ({ type, onSubmit }) => {
       }) => (
         <Form>
           <Flex direction="column" py={4} px={1}>
+            <FormControl mb={3} isInvalid={!!touched.memo && !!errors.memo}>
+              <FormLabel>Request Memo</FormLabel>
+              <Textarea
+                name="memo"
+                value={values.memo}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              ></Textarea>
+            </FormControl>
             <FormControl
               mb={3}
               isInvalid={!!touched.startDate && !!errors.startDate}
