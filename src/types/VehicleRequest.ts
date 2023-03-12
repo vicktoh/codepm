@@ -14,4 +14,7 @@ export type VehicleRequest = {
   userId: string;
   timestamp: number;
   datetimestamp: number;
+  riders: string[];
+  approvedBy?: string;
+  approvedTimeStamp?: number;
 };

@@ -4,14 +4,19 @@ import {
   FormControl,
   FormErrorMessage,
   FormLabel,
+  HStack,
   Input,
   SimpleGrid,
   Textarea,
   useToast,
+  Tooltip,
+  Avatar,
 } from "@chakra-ui/react";
-import { format } from "date-fns";
+import { format, setHours } from "date-fns";
+import sub from "date-fns/sub";
 import { Form, Formik } from "formik";
 import React, { FC } from "react";
+import { RiDraftFill } from "react-icons/ri";
 
 import * as yup from "yup";
 import { useAppSelector } from "../reducers/types";
@@ -21,6 +26,7 @@ import {
 } from "../services/vehicleServices";
 import { Period, Request } from "../types/Permission";
 import { VehicleRequest } from "../types/VehicleRequest";
+import { UserListPopover } from "./UserListPopover";
 
 type VehicleRequestFormProps = {
   request?: VehicleRequest;
@@ -43,8 +49,12 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
   mode = "add",
 }) => {
   const toast = useToast();
-  const { auth } = useAppSelector(({ auth }) => ({ auth }));
-  const { userId, status, timestamp, startTime, endTime, ...rest } =
+  const { auth, users } = useAppSelector(({ auth, users }) => ({
+    auth,
+    users,
+  }));
+  const { usersMap = {} } = users || {};
+  const { userId, status, timestamp, startTime, endTime, riders, ...rest } =
     request || {};
   const initialValues: VehicleFormRequest = {
     date: "",
@@ -54,18 +64,36 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
     origin: "",
     purpose: "",
     ...(rest || {}),
+    riders: riders || [auth?.uid || ""],
   };
   const validationSchema = yup.object().shape({
     startTime: yup.string().required("This is a required field"),
     purpose: yup.string().min(10, "Must be at least 10 characters"),
-    date: yup
-      .date()
-      .min(new Date(), "Cannot select a past date")
-      .required("You must select a date"),
+    date:
+      mode === "add"
+        ? yup
+            .date()
+            .min(sub(new Date(), { days: 1 }), "Cannot select a past date")
+            .required("You must select a date")
+        : yup.date().required(),
     destination: yup.string().required("Destination is required"),
     origin: yup.string().required("Location is required"),
     endTime: yup.string().required("This is a required field"),
+    riders: yup
+      .array()
+      .min(1, "You have to select at least one rider")
+      .max(4, "Cannot select more than four riders"),
   });
+  const onSelectUser = (user: string, riders: string[]) => {
+    const riderCopy = [...riders];
+    const index = riderCopy.indexOf(user);
+    if (index < 0) {
+      riderCopy.push(user);
+    } else {
+      riderCopy.splice(index, 1);
+    }
+    return riderCopy;
+  };
   return (
     <Formik
       initialValues={initialValues}
@@ -125,6 +153,7 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
         handleBlur,
         handleChange,
         isSubmitting,
+        setFieldValue,
       }) => (
         <Form>
           <Flex direction="column" py={4} px={1}>
@@ -151,11 +180,35 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
                 onBlur={handleBlur}
                 value={values.date}
               />
-              <FormErrorMessage>
-                {touched.date && touched.date}
-              </FormErrorMessage>
+              <FormErrorMessage>{touched.date && errors.date}</FormErrorMessage>
             </FormControl>
-
+            <FormControl isInvalid={!!errors.riders} mb={3}>
+              <FormLabel>Riders</FormLabel>
+              <HStack spacing={-1} my={2}>
+                {values.riders.length &&
+                  values.riders.map((userid) => (
+                    <Tooltip
+                      label={usersMap[userid]?.displayName || ""}
+                      key={`rider-${userid}`}
+                    >
+                      <Avatar
+                        src={usersMap[userid]?.photoUrl || ""}
+                        name={usersMap[userid]?.displayName || ""}
+                        size="sm"
+                      />
+                    </Tooltip>
+                  ))}
+              </HStack>
+              <UserListPopover
+                assignees={values.riders}
+                onSelectUser={(userId) =>
+                  setFieldValue("riders", onSelectUser(userId, values.riders))
+                }
+              >
+                <Button size="sm">Select Riders</Button>
+              </UserListPopover>
+              <FormErrorMessage>{errors.riders || ""}</FormErrorMessage>
+            </FormControl>
             <SimpleGrid columns={[1, 2]} mb={3} gap={4}>
               <FormControl
                 isInvalid={!!touched.startTime && !!errors.startTime}

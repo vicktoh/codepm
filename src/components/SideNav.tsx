@@ -18,7 +18,7 @@ import {
   AiOutlineDashboard,
   AiOutlineRead,
 } from "react-icons/ai";
-import { BsChat, BsCurrencyDollar, BsPower } from "react-icons/bs";
+import { BsBuilding, BsChat, BsCurrencyDollar, BsPower } from "react-icons/bs";
 import { useLogout } from "../hooks/useLoadingAnimation";
 import { FaUsersCog } from "react-icons/fa";
 import { UserRole } from "../types/Profile";
@@ -43,6 +43,7 @@ export const SideNav: FC<SideNavProps> = ({
   const isAdminReqPath = !!useMatch("/requisition-admin");
   const isSettingPath = !!useMatch("/system-settings");
   const isRequestsPath = !!useMatch("/requests");
+  const isRequestsAdminPath = !!useMatch("/requests-admin");
   const unreadMessages = useMemo(() => {
     let count = 0;
     (conversations || []).forEach((converastion) => {
@@ -77,7 +78,7 @@ export const SideNav: FC<SideNavProps> = ({
         />
         <Text fontWeight="bold">{displayName}</Text>
       </VStack>
-      <VStack alignItems="flex-start" alignSelf="center" mt={12} spacing={7}>
+      <VStack alignItems="flex-start" alignSelf="center" mt={8} spacing={6}>
         <HStack
           as={Link}
           to="/"
@@ -177,6 +178,24 @@ export const SideNav: FC<SideNavProps> = ({
               fontWeight={isUsersPath ? "extrabold" : "medium"}
             >
               Users
+            </Text>
+          </HStack>
+        ) : null}
+        {role === UserRole.admin ||
+        role === UserRole.master ||
+        role === UserRole.reviewer ? (
+          <HStack
+            as={Link}
+            to="/requests-admin"
+            spacing={2}
+            color={isRequestsAdminPath ? "brand.400" : "tetiary"}
+          >
+            <Icon as={BsBuilding} />
+            <Text
+              color={isRequestsAdminPath ? "brand.400" : "tetiary"}
+              fontWeight={isRequestsAdminPath ? "extrabold" : "medium"}
+            >
+              Requests Admin
             </Text>
           </HStack>
         ) : null}

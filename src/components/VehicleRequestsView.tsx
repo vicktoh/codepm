@@ -1,0 +1,230 @@
+import {
+  Avatar,
+  Box,
+  Button,
+  Flex,
+  FormControl,
+  FormLabel,
+  Heading,
+  HStack,
+  SimpleGrid,
+  Text,
+  useToast,
+  VStack,
+} from "@chakra-ui/react";
+import { format, intervalToDuration } from "date-fns";
+import React, { FC, useEffect, useMemo, useState } from "react";
+import { useAppSelector } from "../reducers/types";
+import {
+  getVehicleRequestClashes,
+  getVehicleRequestForDate,
+  updateVehicleRequestStatus,
+} from "../services/vehicleServices";
+import { VehicleRequest } from "../types/VehicleRequest";
+type VehicleRequestsViewProps = {
+  request: VehicleRequest;
+  onClose: () => void;
+};
+export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
+  request,
+  onClose,
+}) => {
+  const { users, auth } = useAppSelector(({ users, auth }) => ({
+    users,
+    auth,
+  }));
+  const { usersMap = {} } = users || {};
+  const toast = useToast();
+  const [approving, setApproving] = useState<boolean>();
+  const [declining, setDeclining] = useState<boolean>(false);
+  const [checking, setChecking] = useState<boolean>();
+  const [clash, setClash] = useState<VehicleRequest>();
+  const duraction = useMemo(() => {
+    return intervalToDuration({
+      start: request.startTime,
+      end: request.endTime,
+    });
+  }, [request.startTime, request.endTime]);
+
+  const onApprove = async (status: VehicleRequest["status"]) => {
+    try {
+      if (status === "approved") setApproving(true);
+      if (status === "declined") setDeclining(true);
+      await updateVehicleRequestStatus(status, request.id, auth?.uid || "");
+      toast({
+        title: `Request has been ${status}`,
+        status: "success",
+      });
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Something went wrong",
+        description: "Could not approve request",
+        status: "error",
+      });
+    } finally {
+      if (status === "approved") setApproving(false);
+      if (status === "declined") setDeclining(false);
+    }
+  };
+
+  useEffect(() => {
+    const checkForClashes = async () => {
+      try {
+        setChecking(true);
+        const requests = await getVehicleRequestForDate(request.date);
+        const clashes = getVehicleRequestClashes(requests, request);
+        if (clashes) setClash(clashes);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setChecking(false);
+      }
+    };
+    checkForClashes();
+  }, [request]);
+  return (
+    <Flex direction="column" py={3}>
+      <Flex justifyContent="space-between" alignItems="center">
+        <HStack alignItems="center" mb={4}>
+          <Avatar
+            size="sm"
+            src={usersMap[request.userId]?.photoUrl || ""}
+            name={usersMap[request.userId]?.displayName || "Unknown users"}
+          />
+          <VStack alignItems="flex-start" spacing={0}>
+            <Heading fontSize="lg">
+              {usersMap[request.userId]?.displayName || "Unknown User"}
+            </Heading>
+            <Text>{usersMap[request.userId]?.designation || ""}</Text>
+          </VStack>
+        </HStack>
+
+        {["approved", "declined"].includes(request.status) ? (
+          <Box
+            p={5}
+            borderColor={
+              request.status === "approved" ? "green.200" : "red.300"
+            }
+            color={request.status === "approved" ? "green" : "red"}
+            borderWidth={4}
+            fontSize="2xl"
+            transform="rotate(-30deg)"
+          >
+            {request.status}
+          </Box>
+        ) : null}
+      </Flex>
+
+      <FormControl mb={4}>
+        <FormLabel fontSize="sm" fontWeight="bold">
+          Date of trip
+        </FormLabel>
+        <Text>{format(request.datetimestamp, "do MM Y")}</Text>
+      </FormControl>
+      <SimpleGrid columns={2}>
+        <FormControl mb={4}>
+          <FormLabel fontSize="sm" fontWeight="bold">
+            From
+          </FormLabel>
+          <Text>{request.origin}</Text>
+        </FormControl>
+        <FormControl mb={4}>
+          <FormLabel fontSize="sm" fontWeight="bold">
+            Destination
+          </FormLabel>
+          <Text>{request.destination}</Text>
+        </FormControl>
+      </SimpleGrid>
+
+      <FormControl mb={4}>
+        <FormLabel fontSize="sm" fontWeight="bold">
+          Purpose
+        </FormLabel>
+        <Text>{request.purpose}</Text>
+      </FormControl>
+
+      <SimpleGrid columns={2}>
+        <FormControl mb={4}>
+          <FormLabel fontSize="sm" fontWeight="bold">
+            Start Time
+          </FormLabel>
+          <Text>{format(request.startTime, "KK:mm aaa")}</Text>
+        </FormControl>
+        <FormControl mb={4}>
+          <FormLabel fontSize="sm" fontWeight="bold">
+            End Time
+          </FormLabel>
+          <Text>{format(request.endTime, "KK:mm aaa")}</Text>
+        </FormControl>
+      </SimpleGrid>
+      <FormControl mb={4}>
+        <FormLabel fontSize="sm" fontWeight="bold">
+          Duration
+        </FormLabel>
+        <Text>{`${duraction.hours}H ${
+          duraction.minutes ? `${duraction.minutes} m` : ""
+        } `}</Text>
+      </FormControl>
+      <Flex direction="column">
+        {checking ? <Text color="red.400">Checking for Clashes</Text> : null}
+
+        {clash && request.status === "pending" ? (
+          <Flex
+            direction="column"
+            p={3}
+            borderWidth={1}
+            borderColor="brand.300"
+            mb={4}
+            borderRadius="sm"
+          >
+            <Text fontSize="sm" color="red.400">
+              This request is clashing with...
+            </Text>
+            <HStack>
+              <Avatar
+                src={usersMap[clash.userId]?.photoUrl}
+                size="sm"
+                name={usersMap[clash.userId]?.displayName || ""}
+              />
+              <VStack alignItems="flex-start" spacing={1}>
+                <Text fontWeight="bold">
+                  {usersMap[clash.userId]?.displayName || "Unknown user"}
+                </Text>
+                <Text>{`${format(clash.startTime, "KK:mm aaa")} - ${format(
+                  clash.endTime,
+                  "KK:mm aaa",
+                )}`}</Text>
+              </VStack>
+            </HStack>
+            <Text my={3}>{clash.purpose}</Text>
+          </Flex>
+        ) : null}
+      </Flex>
+      {["approved", "declined"].includes(request.status) ? null : (
+        <Flex>
+          <Button
+            variant="solid"
+            colorScheme="brand"
+            isLoading={approving}
+            onClick={() => onApprove("approved")}
+            isFullWidth
+            disabled={clash?.status === "approved"}
+          >
+            Approve
+          </Button>
+          <Button
+            variant="outline"
+            colorScheme="brand"
+            isLoading={declining}
+            isFullWidth
+            onClick={() => onApprove("declined")}
+            ml={2}
+          >
+            Decline
+          </Button>
+        </Flex>
+      )}
+    </Flex>
+  );
+};

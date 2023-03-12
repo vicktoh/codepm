@@ -182,3 +182,8 @@ export const listenOnRequest = (
     callback(request);
   });
 };
+
+export const deleteRequest = (id: string) => {
+  const requestRef = doc(db, `permissionRequests/${id}`);
+  return deleteDoc(requestRef);
+};

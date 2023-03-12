@@ -21,7 +21,10 @@ export const RequisitionAdminLayout = () => {
         my={[3, 0]}
         px={5}
         py={3}
-        {...glassEffect}
+        bg="whiteAlpha.400"
+        borderRadius="lg"
+        borderColor="white"
+        borderWidth={1}
         width="max-content"
       >
         <HStack

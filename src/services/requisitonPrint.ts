@@ -1,5 +1,7 @@
 import { format } from "date-fns";
 import { Requisition } from "../types/Requisition";
+import { User } from "../types/User";
+import { VehicleRequest } from "../types/VehicleRequest";
 
 // playground requires you to assign document definition to a variable called dd
 const dataField = (label: string, value: string) => ({
@@ -207,10 +209,10 @@ export const requisitionPrintDefinition = (
         margin: [0, 10],
       },
       subheader: {
-        fontSize: 16,
+        fontSize: 12,
         bold: true,
         margin: [0, 6],
-        color: "grey",
+        color: "red",
       },
       body: {
         fontSize: 12,
@@ -223,6 +225,7 @@ export const requisitionPrintDefinition = (
       },
       value: {
         fontSize: 14,
+        color: "#8a7c7b",
       },
       tableheader: {
         bold: true,
@@ -230,6 +233,203 @@ export const requisitionPrintDefinition = (
       signature: {
         width: 100,
         height: 80,
+      },
+    },
+  };
+};
+
+export const vehicleApprovalPrint = (
+  request: VehicleRequest,
+  logoImage: string,
+  signature: string,
+  usersMap: Record<string, User | undefined>,
+) => {
+  return {
+    header: {
+      image: logoImage,
+      width: 80,
+      height: 50,
+      margin: [10, 10, 0, 20],
+    },
+    content: [
+      {
+        text: "Vehicle Request Approval",
+        style: "header",
+        alignment: "center",
+        margin: [0, 20, 0, 10],
+      },
+      {
+        text: format(request.datetimestamp, "do MMM Y"),
+        style: "datestyle",
+      },
+      {
+        text: "General Info",
+        style: "subheader",
+      },
+      {
+        stack: [
+          {
+            text: "Requested By",
+            style: "labelstyle",
+          },
+          {
+            text: usersMap[request.userId]?.displayName || "Unknown user",
+            style: "valuestyle",
+          },
+        ],
+        margin: [0, 0, 0, 20],
+      },
+      {
+        stack: [
+          {
+            text: "Purpose of trip",
+            style: "labelstyle",
+          },
+          {
+            text: request.purpose,
+            style: "valuestyle",
+          },
+        ],
+        margin: [0, 0, 0, 20],
+      },
+      {
+        columns: [
+          {
+            width: "*",
+            stack: [
+              {
+                text: "From",
+                style: "labelstyle",
+              },
+              {
+                text: request.origin,
+                style: "valuestyle",
+              },
+            ],
+          },
+          {
+            width: "*",
+            stack: [
+              {
+                text: "Destination",
+                style: "labelstyle",
+              },
+              {
+                text: request.destination,
+                style: "valuestyle",
+              },
+            ],
+          },
+        ],
+        margin: [0, 0, 0, 20],
+      },
+      {
+        columns: [
+          {
+            width: "*",
+            stack: [
+              {
+                text: "Start Time",
+                style: "labelstyle",
+              },
+              {
+                text: format(request.startTime, "KK:mm aaa"),
+                style: "valuestyle",
+              },
+            ],
+          },
+          {
+            width: "*",
+            stack: [
+              {
+                text: "End Time",
+                style: "labelstyle",
+              },
+              {
+                text: format(request.endTime, "KK:mm aaa"),
+                style: "valuestyle",
+              },
+            ],
+          },
+        ],
+        margin: [0, 0, 0, 20],
+      },
+      {
+        stack: [
+          {
+            text: "Riders",
+            style: "labelstyle",
+          },
+          {
+            text: request.riders
+              .map((userId) => usersMap[userId]?.displayName || "unknownUser")
+              .join(", "),
+            style: "valuestyle",
+          },
+        ],
+      },
+      {
+        stack: [
+          {
+            text: "Approved by",
+            style: "labelstyle",
+          },
+          {
+            text:
+              usersMap[request.approvedBy || ""]?.displayName || "Unknown User",
+            style: "valuestyle",
+          },
+          {
+            image: signature,
+            fit: [80, 50],
+            margin: [0, 10],
+          },
+        ],
+
+        margin: [0, 40],
+      },
+
+      {
+        text: "this request has been approved by the following authorithy above",
+        style: "disclaimerstyle",
+      },
+    ],
+    styles: {
+      header: {
+        fontSize: 24,
+        bold: true,
+        alignment: "justify",
+      },
+      subheader: {
+        fontsize: 12,
+        bold: true,
+        color: "red",
+        margin: [0, 0, 0, 10],
+      },
+      logo: {
+        fontSize: 24,
+        bold: true,
+        color: "red",
+      },
+      labelstyle: {
+        fontSize: 12,
+        bold: true,
+        margin: [0, 0, 0, 5],
+      },
+      valuestyle: {
+        fontSize: 14,
+        color: "#63625c",
+      },
+      datestyle: {
+        alignment: "center",
+        color: "#cf7b74",
+        margin: [0, 0, 0, 20],
+      },
+      disclaimerstyle: {
+        fontSize: 10,
+        color: "red",
+        italics: true,
+        alignment: "center",
       },
     },
   };

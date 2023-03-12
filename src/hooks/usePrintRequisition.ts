@@ -1,10 +1,14 @@
 import { getBase64FromUrl, tobase64 } from "../helpers";
 import { useAppSelector } from "../reducers/types";
-import { requisitionPrintDefinition } from "../services/requisitonPrint";
+import {
+  requisitionPrintDefinition,
+  vehicleApprovalPrint,
+} from "../services/requisitonPrint";
 import { Requisition } from "../types/Requisition";
 import * as pdfMake from "pdfmake/build/pdfmake";
 import * as pdfFonts from "pdfmake/build/vfs_fonts";
 import codeLogo from "../assets/images/logo.png";
+import { VehicleRequest } from "../types/VehicleRequest";
 (pdfMake as any).vfs = pdfFonts.pdfMake.vfs;
 
 export const usePrintPrequisition = () => {
@@ -52,4 +56,19 @@ export const usePrintPrequisition = () => {
   };
 
   return printRequisition;
+};
+
+export const usePrintVehicleapproval = () => {
+  const { users } = useAppSelector(({ users }) => ({ users }));
+  const { usersMap = {} } = users || {};
+  const printRequest = async (request: VehicleRequest) => {
+    const logoImage = await tobase64(codeLogo);
+    const signature = (await getBase64FromUrl(
+      usersMap[request.approvedBy || ""]?.signatureUrl || "",
+    )) as string;
+
+    const dd = vehicleApprovalPrint(request, logoImage, signature, usersMap);
+    pdfMake.createPdf(dd as any).open();
+  };
+  return printRequest;
 };

@@ -26,9 +26,12 @@ import {
   useToast,
   Box,
   Badge,
+  FormControl,
+  FormLabel,
+  Select,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
-import React, { FC, ReactElement, useEffect, useState } from "react";
+import React, { FC, ReactElement, useEffect, useMemo, useState } from "react";
 import { AiFillPlusCircle } from "react-icons/ai";
 import { BiPencil } from "react-icons/bi";
 import {
@@ -37,16 +40,21 @@ import {
   BsCheck2,
   BsClock,
   BsEye,
+  BsFilter,
   BsStopCircle,
+  BsTrash,
 } from "react-icons/bs";
+import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { useAppSelector } from "../reducers/types";
 import {
+  deleteRequest,
   listenUserRequests,
   makeLeaveRequest,
   makeRequest,
   updateRequest,
 } from "../services/logsServices";
 import { Request } from "../types/Permission";
+import { DeleteDialog } from "./DeleteDialog";
 import { LeaveRequestForm } from "./LeaveRequestForm";
 import { LogRequestForm } from "./LogRequestForm";
 import { RequestChat } from "./RequestChat";
@@ -56,6 +64,8 @@ const statusIcons: Record<Request["status"], ReactElement> = {
   reviewed: <BsEye color="blue" />,
   declined: <BsStopCircle color="red" />,
 };
+
+type FilterType = Request["type"] | "all";
 const RequestView: FC = () => {
   const { auth, users } = useAppSelector(({ auth, users }) => ({
     auth,
@@ -63,12 +73,24 @@ const RequestView: FC = () => {
   }));
   const [mode, setMode] = useState<"add" | "edit">("add");
   const [requests, setRequests] = useState<Request[]>();
+  const [deleting, setDeleting] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
   const toast = useToast();
   const [selectedRequest, setSelectedRequest] = useState<Request>();
+
+  const dataToRender = useMemo(() => {
+    if (selectedFilter === "all") return requests;
+    return requests?.filter((value) => value.type === selectedFilter);
+  }, [selectedFilter, requests]);
   const {
     onOpen: onOpenLeaveRequest,
     onClose: onCloseLeaveRequest,
     isOpen: isLeaveRequestOpen,
+  } = useDisclosure();
+  const {
+    onOpen: onOpenDeleteModal,
+    onClose: onCloseDeleteModal,
+    isOpen: isDeleteModalOpen,
   } = useDisclosure();
   const {
     onOpen: onOpenRequestChat,
@@ -82,6 +104,7 @@ const RequestView: FC = () => {
   } = useDisclosure();
   const [loading, setLoading] = useState<boolean>(false);
   const { usersMap = {} } = users || {};
+  const glassEffect = useGlassEffect(true);
   const onRequestForLeave = async (
     values: Omit<Request, "status" | "type" | "userId" | "timestamp">,
   ) => {
@@ -111,6 +134,25 @@ const RequestView: FC = () => {
     type === "log" && onOpenAccessRequest();
   };
 
+  const deletePrompt = (req: Request) => {
+    setSelectedRequest(req);
+    onOpenDeleteModal();
+  };
+
+  const onDelete = async () => {
+    if (!selectedRequest?.id) return;
+    try {
+      setDeleting(true);
+      await deleteRequest(selectedRequest?.id);
+      onCloseDeleteModal();
+      toast({ title: "Request Deleted", status: "success" });
+    } catch (error) {
+      console.log(error);
+      toast({ title: "Could delete request", status: "error" });
+    } finally {
+      setDeleting(false);
+    }
+  };
   const onOpenRequestConverstaion = (req: Request) => {
     setSelectedRequest(req);
     onOpenRequestChat();
@@ -137,26 +179,51 @@ const RequestView: FC = () => {
   }, [auth?.uid]);
   return (
     <Flex direction="column" flex="1 1" width="100%" py={8} px={2}>
-      <HStack alignItems="center" mb={5} spacing={3}>
-        <Button
-          leftIcon={<AiFillPlusCircle />}
-          colorScheme="brand"
-          aria-label="new Request"
-          size="sm"
-          onClick={() => onOpenAddRequest("leave")}
-        >
-          Leave Request
-        </Button>
-        <Button
-          leftIcon={<AiFillPlusCircle />}
-          colorScheme="brand"
-          aria-label="new Request"
-          size="sm"
-          onClick={() => onOpenAddRequest("log")}
-        >
-          Log Request
-        </Button>
-      </HStack>
+      <Flex
+        justifyContent="space-between"
+        width="100%"
+        alignItems="flex-end"
+        mb={5}
+      >
+        <HStack alignItems="center" spacing={3}>
+          <Button
+            leftIcon={<AiFillPlusCircle />}
+            colorScheme="brand"
+            aria-label="new Request"
+            size="sm"
+            onClick={() => onOpenAddRequest("leave")}
+          >
+            Leave Request
+          </Button>
+          <Button
+            leftIcon={<AiFillPlusCircle />}
+            colorScheme="brand"
+            aria-label="new Request"
+            size="sm"
+            onClick={() => onOpenAddRequest("log")}
+          >
+            Log Request
+          </Button>
+        </HStack>
+
+        <VStack alignItems="flext-start">
+          <Heading fontSize="sm">Filter Requests</Heading>
+          <HStack spacing={3}>
+            {["all", "leave", "log"].map((type) => (
+              <Button
+                key={`filter-${type}`}
+                value={type}
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedFilter(type as FilterType)}
+                {...(type === selectedFilter ? glassEffect : {})}
+              >
+                {type}
+              </Button>
+            ))}
+          </HStack>
+        </VStack>
+      </Flex>
 
       <TableContainer>
         <Table>
@@ -174,8 +241,8 @@ const RequestView: FC = () => {
               <Tr>
                 <Td colSpan={5}>Fetching Requests</Td>
               </Tr>
-            ) : requests?.length ? (
-              requests.map((req) => (
+            ) : dataToRender?.length ? (
+              dataToRender.map((req) => (
                 <Tr key={req.timestamp}>
                   <Td>
                     <HStack alignItems="center">
@@ -225,29 +292,43 @@ const RequestView: FC = () => {
                     ) : null}
                   </Td>
                   <Td>
-                    <Box position="relative">
-                      <IconButton
-                        size="md"
-                        aria-label="open chat"
-                        onClick={() => onOpenRequestConverstaion(req)}
-                        icon={<BsChatDots />}
-                      />
-                    </Box>
-                    {req.chatCount &&
-                    req.conversation &&
-                    (req.chatCount - req.conversation[auth?.uid || ""] || 0) >
-                      0 ? (
-                      <Badge
-                        borderRadius="ful"
-                        background="red.300"
-                        color="white"
-                        position="absolute"
-                        top={-2}
-                        right={-3}
-                      >
-                        {req.chatCount - req.conversation[auth?.uid || ""] || 0}
-                      </Badge>
-                    ) : null}
+                    <HStack>
+                      <Box position="relative">
+                        <IconButton
+                          size="md"
+                          aria-label="open chat"
+                          onClick={() => onOpenRequestConverstaion(req)}
+                          icon={<BsChatDots />}
+                        />
+                        {req.chatCount &&
+                        req.conversation &&
+                        (req.chatCount - req.conversation[auth?.uid || ""] ||
+                          0) > 0 ? (
+                          <Badge
+                            borderRadius="ful"
+                            background="red.300"
+                            color="white"
+                            position="absolute"
+                            top={-2}
+                            right={-3}
+                          >
+                            {req.chatCount -
+                              req.conversation[auth?.uid || ""] || 0}
+                          </Badge>
+                        ) : null}
+                      </Box>
+                      {req.status === "pending" ? (
+                        <Tooltip label="Delete request">
+                          <IconButton
+                            aria-label="remove"
+                            bg="brand.300"
+                            color="white"
+                            icon={<BsTrash />}
+                            onClick={() => deletePrompt(req)}
+                          />
+                        </Tooltip>
+                      ) : null}
+                    </HStack>
                   </Td>
                 </Tr>
               ))
@@ -302,6 +383,21 @@ const RequestView: FC = () => {
           <ModalHeader textAlign="center">💬 Request Conversations</ModalHeader>
           <ModalBody>
             {selectedRequest && <RequestChat request={selectedRequest} />}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal isOpen={isDeleteModalOpen} onClose={onCloseDeleteModal}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton />
+          <ModalHeader textAlign="center">🗑 Delete Request</ModalHeader>
+          <ModalBody>
+            <DeleteDialog
+              title="Are you sure you want to delete this request?"
+              onConfirm={onDelete}
+              isLoading={deleting}
+              onClose={onCloseDeleteModal}
+            />
           </ModalBody>
         </ModalContent>
       </Modal>
