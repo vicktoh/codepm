@@ -106,7 +106,7 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
             sendEmailNotification({
               to: emailAttentionTo,
               data: {
-                action: `${BASE_URL}/users/requests`,
+                action: `${BASE_URL}/requests-admin`,
                 title: "Leave Request",
                 message,
                 date: today,
@@ -120,7 +120,7 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
               }`,
               title: "Leave Request",
               timestamp: Timestamp.now(),
-              linkTo: "/users/requests",
+              linkTo: "/requests-admin",
               type: "request",
             });
           }
@@ -208,6 +208,9 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
                 onChange={handleChange}
                 onBlur={handleBlur}
               >
+                <option value="" selected disabled>
+                  Select leave type
+                </option>
                 {Object.values(LeaveType).map((leaveType, i) => (
                   <option key={`leave-type-${i}`} value={leaveType}>
                     {leaveType}

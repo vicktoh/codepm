@@ -39,7 +39,7 @@ import {
 import { useAppSelector } from "../reducers/types";
 import { AiOutlineCalendar } from "react-icons/ai";
 import { STATUS_COLORSCHEME } from "../constants";
-import { BsCheckAll, BsChevronRight, BsPlus } from "react-icons/bs";
+import { BsCheckAll, BsChevronRight, BsListTask, BsPlus } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import { MdCancel, MdPending } from "react-icons/md";
 import { FaFile } from "react-icons/fa";
@@ -327,8 +327,17 @@ export const MyTasks: FC = () => {
                 ))
               ) : (
                 <Tr>
-                  <Td colSpan={4}>
-                    <Heading>You have no task assigned to you</Heading>
+                  <Td colSpan={6}>
+                    <Flex
+                      direction="column"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <BsListTask fontSize={32} color="red.300" />
+                      <Heading fontSize="lg" textAlign="center">
+                        You have no task assigned to you
+                      </Heading>
+                    </Flex>
                   </Td>
                 </Tr>
               )}
