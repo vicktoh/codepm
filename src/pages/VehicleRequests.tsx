@@ -1,5 +1,4 @@
 import {
-  Button,
   Flex,
   Heading,
   HStack,
@@ -10,6 +9,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalOverlay,
+  SimpleGrid,
   Spinner,
   Table,
   TableContainer,
@@ -18,30 +18,62 @@ import {
   Text,
   Th,
   Thead,
+  Tooltip,
   Tr,
   useDisclosure,
+  useToast,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
 import React, { ReactElement, useEffect, useState } from "react";
-import { BsCheck2All, BsClock, BsPlus, BsXCircle } from "react-icons/bs";
+import { BiTrash } from "react-icons/bi";
+import {
+  BsCalendar2,
+  BsCheck2All,
+  BsClock,
+  BsPencil,
+  BsPlus,
+  BsPrinter,
+  BsXCircle,
+} from "react-icons/bs";
 import { VehicleRequestForm } from "../components/VehicleRequestForm";
+import { DeleteDialog } from "../components/DeleteDialog";
 import { useAppSelector } from "../reducers/types";
-import { listenOnMyVehicleRequests } from "../services/vehicleServices";
+import {
+  deleteVehicleRequest,
+  listenOnMyVehicleRequests,
+} from "../services/vehicleServices";
 import { VehicleRequest } from "../types/VehicleRequest";
+import { VehicleSchedule } from "../components/VehicleSchedule";
+import { usePrintVehicleapproval } from "../hooks/usePrintRequisition";
 
-const REQ_STATUS_ICONS: Record<VehicleRequest["status"], ReactElement> = {
-  approved: <BsCheck2All color="green" />,
-  declined: <BsXCircle color="red" />,
-  pending: <BsClock color="orange" />,
-};
+export const REQ_STATUS_ICONS: Record<VehicleRequest["status"], ReactElement> =
+  {
+    approved: <BsCheck2All color="green" />,
+    declined: <BsXCircle color="red" />,
+    pending: <BsClock color="orange" />,
+  };
 export const VehicleRequests = () => {
   const [myVehicleRequest, setMyVehicleRequests] = useState<VehicleRequest[]>();
   const [selectedRequest, setSelectedRequest] = useState<VehicleRequest>();
+  const [deleting, setDeleting] = useState<boolean>(false);
+  const [printing, setPrinting] = useState(false);
+  const toast = useToast();
   const [mode, setMode] = useState<"add" | "edit">("add");
+  const printRequest = usePrintVehicleapproval();
   const {
     onOpen: onOpenVehModal,
     onClose: onCloseVehModal,
     isOpen: isVehModalOpen,
+  } = useDisclosure();
+  const {
+    onOpen: onOpenDeleteModal,
+    onClose: onCloseDeleteModal,
+    isOpen: isDeleteModalOpen,
+  } = useDisclosure();
+  const {
+    onOpen: onOpenScheduleModal,
+    onClose: onCloseScheduleModal,
+    isOpen: isScheduleModalOpen,
   } = useDisclosure();
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [loading, setLoading] = useState(false);
@@ -57,6 +89,38 @@ export const VehicleRequests = () => {
     setMode("edit");
     onOpenVehModal();
   };
+
+  const onPrintRequest = async (request: VehicleRequest) => {
+    setSelectedRequest(request);
+    try {
+      setPrinting(true);
+      await printRequest(request);
+    } catch (error) {
+      toast({ title: "Could not print request", status: "error" });
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const deletePrompt = (request: VehicleRequest) => {
+    setSelectedRequest(request);
+    onOpenDeleteModal();
+  };
+  const onDelete = async () => {
+    if (!selectedRequest) return;
+    try {
+      setDeleting(true);
+      await deleteVehicleRequest(selectedRequest?.id);
+      toast({ title: "Deleted Succesfully", status: "success" });
+      onCloseDeleteModal();
+    } catch (error) {
+      console.log(error);
+      toast({ title: "Could not delete request", status: "error" });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
     const unsub = listenOnMyVehicleRequests(auth?.uid || "", (reqs) => {
@@ -69,19 +133,31 @@ export const VehicleRequests = () => {
   return (
     <Flex direction="column" flex="1 1">
       <HStack alignItems="center" spacing={4} mb={5}>
-        <Heading fontSize="lg">Vehicle Request 🚗</Heading>
-        <IconButton
-          aria-label="make request"
-          onClick={onMakeVehRequest}
-          borderRadius="full"
-          size="md"
-          colorScheme="brand"
-          icon={<BsPlus />}
-        />
+        <Heading fontSize="lg">Vehicle Requests 🚗</Heading>
+        <Tooltip label="New vehicle request">
+          <IconButton
+            aria-label="make request"
+            onClick={onMakeVehRequest}
+            borderRadius="full"
+            size="sm"
+            colorScheme="brand"
+            icon={<BsPlus />}
+          />
+        </Tooltip>
+        <Tooltip label="View vehicle schedule">
+          <IconButton
+            aria-label="view schedule"
+            borderRadius="full"
+            size="sm"
+            colorScheme="brand"
+            icon={<BsCalendar2 />}
+            onClick={onOpenScheduleModal}
+          />
+        </Tooltip>
       </HStack>
       {loading ? (
         <Flex
-          alignItems="cen"
+          alignItems="center"
           justifyContent="center"
           direction="column"
           height="152px"
@@ -104,7 +180,7 @@ export const VehicleRequests = () => {
               {myVehicleRequest?.length ? (
                 myVehicleRequest.map((req) => (
                   <Tr key={`vehicle-request-${req.id}`}>
-                    <Td>{format(req.timestamp, "Do MMM Y")}</Td>
+                    <Td>{format(req.timestamp, "do MMM Y")}</Td>
                     <Td>{`${format(req.startTime, "KK:mm aaa")} - ${format(
                       req.endTime,
                       "KK:mm aaa",
@@ -116,18 +192,44 @@ export const VehicleRequests = () => {
                       </HStack>
                     </Td>
                     <Td>
-                      <Button
-                        size="sm"
-                        mx={2}
-                        bg="blue.300"
-                        color="white"
-                        onClick={() => onEditRequest(req)}
-                      >
-                        Edit
-                      </Button>
-                      <Button size="sm">Print Approval</Button>
-                      <Button size="sm">Delete</Button>
-                      <Button size="sm">Comments</Button>
+                      <HStack spacing={2}>
+                        {req.status !== "approved" ? (
+                          <>
+                            <Tooltip label="Edit Request">
+                              <IconButton
+                                aria-label="edit Button"
+                                icon={<BsPencil />}
+                                size="sm"
+                                bg="blue.300"
+                                color="white"
+                                onClick={() => onEditRequest(req)}
+                              />
+                            </Tooltip>
+                            <Tooltip label="Delete Request">
+                              <IconButton
+                                aria-label="delete Button"
+                                icon={<BiTrash />}
+                                size="sm"
+                                bg="brand.400"
+                                color="white"
+                                onClick={() => deletePrompt(req)}
+                              />
+                            </Tooltip>
+                          </>
+                        ) : null}
+                        {req.status === "approved" ? (
+                          <Tooltip label="Print Request">
+                            <IconButton
+                              aria-label="print Button"
+                              icon={<BsPrinter />}
+                              size="sm"
+                              bg="green.300"
+                              color="white"
+                              onClick={() => onPrintRequest(req)}
+                            />
+                          </Tooltip>
+                        ) : null}
+                      </HStack>
                     </Td>
                   </Tr>
                 ))
@@ -148,6 +250,7 @@ export const VehicleRequests = () => {
           </Table>
         </TableContainer>
       )}
+
       <Modal isOpen={isVehModalOpen} onClose={onCloseVehModal}>
         <ModalOverlay />
         <ModalContent>
@@ -159,6 +262,35 @@ export const VehicleRequests = () => {
               onClose={onCloseVehModal}
               mode={mode}
             />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal size="xs" isOpen={isDeleteModalOpen} onClose={onCloseDeleteModal}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton />
+          <ModalHeader textAlign="center">Delete request 🗑</ModalHeader>
+          <ModalBody>
+            <DeleteDialog
+              onClose={onCloseDeleteModal}
+              onConfirm={onDelete}
+              title="Are you sure you want to delete this request?"
+              isLoading={deleting}
+            />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal
+        size="2xl"
+        isOpen={isScheduleModalOpen}
+        onClose={onCloseScheduleModal}
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton />
+          <ModalHeader textAlign="center">Vehicle Schedule 📆</ModalHeader>
+          <ModalBody>
+            <VehicleSchedule />
           </ModalBody>
         </ModalContent>
       </Modal>

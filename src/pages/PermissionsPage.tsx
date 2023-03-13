@@ -12,6 +12,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalOverlay,
+  Spinner,
   Table,
   TableContainer,
   Tbody,
@@ -28,16 +29,22 @@ import {
 } from "@chakra-ui/react";
 import { format } from "date-fns";
 import { FirebaseError } from "firebase/app";
-import { request } from "http";
-import { is } from "immer/dist/internal";
 import React, { FC, useEffect, useMemo, useState } from "react";
 import { BiCheckCircle } from "react-icons/bi";
-import { BsCheck2Circle, BsEye, BsEyeglasses } from "react-icons/bs";
-import { FaTimes } from "react-icons/fa";
-import { MdCheckCircle, MdPending } from "react-icons/md";
+import {
+  BsChat,
+  BsCheck,
+  BsCheck2Circle,
+  BsEye,
+  BsEyeglasses,
+} from "react-icons/bs";
+import { FaCross, FaTimes } from "react-icons/fa";
+import { MdCancel, MdCheckCircle, MdPending } from "react-icons/md";
 import { EmptyState } from "../components/EmptyState";
 import { LoadingComponent } from "../components/LoadingComponent";
+import { RequestChat } from "../components/RequestChat";
 import { RequestOverview } from "../components/RequestOverview";
+import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { useAppSelector } from "../reducers/types";
 import {
   approveRequest,
@@ -50,6 +57,7 @@ import { Request } from "../types/Permission";
 type RequestProps = {
   request: Request;
   onViewRequest: () => void;
+  onViewConversation: () => void;
 };
 
 const ModalLabel: Record<Request["type"], string> = {
@@ -58,7 +66,11 @@ const ModalLabel: Record<Request["type"], string> = {
   car: "Vehicle Request",
 };
 
-const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
+const RequestRow: FC<RequestProps> = ({
+  request,
+  onViewRequest,
+  onViewConversation,
+}) => {
   const { users, auth } = useAppSelector(({ users, auth }) => ({
     users,
     auth,
@@ -201,6 +213,14 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
               aria-label="view request"
             />
           </Tooltip>
+          <Tooltip label="Conversation">
+            <IconButton
+              onClick={onViewConversation}
+              size="sm"
+              icon={<Icon as={BsChat} />}
+              aria-label="view chat"
+            />
+          </Tooltip>
         </HStack>
       </Flex>
     );
@@ -239,27 +259,55 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
           <Text fontSize="xs">Duration</Text>
           <Heading fontSize="sm">{`${format(
             new Date(request.startDate),
-            "dd MMM Y",
-          )} - ${format(new Date(request.endDate), "dd MMM Y")}`}</Heading>
+            "dd MMM yy",
+          )} - ${format(new Date(request.endDate), "dd MMM yy")}`}</Heading>
         </VStack>
       </Td>
       <Td>{request.status}</Td>
       <Td>
         <HStack alignItems="center" spacing={3}>
-          <Button variant="outline" onClick={onViewRequest} colorScheme="blue">
-            View
-          </Button>
+          <Tooltip label="View Conversations">
+            <IconButton
+              aria-label="view conversation"
+              borderRadius="full"
+              icon={<BsChat />}
+              onClick={onViewConversation}
+            />
+          </Tooltip>
+          <Tooltip label="View Request">
+            <IconButton
+              colorScheme="blackAlpha"
+              aria-label="view conversation"
+              borderRadius="full"
+              icon={<BsEye />}
+              onClick={onViewRequest}
+            />
+          </Tooltip>
           {request.status === "pending" && request.type === "leave" ? (
             <>
-              <Button
-                size="sm"
-                variant="outline"
-                colorScheme="success"
-                disabled={request.attentionToId !== auth?.uid}
-              >
-                Approve
-              </Button>
-              <Button
+              <Tooltip label="Approve request">
+                <IconButton
+                  aria-label="approve"
+                  borderRadius="full"
+                  colorScheme="green"
+                  icon={<BsCheck />}
+                  onClick={approve}
+                  isLoading={approving}
+                  disabled={request.attentionToId !== auth?.uid}
+                />
+              </Tooltip>
+              <Tooltip label="Decline Request">
+                <IconButton
+                  aria-label="decline"
+                  borderRadius="full"
+                  colorScheme="red"
+                  icon={<MdCancel />}
+                  onClick={decline}
+                  isLoading={delclining}
+                  disabled={request.attentionToId !== auth?.uid}
+                />
+              </Tooltip>
+              {/* <Button
                 size="sm"
                 variant="outline"
                 colorScheme="brand"
@@ -268,47 +316,36 @@ const RequestRow: FC<RequestProps> = ({ request, onViewRequest }) => {
                 disabled={request.attentionToId !== auth?.uid}
               >
                 Decline
-              </Button>
+              </Button> */}
             </>
-          ) : null}
-          {request.status === "reviewed" ? (
-            <>
-              <Button
-                isLoading={delclining}
-                size="sm"
-                colorScheme="brand"
-                variant="outline"
-                onClick={decline}
-              >
-                Decline
-              </Button>
-              <Button
-                onClick={approve}
-                isLoading={approving}
-                size="sm"
-                colorScheme="brand"
-              >
-                Approve
-              </Button>
-            </>
-          ) : null}
-          {request.status === "approved" ? (
-            <BiCheckCircle color="green" />
           ) : null}
         </HStack>
       </Td>
     </Tr>
   );
 };
+type FilterType = Request["type"] | "all";
 
 export const PermissionsPage: FC = () => {
   const [requests, setRequests] = useState<Request[]>();
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedRequest, setSelectedRequest] = useState<Request>();
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
+
+  const dataToRender = useMemo(() => {
+    if (selectedFilter === "all") return requests;
+    return requests?.filter((value) => value.type === selectedFilter);
+  }, [selectedFilter, requests]);
+  const glassEffect = useGlassEffect(true);
   const {
     isOpen: isViewRequestOpen,
     onClose: onCloseViewRequest,
     onOpen: onOpenViewRequest,
+  } = useDisclosure();
+  const {
+    isOpen: isRequestChatOpen,
+    onClose: onCloseRequestChat,
+    onOpen: onOpenRequestChat,
   } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, md: false, lg: false });
   const toast = useToast();
@@ -316,6 +353,12 @@ export const PermissionsPage: FC = () => {
     setSelectedRequest(request);
     onOpenViewRequest();
   };
+  const onViewConversation = (request: Request) => {
+    console.log("here", request);
+    setSelectedRequest(request);
+    onOpenRequestChat();
+  };
+  console.log({ selectedRequest, isRequestChatOpen });
   useEffect(() => {
     try {
       const unsub = listenOnPermissionRequests((rqts) => {
@@ -334,6 +377,23 @@ export const PermissionsPage: FC = () => {
   if (!isMobile) {
     return (
       <>
+        <VStack alignItems="flext-start" mb={3}>
+          <Heading fontSize="sm">Filter Requests</Heading>
+          <HStack spacing={3}>
+            {["all", "leave", "log"].map((type) => (
+              <Button
+                key={`filter-${type}`}
+                value={type}
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedFilter(type as FilterType)}
+                {...(type === selectedFilter ? glassEffect : {})}
+              >
+                {type}
+              </Button>
+            ))}
+          </HStack>
+        </VStack>
         <TableContainer>
           <Table>
             <Thead>
@@ -349,15 +409,23 @@ export const PermissionsPage: FC = () => {
               {loading ? (
                 <Tr>
                   <Td colSpan={5} textAlign="center">
-                    Please wait...
+                    <Flex
+                      alignItems="center"
+                      direction="column"
+                      justifyContent="center"
+                    >
+                      <Spinner />
+                      <Text>Please wait...</Text>
+                    </Flex>
                   </Td>
                 </Tr>
-              ) : requests?.length ? (
-                requests.map((request, i) => (
+              ) : dataToRender?.length ? (
+                dataToRender.map((request, i) => (
                   <RequestRow
                     onViewRequest={() => onViewPrompt(request)}
                     key={`permission-request-${i}`}
                     request={request}
+                    onViewConversation={() => onViewConversation(request)}
                   />
                 ))
               ) : (
@@ -391,22 +459,54 @@ export const PermissionsPage: FC = () => {
             </ModalBody>
           </ModalContent>
         </Modal>
+        <Modal isOpen={isRequestChatOpen} onClose={onCloseRequestChat}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalCloseButton />
+            <ModalHeader textAlign="center">
+              💬 Request Conversations
+            </ModalHeader>
+            <ModalBody>
+              {selectedRequest && <RequestChat request={selectedRequest} />}
+            </ModalBody>
+          </ModalContent>
+        </Modal>
       </>
     );
   }
   return (
     <Flex direction="column" width="100%" px={5}>
-      <Heading my={3} fontSize="lg">
-        Request List
-      </Heading>
+      <Flex direction="row" justifyContent="space-between">
+        <Heading my={3} fontSize="lg">
+          Request List
+        </Heading>
+        <VStack alignItems="flext-start">
+          <Heading fontSize="sm">Filter Requests</Heading>
+          <HStack spacing={3}>
+            {["all", "leave", "log"].map((type) => (
+              <Button
+                key={`filter-${type}`}
+                value={type}
+                variant="ghost"
+                size="xs"
+                onClick={() => setSelectedFilter(type as FilterType)}
+                {...(type === selectedFilter ? glassEffect : {})}
+              >
+                {type}
+              </Button>
+            ))}
+          </HStack>
+        </VStack>
+      </Flex>
       {loading ? (
         <LoadingComponent title="fetching requests" />
-      ) : requests?.length ? (
-        requests.map((request, i) => (
+      ) : dataToRender?.length ? (
+        dataToRender.map((request, i) => (
           <RequestRow
             onViewRequest={() => onViewPrompt(request)}
             key={`permission-request-${i}`}
             request={request}
+            onViewConversation={() => onViewConversation(request)}
           />
         ))
       ) : (
@@ -426,6 +526,16 @@ export const PermissionsPage: FC = () => {
                 onClose={onCloseViewRequest}
               />
             ) : null}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal isOpen={isRequestChatOpen} onClose={onCloseRequestChat}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton />
+          <ModalHeader textAlign="center">💬 Request Conversations</ModalHeader>
+          <ModalBody>
+            {selectedRequest && <RequestChat request={selectedRequest} />}
           </ModalBody>
         </ModalContent>
       </Modal>

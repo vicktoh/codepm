@@ -284,7 +284,7 @@ export const validateBudgetItem = (data: []) => {
 };
 
 export const tobase64 = (url: string) => {
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const canvas = document.createElement("canvas");
     const img = document.createElement("img");
     const ctx = canvas.getContext("2d");

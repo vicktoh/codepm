@@ -21,6 +21,7 @@ import {
 import { useAppSelector } from "../reducers/types";
 import { Log } from "../types/Log";
 import { fetchLogs } from "../services/logsServices";
+import { isWeekend } from "date-fns";
 type UserLogStatsProps = {
   userId: string;
 };
@@ -30,7 +31,10 @@ export const UserLogStats: FC<UserLogStatsProps> = ({ userId }) => {
     permission,
   }));
   const [logs, setLogs] = useState<Log[]>();
-  const loggedDays = logs?.length || 0;
+  const loggedDays =
+    (logs?.length &&
+      logs.filter((log) => !isWeekend(new Date(log.dateString))).length) ||
+    0;
   const businessDays = system
     ? differenceInBusinessDays(new Date(), new Date(system?.logStartDate))
     : 0;
@@ -40,8 +44,10 @@ export const UserLogStats: FC<UserLogStatsProps> = ({ userId }) => {
         isBetween(new Date(date), new Date(system.logStartDate), new Date()),
       ).length
     : 0;
-  const missedDays = businessDays - leaveDays - publicHolidays - loggedDays;
-  const adherence = missedDays === 0 ? 100 : (loggedDays / missedDays) * 100;
+  const missedDays = Math.max(
+    businessDays - leaveDays - publicHolidays - loggedDays,
+  );
+  const adherence = missedDays === 0 ? 100 : (loggedDays / businessDays) * 100;
   const adColor = useMemo(() => adherenceColor(adherence), [adherence]);
   const adEmoji = useMemo(() => adherenceEmoji(adherence), [adherence]);
   const adWord = useMemo(() => adherenceWord(adherence), [adherence]);
