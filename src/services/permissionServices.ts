@@ -53,7 +53,10 @@ export const listenOnPermissionRequests = (
 
 export const declineRequest = (id: string, comments?: Request["comments"]) => {
   const permissionDoc = doc(db, `permissionRequests/${id}`);
-  return updateDoc(permissionDoc, { status: "declined", comments });
+  return updateDoc(permissionDoc, {
+    status: "declined",
+    ...(comments ? { comments } : {}),
+  });
 };
 export const reviewRequest = (id: string) => {
   const permissionDoc = doc(db, `permissionRequests/${id}`);

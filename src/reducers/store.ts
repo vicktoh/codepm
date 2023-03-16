@@ -21,7 +21,7 @@ import { System } from "../types/System";
 import { Permission } from "../types/Permission";
 import { Beneficiary, Requisition } from "../types/Requisition";
 import { Project } from "../types/Project";
-import { Notification } from "../types/Notification";
+import { Notification, ReduxNotification } from "../types/Notification";
 
 export const store = configureStore({
   reducer: {
@@ -52,7 +52,7 @@ export type StoreType = {
   requisitions: Requisition[] | null;
   projects: Project[] | null;
   vendors: Record<string, Beneficiary>;
-  notifications: Notification[] | null;
+  notifications: ReduxNotification[] | null;
 };
 
 export type AppDispatch = typeof store.dispatch;

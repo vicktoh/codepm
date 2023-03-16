@@ -15,6 +15,7 @@ import {
   Table,
   TableContainer,
   Tbody,
+  Td,
   Text,
   Th,
   Thead,
@@ -23,7 +24,8 @@ import {
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
-import React, { useEffect, useState } from "react";
+import { isAfter, isBefore, isEqual } from "date-fns";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
 import { LoadingComponent } from "../components/LoadingComponent";
@@ -38,12 +40,30 @@ import { RetirementForm } from "../components/RequisitionForm/RetirementForm";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { useAppSelector } from "../reducers/types";
 import { listenOnRequisitionAdmin } from "../services/requisitionServices";
-import { Requisition } from "../types/Requisition";
-
+import { UserRole } from "../types/Profile";
+import { Requisition, RequisitionStatus } from "../types/Requisition";
+const roleMap: Record<UserRole, RequisitionStatus | ""> = {
+  admin: RequisitionStatus.checked,
+  finance: RequisitionStatus.reviewed,
+  reviewer: RequisitionStatus.budgetholder,
+  budgetHolder: RequisitionStatus.pending,
+  master: "",
+  user: "",
+};
 export const RequisitionAdminPage = () => {
   const [requisitions, setRequisitions] = useState<Requisition[]>();
   const [selectedRequisition, setSelectedRequisition] = useState<Requisition>();
-  const { profile } = useAppSelector(({ profile }) => ({ profile }));
+  const { profile, auth } = useAppSelector(({ profile, auth }) => ({
+    profile,
+    auth,
+  }));
+  const [requisitionFilter, setRequisitionFilter] =
+    useState<RequisitionFilterType>({
+      type: "",
+      endDate: "",
+      startDate: "",
+      status: auth ? roleMap[auth.role] : "",
+    });
   const [loading, setLoading] = useState<boolean>(true);
   const {
     onOpen: onOpenRequisitionModal,
@@ -72,6 +92,7 @@ export const RequisitionAdminPage = () => {
     setSelectedRequisition(requisition);
     onOpenChatModal();
   };
+
   const openRetirementModal = (requisition: Requisition) => {
     const req = { ...requisition };
     setSelectedRequisition(req);
@@ -93,7 +114,26 @@ export const RequisitionAdminPage = () => {
     return unsubscribe;
   }, [toast]);
   const onFilterRequisition = (requisitionFilter: RequisitionFilterType) => {
-    console.log(requisitionFilter);
+    setRequisitionFilter(requisitionFilter);
+  };
+  const onFilter = (requisition: Requisition, i: number) => {
+    if (!requisitionFilter) return true;
+    const isStartDate = requisitionFilter.startDate
+      ? isAfter(requisition.timestamp, new Date(requisitionFilter.startDate)) ||
+        isEqual(requisition.timestamp, new Date(requisitionFilter.startDate))
+      : true;
+    const isEndDate = requisitionFilter.endDate
+      ? isBefore(requisition.timestamp, new Date(requisitionFilter.endDate)) ||
+        isEqual(requisition.timestamp, new Date(requisitionFilter.endDate))
+      : true;
+    const isStatus = requisitionFilter.status
+      ? requisitionFilter.status === requisition.status
+      : true;
+    const isType = requisitionFilter.type
+      ? requisitionFilter.type === requisition.type
+      : true;
+
+    return isStartDate && isEndDate && isStatus && isType;
   };
   return (
     <Flex px={5} direction="column" pt={5}>
@@ -115,7 +155,10 @@ export const RequisitionAdminPage = () => {
         </Alert>
       )}
       <SimpleGrid mt={4} columns={[1, 2]} gridGap={3}>
-        <RequisitionFilterForm confirm={onFilterRequisition} />
+        <RequisitionFilterForm
+          confirm={onFilterRequisition}
+          filter={requisitionFilter}
+        />
       </SimpleGrid>
       <Heading fontSize="lg" my={5}>
         Requisition List
@@ -126,18 +169,33 @@ export const RequisitionAdminPage = () => {
             <LoadingComponent title="Fetching requisitions" />
           ) : requisitions?.length ? (
             <>
-              {requisitions.map((requisition, i) => (
-                <RequisitionAdminComponent
-                  key={`requisition-${i}`}
-                  requisition={requisition}
-                  onOpenRetirement={() => openRetirementModal(requisition)}
-                  onViewRequisition={() => onViewRequisition(requisition)}
-                  onOpenChat={() => onOpenConversation(requisition)}
-                />
-              ))}
+              {requisitions
+                .filter(onFilter)
+                .map((requisition, i) => (
+                  <RequisitionAdminComponent
+                    key={`requisition-${i}`}
+                    requisition={requisition}
+                    onOpenRetirement={() => openRetirementModal(requisition)}
+                    onViewRequisition={() => onViewRequisition(requisition)}
+                    onOpenChat={() => onOpenConversation(requisition)}
+                  />
+                )) || (
+                <Tr>
+                  <Td colSpan={5}>
+                    <EmptyState
+                      title="No requisition to show"
+                      description="Note❗️ showing filtered requisitions"
+                    />
+                  </Td>
+                </Tr>
+              )}
             </>
           ) : (
-            <EmptyState title="Empty requisition list" />
+            <Tr>
+              <Td colSpan={5}>
+                <EmptyState title="Empty requisition list" />
+              </Td>
+            </Tr>
           )}
         </Flex>
       ) : (
@@ -154,20 +212,40 @@ export const RequisitionAdminPage = () => {
             </Thead>
             {loading ? (
               <LoadingComponent title="Fetching requisitions" />
-            ) : requisitions?.length ? (
+            ) : requisitions?.filter(onFilter)?.length ? (
               <Tbody>
-                {requisitions.map((requisition, i) => (
-                  <RequisitionAdminComponent
-                    key={`requisition-${i}`}
-                    requisition={requisition}
-                    onOpenRetirement={() => openRetirementModal(requisition)}
-                    onViewRequisition={() => onViewRequisition(requisition)}
-                    onOpenChat={() => onOpenConversation(requisition)}
-                  />
-                ))}
+                {requisitions
+                  .filter(onFilter)
+                  .map((requisition, i) => (
+                    <RequisitionAdminComponent
+                      key={`requisition-${i}`}
+                      requisition={requisition}
+                      onOpenRetirement={() => openRetirementModal(requisition)}
+                      onViewRequisition={() => onViewRequisition(requisition)}
+                      onOpenChat={() => onOpenConversation(requisition)}
+                    />
+                  )) || (
+                  <Tr>
+                    <Td colSpan={5}>
+                      <EmptyState
+                        title="No requisition to show"
+                        description="Note❗️ showing filtered requisitions"
+                      />
+                    </Td>
+                  </Tr>
+                )}
               </Tbody>
             ) : (
-              <EmptyState title="Empty requisition list" />
+              <Tbody>
+                <Tr>
+                  <Td colSpan={5}>
+                    <EmptyState
+                      title="No requisition to show"
+                      description="Note❗️ showing filtered requisitions"
+                    />
+                  </Td>
+                </Tr>
+              </Tbody>
             )}
           </Table>
         </TableContainer>

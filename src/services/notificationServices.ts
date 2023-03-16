@@ -9,22 +9,25 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
-import { Notification } from "../types/Notification";
+import { Notification, ReduxNotification } from "../types/Notification";
 import { db } from "./firebase";
 
 export const listenOnNofification = (
   userId: string,
-  callback: (notification: Notification[]) => void,
+  callback: (notification: ReduxNotification[]) => void,
 ) => {
   const notificationRef = collection(db, `users/${userId}/notifications`);
   const q = query(notificationRef, orderBy("timestamp", "desc"));
   return onSnapshot(q, (snapshot) => {
-    const nots: Notification[] = [];
+    const nots: ReduxNotification[] = [];
     snapshot.forEach((snap) => {
-      const notification = snap.data() as Notification;
+      const notification = snap.data();
       notification.id = snap.id;
-      notification.timestamp = (notification.timestamp as Timestamp).toMillis();
-      nots.push(notification);
+      if (typeof notification.timestamp !== "number")
+        notification.timestamp = (
+          notification.timestamp as Timestamp
+        ).toMillis();
+      nots.push(notification as ReduxNotification);
     });
     callback(nots);
   });

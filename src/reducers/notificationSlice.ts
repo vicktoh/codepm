@@ -1,16 +1,16 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Auth } from "../types/Auth";
-import { Notification } from "../types/Notification";
+import { ReduxNotification } from "../types/Notification";
 
-const intialNotifications: Notification[] | null = null;
+const intialNotifications: ReduxNotification[] | null = null;
 
 const notificationSlice = createSlice({
   name: "notifications",
   initialState: intialNotifications,
   reducers: {
     setNotification: (
-      state: Notification[] | null,
-      action: PayloadAction<Notification[] | null>,
+      state: ReduxNotification[] | null,
+      action: PayloadAction<ReduxNotification[] | null>,
     ) => {
       state = action.payload === null ? null : action.payload;
       return state as any;

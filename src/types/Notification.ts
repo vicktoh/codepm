@@ -6,9 +6,13 @@ export type Notification = {
   description?: string;
   linkTo?: string;
   reciepientId: string;
-  timestamp: number | Timestamp;
+  timestamp: Timestamp;
   type: "tasks" | "requisition" | "request";
   read: boolean;
+};
+
+export type ReduxNotification = Omit<Notification, "timestamp"> & {
+  timestamp: number;
 };
 
 export type NotificationPayload = {

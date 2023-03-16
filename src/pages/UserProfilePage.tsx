@@ -144,12 +144,16 @@ export const UserProfilePage = () => {
                   <Heading fontSize="md">{profile?.role || "User"}</Heading>
                 </Box>
               </SimpleGrid>
-              <SimpleGrid columns={2} mt={5}>
+              <SimpleGrid columns={2} mt={5} gridGap={8}>
                 <Box mb={3}>
                   <Text>Phone Number</Text>
                   <Heading fontSize="md">
                     {profile?.phoneNumber || "None"}
                   </Heading>
+                </Box>
+                <Box mb={3}>
+                  <Text>Email</Text>
+                  <Heading fontSize="md">{profile?.email || "None"}</Heading>
                 </Box>
                 <Box mb={3}>
                   <Text>Departments</Text>

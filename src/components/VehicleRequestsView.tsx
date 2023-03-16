@@ -13,13 +13,18 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { format, intervalToDuration } from "date-fns";
+import { Timestamp } from "firebase/firestore";
 import React, { FC, useEffect, useMemo, useState } from "react";
+import { BASE_URL } from "../constants";
 import { useAppSelector } from "../reducers/types";
+import { sendNotification } from "../services/notificationServices";
+import { sendEmailNotification } from "../services/userServices";
 import {
   getVehicleRequestClashes,
   getVehicleRequestForDate,
   updateVehicleRequestStatus,
 } from "../services/vehicleServices";
+import { EmailPayLoad, Notification } from "../types/Notification";
 import { VehicleRequest } from "../types/VehicleRequest";
 type VehicleRequestsViewProps = {
   request: VehicleRequest;
@@ -51,6 +56,34 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
       if (status === "approved") setApproving(true);
       if (status === "declined") setDeclining(true);
       await updateVehicleRequestStatus(status, request.id, auth?.uid || "");
+      const notification: Notification = {
+        title: `Vehicle Request ${status} ${
+          status === "approved" ? "✅" : "⛔️"
+        }`,
+        description: `Your vehicle request has been ${status}`,
+        read: false,
+        reciepientId: request.userId,
+        timestamp: Timestamp.now(),
+        type: "request",
+        linkTo: "/requests/vehicle",
+      };
+      sendNotification(notification);
+      if (status === "approved") {
+        const email: EmailPayLoad = {
+          to: usersMap[request.userId]?.email || "",
+          data: {
+            action: `${BASE_URL}/requests/vehicle`,
+            date: format(new Date(), "do MMM Y"),
+            message: `This is to certify that the vehicle request for ${
+              usersMap[request.userId]?.displayName || "Unknown"
+            }'s trip on the ${format(request.datetimestamp, "do MMM Y")} from ${
+              request.origin
+            } to ${request.destination} has been approved ✅`,
+            title: "Vehicle Request Approval",
+          },
+        };
+        sendEmailNotification(email);
+      }
       toast({
         title: `Request has been ${status}`,
         status: "success",
