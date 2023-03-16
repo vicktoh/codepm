@@ -384,9 +384,7 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
               variant="outline"
               colorScheme="brand"
               disabled={
-                request.attentionToId !== auth?.uid ||
-                auth?.role !== UserRole.admin ||
-                request.userId === auth?.uid
+                auth?.role !== UserRole.admin || request.userId === auth?.uid
               }
             >
               Decline
