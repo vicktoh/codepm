@@ -19,15 +19,22 @@ import { format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import React, { FC, useMemo, useState } from "react";
 import { BsCheckCircle, BsStopCircle } from "react-icons/bs";
+import { BASE_URL } from "../constants";
 import { leaveMapper } from "../helpers";
 import { useLeaveData } from "../hooks/useLeaveData";
 import { useAppSelector } from "../reducers/types";
+import { sendNotification } from "../services/notificationServices";
 import {
   approveRequest,
   declineRequest,
   reviewRequest,
 } from "../services/permissionServices";
+import {
+  sendEmailNotification,
+  sendNotificationToGroup,
+} from "../services/userServices";
 import { Chat } from "../types/Chat";
+import { EmailPayLoad, Notification } from "../types/Notification";
 import { Request } from "../types/Permission";
 import { UserRole } from "../types/Profile";
 import { LeaveTypeMap } from "../types/System";
@@ -74,6 +81,32 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
     try {
       setReviewing(true);
       await reviewRequest(request.id || "");
+      const notificaiton: Notification = {
+        title: "Leave Request Approval",
+        description: `Head of department ${
+          usersMap[request.attentionToId || ""]?.displayName
+        } has approved the leave request for ${
+          usersMap[request.userId]?.displayName || "Unknown"
+        } and this request is  now awaiting your final approval`,
+        reciepientId: "",
+        read: false,
+        timestamp: Timestamp.now(),
+        type: "request",
+        linkTo: "/requests-admin",
+      };
+      const userNotification: Notification = {
+        title: "Leave Request Reviewed 👀",
+        description: `Your leave request has been reviewed by ${
+          auth?.displayName || "Unknown"
+        } as head of department, it is now awaiting approval from admin`,
+        read: false,
+        reciepientId: request.userId,
+        timestamp: Timestamp.now(),
+        type: "request",
+        linkTo: "/requests",
+      };
+      sendNotification(userNotification);
+      sendNotificationToGroup({ group: UserRole.admin, data: notificaiton });
       // toast({ title: "Request successfully Aproved", status: "success" });
       onClose();
     } catch (error) {
@@ -83,13 +116,13 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
     }
   };
   const decline = async () => {
-    if (request.status !== "reviewed" && request.attentionToId !== auth?.uid) {
-      toast({
-        title: "This request has to be reviewed first",
-        status: "error",
-      });
-      return;
-    }
+    // if (request.status !== "reviewed" && request.attentionToId !== auth?.uid) {
+    //   toast({
+    //     title: "This request has to be reviewed first",
+    //     status: "error",
+    //   });
+    //   return;
+    // }
     try {
       setDeclining(true);
       const comments: Chat[] = comment
@@ -108,6 +141,28 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
           ]
         : [];
       await declineRequest(request.id || "", comments);
+      const notification: Notification = {
+        title: `${
+          request.type === "log" ? "Log" : "Leave"
+        } Request Declined ⛔️`,
+        description: "Oops your leave request was declined",
+        read: false,
+        reciepientId: request.userId,
+        timestamp: Timestamp.now(),
+        type: "request",
+        linkTo: "/requests",
+      };
+      const email: EmailPayLoad = {
+        data: {
+          action: `${BASE_URL}/requests`,
+          message: `Oops your leave request was declined go on the codepm platform to view more details`,
+          date: `${format(new Date(), `do MMM Y`)}`,
+          title: `Leave Request Declined ⛔️`,
+        },
+        to: usersMap[request.userId]?.email || "",
+      };
+      sendNotification(notification);
+      sendEmailNotification(email);
       onClose();
     } catch (error) {
       toast({ title: "Something went wrong", status: "error" });
@@ -116,7 +171,7 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
     }
   };
   const approve = async () => {
-    if (request.status !== "reviewed") {
+    if (request.type === "leave" && request.status !== "reviewed") {
       toast({
         title: "This request has to be reviewed first",
         status: "error",
@@ -126,6 +181,65 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
     try {
       setApproving(true);
       await approveRequest(request);
+      const notification: Notification = {
+        title: `${
+          request.type === "log" ? "Log" : "Leave"
+        } Request Approved ✅`,
+        description: `Your ${request.type} request has been approved`,
+        read: false,
+        reciepientId: request.userId,
+        timestamp: Timestamp.now(),
+        type: "request",
+        linkTo: "/requests",
+      };
+      const email: EmailPayLoad = {
+        data: {
+          action: `${BASE_URL}/requests`,
+          message: `Your ${request.type} request has been approved`,
+          date: `${format(new Date(), `do MMM Y`)}`,
+          title: `${
+            request.type === "log" ? "Log" : "Leave"
+          } request approval ✅`,
+        },
+        to: usersMap[request.userId]?.email || "",
+      };
+
+      if (request.type === "leave" && request.handoverId) {
+        sendNotification({
+          read: false,
+          reciepientId: request.handoverId,
+          description: `You have been mentioned in a leave request by ${
+            auth?.displayName || "Unknown"
+          }, the of ${
+            auth?.displayName || "Unknown"
+          } duties and responsibilities will be handed over to you`,
+          title: "Leave Request",
+          timestamp: Timestamp.now(),
+          linkTo: "/requests-admin",
+          type: "request",
+        });
+        const handoverEmail: EmailPayLoad = {
+          data: {
+            action: `${BASE_URL}/requests`,
+            message: `This mail officially states that ${
+              usersMap[request.userId]?.displayName || "Unknown"
+            } is going on ${request.leaveType || "leave"} from ${format(
+              new Date(request.startDate),
+              "do MMM Y ",
+            )} to ${format(
+              new Date(request.endDate),
+              "do MMM Y",
+            )} and will be handing over their duties and responsility to you`,
+            date: `${format(new Date(), `do MMM Y`)}`,
+            title: `Leave Handover 🤝`,
+          },
+          to: usersMap[request.handoverId || ""]?.email || "",
+        };
+        sendEmailNotification(handoverEmail);
+      }
+
+      sendNotification(notification);
+      sendEmailNotification(email);
       // toast({ title: "Request successfully Approved", status: "success" });
       onClose();
     } catch (error) {
@@ -270,9 +384,7 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
               variant="outline"
               colorScheme="brand"
               disabled={
-                request.attentionToId !== auth?.uid ||
-                auth?.role !== UserRole.admin ||
-                request.userId === auth?.uid
+                auth?.role !== UserRole.admin || request.userId === auth?.uid
               }
             >
               Decline
@@ -300,7 +412,7 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
                   auth?.role !== UserRole.admin || request.userId === auth?.uid
                 }
               >
-                Approve
+                Approve Log
               </Button>
             )}
           </>

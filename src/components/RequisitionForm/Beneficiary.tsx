@@ -55,6 +55,9 @@ export const Beneficiary = () => {
       setFieldValue("attentionTo", attentionTo);
     }
   };
+  const onSelectAttention = (type: string, userId: string) => {
+    setFieldValue(type, userId);
+  };
   const onInputChange = (
     index: number,
     newText: string,
@@ -166,7 +169,97 @@ export const Beneficiary = () => {
       <RequisitionAttachmentForm />
       <FormControl mb={5}>
         <FormLabel>Attention To</FormLabel>
-        <UserListPopover
+        <SimpleGrid columns={[2, 2, 4]} columnGap={3}>
+          <Flex direction="column">
+            {values.bugetHolderAttentionId && (
+              <Avatar
+                src={usersMap[values.bugetHolderAttentionId]?.photoUrl || ""}
+                name={
+                  usersMap[values.bugetHolderAttentionId]?.displayName || ""
+                }
+                size="sm"
+                my={2}
+              />
+            )}
+            <UserListPopover
+              assignees={
+                values.bugetHolderAttentionId
+                  ? [values.bugetHolderAttentionId]
+                  : []
+              }
+              onSelectUser={(userId) =>
+                onSelectAttention("bugetHolderAttentionId", userId)
+              }
+              closeOnSelect={true}
+            >
+              <Button size="sm">Select Budget Holder</Button>
+            </UserListPopover>
+          </Flex>
+          <Flex direction="column">
+            {values.operationAttentionId && (
+              <Avatar
+                src={usersMap[values.operationAttentionId]?.photoUrl || ""}
+                name={usersMap[values.operationAttentionId]?.displayName || ""}
+                size="sm"
+                my={2}
+              />
+            )}
+            <UserListPopover
+              assignees={
+                values.operationAttentionId ? [values.operationAttentionId] : []
+              }
+              onSelectUser={(userId) =>
+                onSelectAttention("operationAttentionId", userId)
+              }
+              closeOnSelect={true}
+            >
+              <Button size="sm">Select Operations</Button>
+            </UserListPopover>
+          </Flex>
+          <Flex direction="column">
+            {values.financeAttentionId && (
+              <Avatar
+                src={usersMap[values.financeAttentionId]?.photoUrl || ""}
+                name={usersMap[values.financeAttentionId]?.displayName || ""}
+                size="sm"
+                my={2}
+              />
+            )}
+            <UserListPopover
+              assignees={
+                values.financeAttentionId ? [values.financeAttentionId] : []
+              }
+              onSelectUser={(userId) =>
+                onSelectAttention("financeAttentionId", userId)
+              }
+              closeOnSelect={true}
+            >
+              <Button size="sm">Select Finance</Button>
+            </UserListPopover>
+          </Flex>
+          <Flex direction="column">
+            {values.adminAttentionId && (
+              <Avatar
+                src={usersMap[values.adminAttentionId]?.photoUrl || ""}
+                name={usersMap[values.adminAttentionId]?.displayName || ""}
+                size="sm"
+                my={2}
+              />
+            )}
+            <UserListPopover
+              assignees={
+                values.adminAttentionId ? [values.adminAttentionId] : []
+              }
+              onSelectUser={(userId) =>
+                onSelectAttention("adminAttentionId", userId)
+              }
+              closeOnSelect={true}
+            >
+              <Button size="sm">Select Admin</Button>
+            </UserListPopover>
+          </Flex>
+        </SimpleGrid>
+        {/* <UserListPopover
           onSelectUser={onSelectAttentionTo}
           assignees={values.attentionTo || []}
         >
@@ -185,7 +278,7 @@ export const Beneficiary = () => {
               ))}
             </HStack>
           </Flex>
-        ) : null}
+        ) : null} */}
       </FormControl>
       <Flex direction="row" justifyContent="space-between">
         <Button

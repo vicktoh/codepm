@@ -91,6 +91,10 @@ export interface Requisition {
   retirementTimestamp?: number;
   retirementApproveDate?: number;
   conversation?: Record<string, number>;
+  bugetHolderAttentionId?: string;
+  operationAttentionId?: string;
+  financeAttentionId?: string;
+  adminAttentionId?: string;
 }
 export type Beneficiary = {
   name: string;
@@ -110,4 +114,8 @@ export type RequisitionFormValues = {
   activityTitle: string;
   currency: Requisition["currency"];
   attentionTo?: Requisition["attentionTo"];
+  bugetHolderAttentionId?: string;
+  operationAttentionId?: string;
+  financeAttentionId?: string;
+  adminAttentionId?: string;
 };

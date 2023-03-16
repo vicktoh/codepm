@@ -1,5 +1,5 @@
 import { httpsCallable, getFunctions } from "firebase/functions";
-import { EmailPayLoad } from "../types/Notification";
+import { EmailPayLoad, Notification } from "../types/Notification";
 import { UserRole } from "../types/Profile";
 import { firebaseApp } from "./firebase";
 
@@ -13,3 +13,7 @@ export const sendEmailNotification = httpsCallable<
   EmailPayLoad,
   { status: "success" | "failed"; message?: string }
 >(functions, "sendEmailNotification");
+export const sendNotificationToGroup = httpsCallable<
+  { group: UserRole; data: Notification },
+  { status: "success" | "failed"; message?: string }
+>(functions, "sendNotificationToGroup");

@@ -22,6 +22,7 @@ import { useAppSelector } from "../../reducers/types";
 import { sendNotification } from "../../services/notificationServices";
 import { updateRequisition } from "../../services/requisitionServices";
 import { sendEmailNotification } from "../../services/userServices";
+import { EmailPayLoad, Notification } from "../../types/Notification";
 import { UserRole } from "../../types/Profile";
 import { Requisition, RequisitionStatus } from "../../types/Requisition";
 import { UserReference } from "../../types/User";
@@ -35,6 +36,15 @@ type RequisitionAdminFormProps = {
 type RequisitionFieldProps = {
   label: string;
   value: string;
+};
+
+const roleMap: Record<UserRole, string> = {
+  admin: "Admin",
+  budgetHolder: "Budget Holder",
+  reviewer: "Operation",
+  finance: "Finance",
+  master: "Master",
+  user: "User",
 };
 const RequisitionField: FC<RequisitionFieldProps> = ({ label, value }) => {
   const isMobile = useBreakpointValue({ base: true, md: false, lg: true });
@@ -278,6 +288,49 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               linkTo: "/requisitions",
               type: "requisition",
             });
+            let nextReciepient: string | undefined = "";
+            if (auth.role === UserRole.budgetHolder)
+              nextReciepient = requisition.operationAttentionId;
+            if (auth.role === UserRole.reviewer)
+              nextReciepient = requisition.financeAttentionId;
+            if (auth.role === UserRole.finance)
+              nextReciepient = requisition.adminAttentionId;
+            if (nextReciepient) {
+              const not: Notification = {
+                title: "Requisition Alert",
+                type: "requisition",
+                read: false,
+                description: `${
+                  auth.displayName || "Unknown"
+                } has just checked the requisition titled "${
+                  requisition.title
+                }" as ${
+                  roleMap[auth.role]
+                }. It is now your turn to work on this requisition`,
+                reciepientId: nextReciepient,
+                timestamp: Timestamp.now(),
+                linkTo: "/requisition-admin",
+              };
+              const emailTonext: EmailPayLoad = {
+                to: `${usersMap[nextReciepient]?.displayName || ""} <${
+                  usersMap[nextReciepient]?.email
+                }>`,
+                data: {
+                  title: "Requisition Alert",
+                  message: `${
+                    auth.displayName || "Unknown"
+                  } has just checked the requisition titled "${
+                    requisition.title
+                  }" as ${
+                    roleMap[auth.role]
+                  }. It is now your turn to work on this requisition`,
+                  date: format(new Date(), "do MMM Y"),
+                  action: `${BASE_URL}/requisition-admin`,
+                },
+              };
+              sendNotification(not);
+              sendEmailNotification(emailTonext);
+            }
             onClose();
           }
           if (values.mode === "approve") {

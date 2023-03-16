@@ -14,17 +14,21 @@ import {
 } from "@chakra-ui/react";
 import { format, setHours } from "date-fns";
 import sub from "date-fns/sub";
+import { Timestamp } from "firebase/firestore";
 import { Form, Formik } from "formik";
 import React, { FC } from "react";
 import { RiDraftFill } from "react-icons/ri";
 
 import * as yup from "yup";
 import { useAppSelector } from "../reducers/types";
+import { sendNotificationToGroup } from "../services/userServices";
 import {
   sendVehicleRequest,
   updateVehicleRquest,
 } from "../services/vehicleServices";
+import { Notification } from "../types/Notification";
 import { Period, Request } from "../types/Permission";
+import { UserRole } from "../types/Profile";
 import { VehicleRequest } from "../types/VehicleRequest";
 import { UserListPopover } from "./UserListPopover";
 
@@ -127,6 +131,26 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
             await updateVehicleRquest(edit);
             onClose();
           }
+          const notification: Notification = {
+            title: `Vehicle Request 🚘`,
+            description: `${
+              auth?.displayName || "Uknown"
+            } is requesting for vehicle on the ${format(
+              new Date(values.date),
+              "do MMM Y",
+            )} to ${values.destination} from ${values.startTime} to ${
+              values.endTime
+            }`,
+            timestamp: Timestamp.now(),
+            read: false,
+            reciepientId: "",
+            linkTo: "/requests-admin/vehicle",
+            type: "request",
+          };
+          sendNotificationToGroup({
+            group: UserRole.admin,
+            data: notification,
+          });
           toast({
             title: `Request successfully ${
               mode === "edit" ? "edited" : "submitted"

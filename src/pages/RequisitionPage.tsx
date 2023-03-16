@@ -241,7 +241,10 @@ export const RequisitionPage: FC = () => {
         </Alert>
       )}
       <SimpleGrid columns={[1, 2]} columnGap={[3, 1]} gridGap={[3, 5]}>
-        <RequisitionFilterForm confirm={setFilterFilter} />
+        <RequisitionFilterForm
+          confirm={setFilterFilter}
+          filter={requisitionFilter}
+        />
         <RequisitionStatsComponent />
       </SimpleGrid>
       <Button

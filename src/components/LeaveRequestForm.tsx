@@ -36,12 +36,14 @@ type LeaveRequestFormProps = {
   mode?: "add" | "edit";
   request?: Request;
   onEdit?: (values: Request) => Promise<void>;
+  onClose: () => void;
 };
 export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
   onSubmit,
   request,
   onEdit,
   mode,
+  onClose,
 }) => {
   const toast = useToast();
   const { users, auth, system } = useAppSelector(({ users, auth, system }) => ({
@@ -90,12 +92,14 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
             await onSubmit(values);
           }
           if (mode === "edit" && onEdit && request) {
-            await onEdit({ ...(request || {}), ...values });
+            await onEdit({ ...(request || {}), ...values, status: "pending" });
           }
           if (values.attentionToId) {
             const attentionToName =
               usersMap[values.attentionToId]?.displayName || "";
-            const message = `${attentionToName} is requesting for leave from ${format(
+            const message = `${
+              auth?.displayName || ""
+            } is requesting for leave from ${format(
               new Date(values.startDate),
               "do MMM yyy",
             )} to ${format(new Date(values.endDate), "do MMM yyy")}`;
@@ -123,6 +127,20 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
               linkTo: "/requests-admin",
               type: "request",
             });
+            // values.handoverId &&
+            //   sendNotification({
+            //     read: false,
+            //     reciepientId: values.handoverId,
+            //     description: `You have been mentioned in a leave request by ${
+            //       auth?.displayName || "Unknown"
+            //     }, the of ${
+            //       auth?.displayName || "Unknown"
+            //     } duties and responsibilities will be handed over to you`,
+            //     title: "Leave Request",
+            //     timestamp: Timestamp.now(),
+            //     linkTo: "/requests-admin",
+            //     type: "request",
+            //   });
           }
           toast({
             title: `Request successfully ${
@@ -132,6 +150,7 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
               "Your request has been submitted you'll get a notificaiton when it is approved or declined",
             status: "success",
           });
+          onClose();
         } catch (error) {
           const err: any = error;
           toast({

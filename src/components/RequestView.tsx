@@ -353,6 +353,7 @@ const RequestView: FC = () => {
               request={selectedRequest}
               onEdit={onEditRequest}
               mode={mode}
+              onClose={onCloseLeaveRequest}
             />
           </ModalBody>
         </ModalContent>

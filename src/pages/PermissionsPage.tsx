@@ -394,7 +394,7 @@ export const PermissionsPage: FC = () => {
             ))}
           </HStack>
         </VStack>
-        <TableContainer>
+        <TableContainer mb={5}>
           <Table>
             <Thead>
               <Tr>
@@ -475,7 +475,7 @@ export const PermissionsPage: FC = () => {
     );
   }
   return (
-    <Flex direction="column" width="100%" px={5}>
+    <Flex direction="column" width="100%" px={5} pb={5}>
       <Flex direction="row" justifyContent="space-between">
         <Heading my={3} fontSize="lg">
           Request List

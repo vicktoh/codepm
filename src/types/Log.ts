@@ -3,7 +3,7 @@ import { Timestamp } from "firebase/firestore";
 export type Log = {
   userId: string;
   timeStamp: number;
-  dateUpdated: Timestamp;
+  dateUpdated: Timestamp | number;
   activity: string[];
   dateString: string;
   link?: string;

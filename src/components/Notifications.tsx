@@ -25,10 +25,10 @@ import { Link } from "react-router-dom";
 import { Box } from "victory";
 import { useAppSelector } from "../reducers/types";
 import { markNotificationAsRead } from "../services/notificationServices";
-import { Notification } from "../types/Notification";
+import { Notification, ReduxNotification } from "../types/Notification";
 
 type NotificationBoxProps = {
-  notification: Notification;
+  notification: ReduxNotification;
 };
 
 const iconMap: Record<Notification["type"], string> = {

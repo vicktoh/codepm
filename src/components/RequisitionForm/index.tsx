@@ -21,7 +21,11 @@ import {
   updateRequisition,
   updateVendorsList,
 } from "../../services/requisitionServices";
-import { sendMultipleNotification } from "../../services/notificationServices";
+import { sendNotification } from "../../services/notificationServices";
+import { EmailPayLoad, Notification } from "../../types/Notification";
+import { Timestamp } from "firebase/firestore";
+import { BASE_URL } from "../../constants";
+import { sendEmailNotification } from "../../services/userServices";
 
 type RequisitionFormProps = {
   requisition?: Requisition;
@@ -57,6 +61,10 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
     currency: requisition?.currency || RequisitionCurrency.NGN,
     attentionTo: requisition?.attentionTo || [],
     budgetIds: requisition?.budgetIds || [],
+    adminAttentionId: requisition?.adminAttentionId || "",
+    bugetHolderAttentionId: requisition?.bugetHolderAttentionId || "",
+    financeAttentionId: requisition?.financeAttentionId || "",
+    operationAttentionId: requisition?.operationAttentionId || "",
   };
   const validationSchema = yup.object().shape({
     title: yup.string().required("Requisition title is required"),
@@ -126,21 +134,35 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
               vendors || {},
               newRequisition.beneficiaries,
             );
-            if (newRequisition.attentionTo?.length) {
-              newRequisitionNotification(
-                {
-                  raisedBy: auth.displayName,
-                  title: "Requisition Alert",
-                  ids: newRequisition.attentionTo || [],
-                },
-                usersMap,
-              );
-              sendMultipleNotification(newRequisition.attentionTo, {
-                title: "Requisition Alert",
-                linkTo: "/requisition-admin",
-                description: `${auth.displayName} request your attention to the requesition titled "${newRequisition.title}"`,
+            if (values.bugetHolderAttentionId) {
+              const notification: Notification = {
+                title: `Requisition Alert 🤑`,
+                description: `${
+                  auth.displayName || "Unknown"
+                } is requesting your review as a budget holder of thier requisition titled "${
+                  values.title
+                }"`,
+                read: false,
+                reciepientId: values.bugetHolderAttentionId,
+                timestamp: Timestamp.now(),
                 type: "requisition",
-              });
+                linkTo: "/requisition-admin",
+              };
+              const email: EmailPayLoad = {
+                to: usersMap[values.bugetHolderAttentionId]?.email || "",
+                data: {
+                  title: "Requisition Alert",
+                  message: `${
+                    auth.displayName || "Unknown"
+                  } is requesting your review as a budget holder of thier requisition titled "${
+                    values.title
+                  }"`,
+                  action: `${BASE_URL}/requisition-admin`,
+                  date: format(new Date(), "do MMM Y"),
+                },
+              };
+              sendNotification(notification);
+              sendEmailNotification(email);
             }
             onClose();
           } catch (error) {

@@ -8,12 +8,17 @@ import {
   Textarea,
   useToast,
 } from "@chakra-ui/react";
+import { Timestamp } from "firebase/firestore";
 import { Form, Formik } from "formik";
 import { request } from "http";
 import React, { FC } from "react";
 
 import * as yup from "yup";
+import { useAppSelector } from "../reducers/types";
+import { sendNotificationToGroup } from "../services/userServices";
+import { Notification } from "../types/Notification";
 import { Period, Request } from "../types/Permission";
+import { UserRole } from "../types/Profile";
 
 type LogRequestFormProps = {
   request?: Request;
@@ -35,6 +40,7 @@ export const LogRequestForm: FC<LogRequestFormProps> = ({
 }) => {
   const toast = useToast();
   const { userId, status, timestamp, ...rest } = request || {};
+  const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const initialValues: Omit<Request, "userId" | "status" | "timestamp"> = {
     startDate: "",
     endDate: "",
@@ -61,6 +67,23 @@ export const LogRequestForm: FC<LogRequestFormProps> = ({
         try {
           if (mode === "add") {
             await onSubmit(values);
+            const notification: Notification = {
+              read: false,
+              title: "Log Request",
+              description: `${
+                auth?.displayName || "Unknown"
+              } is requesting access to logs from ${values.startDate} to ${
+                values.endDate
+              }`,
+              reciepientId: "",
+              timestamp: Timestamp.now(),
+              type: "request",
+              linkTo: "/requests-admin",
+            };
+            sendNotificationToGroup({
+              group: UserRole.admin,
+              data: notification,
+            });
           }
           if (mode === "edit" && request && onEdit) {
             await onEdit({ ...request, ...values });

@@ -31,6 +31,8 @@ export const listenOnLogs = (
     const logMap: Record<string, Log> = {};
     snapshot.forEach((snap) => {
       const log = snap.data() as Log;
+      if (typeof log.dateUpdated !== "number")
+        log.dateUpdated = (log.dateUpdated as Timestamp).toMillis();
       logs.push(log);
       logMap[snap.id] = log;
     });

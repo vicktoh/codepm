@@ -25,12 +25,13 @@ export type RequisitionFilterType = {
 };
 export const RequisitionFilterForm: FC<{
   confirm: (reflection: RequisitionFilterType) => void;
-}> = ({ confirm }) => {
+  filter?: RequisitionFilterType;
+}> = ({ confirm, filter }) => {
   const initialValues: RequisitionFilterType = {
-    type: "",
-    startDate: "",
-    endDate: "",
-    status: "",
+    type: filter?.type || "",
+    startDate: filter?.startDate || "",
+    endDate: filter?.endDate || "",
+    status: filter?.status || "",
   };
   const inputSize = useBreakpointValue({ base: "sm", md: "md", lg: "md" });
   const validationSchema = yup.object().shape({
@@ -96,7 +97,7 @@ export const RequisitionFilterForm: FC<{
                   bg="white"
                   size={inputSize}
                 >
-                  <option value="">Select Type</option>
+                  <option value="">All</option>
                   {Object.values(RequisitionType).map((value, i) => (
                     <option key={`type-${value}-${i}`} value={value}>
                       {value}
@@ -117,7 +118,7 @@ export const RequisitionFilterForm: FC<{
                   onChange={handleChange}
                   onBlur={handleBlur}
                 >
-                  <option value="">Select Status</option>
+                  <option value="">All</option>
                   {Object.values(RequisitionStatus).map((value, i) => (
                     <option key={`type-${value}-${i}`} value={value}>
                       {value}
