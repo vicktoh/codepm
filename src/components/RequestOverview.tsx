@@ -384,7 +384,9 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
               variant="outline"
               colorScheme="brand"
               disabled={
-                auth?.role !== UserRole.admin || request.userId === auth?.uid
+                (auth?.role &&
+                  ![UserRole.admin, UserRole.master].includes(auth?.role)) ||
+                request.userId === auth?.uid
               }
             >
               Decline
@@ -409,7 +411,9 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
                 isLoading={approving}
                 colorScheme="brand"
                 disabled={
-                  auth?.role !== UserRole.admin || request.userId === auth?.uid
+                  (auth?.role &&
+                    !!![UserRole.admin, UserRole.master].includes(auth.role)) ||
+                  request.userId === auth?.uid
                 }
               >
                 Approve Log
@@ -425,7 +429,9 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
               isLoading={declining}
               colorScheme="brand"
               disabled={
-                auth?.role !== UserRole.admin || request.userId === auth?.uid
+                (auth?.role &&
+                  !!![UserRole.admin, UserRole.master].includes(auth.role)) ||
+                request.userId === auth?.uid
               }
             >
               Decline
@@ -436,7 +442,9 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
               isLoading={approving}
               colorScheme="brand"
               disabled={
-                auth?.role !== UserRole.admin || request.userId === auth?.uid
+                (auth?.role &&
+                  !!![UserRole.admin, UserRole.master].includes(auth.role)) ||
+                request.userId === auth?.uid
               }
             >
               Approve
