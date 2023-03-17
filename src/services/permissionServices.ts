@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { Chat } from "../types/Chat";
 import { Permission, Request } from "../types/Permission";
+import { VehicleRequest } from "../types/VehicleRequest";
 import { db } from "./firebase";
 
 export const listenOnPermission = (

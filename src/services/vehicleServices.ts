@@ -37,7 +37,16 @@ export const listenOnMyVehicleRequests = (
     callback(reqs);
   });
 };
-
+export const listenOnVehicleRequest = (
+  id: string,
+  callback: (req: VehicleRequest) => void,
+) => {
+  const requestRef = doc(db, `vehicleRequests/${id}`);
+  return onSnapshot(requestRef, (snapshot) => {
+    const request = snapshot.data() as VehicleRequest;
+    callback(request);
+  });
+};
 export const sendVehicleRequest = async (request: VehicleRequest) => {
   const vCollection = collection(db, "vehicleRequests");
   const docRef = doc(vCollection);
@@ -119,4 +128,26 @@ export const updateVehicleRequestStatus = (
   };
 
   return updateDoc(docRef, payload);
+};
+
+export const sendVehicleChat = (
+  comments: VehicleRequest["comments"],
+  requestId: string,
+) => {
+  const requestRef = doc(db, `vehicleRequests/${requestId}`);
+  return updateDoc(requestRef, {
+    comments,
+  });
+};
+
+export const markVehicleChatAsRead = (
+  requestId: string,
+  conversation: Record<string, number>,
+  chatCount: number,
+) => {
+  const requestRef = doc(db, `vehicleRequests/${requestId}`);
+  return updateDoc(requestRef, {
+    chatCount,
+    conversation,
+  });
 };

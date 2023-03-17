@@ -1,4 +1,6 @@
 import {
+  Badge,
+  Box,
   Flex,
   Heading,
   HStack,
@@ -28,6 +30,7 @@ import React, { ReactElement, useEffect, useState } from "react";
 import { BiTrash } from "react-icons/bi";
 import {
   BsCalendar2,
+  BsChatFill,
   BsCheck2All,
   BsClock,
   BsPencil,
@@ -45,6 +48,8 @@ import {
 import { VehicleRequest } from "../types/VehicleRequest";
 import { VehicleSchedule } from "../components/VehicleSchedule";
 import { usePrintVehicleapproval } from "../hooks/usePrintRequisition";
+import { RequestChat } from "../components/RequestChat";
+import { VehicleRquestChat } from "../components/VehicleRequestChat";
 
 export const REQ_STATUS_ICONS: Record<VehicleRequest["status"], ReactElement> =
   {
@@ -74,6 +79,11 @@ export const VehicleRequests = () => {
     onOpen: onOpenScheduleModal,
     onClose: onCloseScheduleModal,
     isOpen: isScheduleModalOpen,
+  } = useDisclosure();
+  const {
+    onOpen: onOpenRequestChat,
+    onClose: onCloseRequestChat,
+    isOpen: isRequestChatOpen,
   } = useDisclosure();
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [loading, setLoading] = useState(false);
@@ -120,7 +130,10 @@ export const VehicleRequests = () => {
       setDeleting(false);
     }
   };
-
+  const onOpenRequestConverstaion = (req: VehicleRequest) => {
+    setSelectedRequest(req);
+    onOpenRequestChat();
+  };
   useEffect(() => {
     setLoading(true);
     const unsub = listenOnMyVehicleRequests(auth?.uid || "", (reqs) => {
@@ -229,6 +242,32 @@ export const VehicleRequests = () => {
                             />
                           </Tooltip>
                         ) : null}
+                        <Box position="relative">
+                          <IconButton
+                            size="sm"
+                            bg="blue.300"
+                            color="white"
+                            aria-label="open chat"
+                            onClick={() => onOpenRequestConverstaion(req)}
+                            icon={<BsChatFill />}
+                          />
+                          {req.chatCount &&
+                          req.conversation &&
+                          (req.chatCount - req.conversation[auth?.uid || ""] ||
+                            0) > 0 ? (
+                            <Badge
+                              borderRadius="ful"
+                              background="red.300"
+                              color="white"
+                              position="absolute"
+                              top={-2}
+                              right={-3}
+                            >
+                              {req.chatCount -
+                                req.conversation[auth?.uid || ""] || 0}
+                            </Badge>
+                          ) : null}
+                        </Box>
                       </HStack>
                     </Td>
                   </Tr>
@@ -291,6 +330,16 @@ export const VehicleRequests = () => {
           <ModalHeader textAlign="center">Vehicle Schedule 📆</ModalHeader>
           <ModalBody>
             <VehicleSchedule />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal isOpen={isRequestChatOpen} onClose={onCloseRequestChat}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton />
+          <ModalHeader textAlign="center">🚘 Vehicle Conversations</ModalHeader>
+          <ModalBody>
+            {selectedRequest && <VehicleRquestChat request={selectedRequest} />}
           </ModalBody>
         </ModalContent>
       </Modal>

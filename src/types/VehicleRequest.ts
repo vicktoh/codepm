@@ -17,4 +17,5 @@ export type VehicleRequest = {
   riders: string[];
   approvedBy?: string;
   approvedTimeStamp?: number;
+  comments?: Chat[];
 };

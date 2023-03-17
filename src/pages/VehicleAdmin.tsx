@@ -1,5 +1,7 @@
 import {
   Avatar,
+  Badge,
+  Box,
   Flex,
   Heading,
   HStack,
@@ -28,7 +30,8 @@ import { request } from "http";
 import React, { useEffect, useState } from "react";
 import { AiFillEye } from "react-icons/ai";
 import { BiChat } from "react-icons/bi";
-import { BsCalendar, BsCalendar2 } from "react-icons/bs";
+import { BsCalendar, BsCalendar2, BsChatFill } from "react-icons/bs";
+import { VehicleRquestChat } from "../components/VehicleRequestChat";
 import { VehicleRequestsView } from "../components/VehicleRequestsView";
 import { VehicleSchedule } from "../components/VehicleSchedule";
 import { useAppSelector } from "../reducers/types";
@@ -38,7 +41,10 @@ import { REQ_STATUS_ICONS } from "./VehicleRequests";
 
 export const VehicleAdmin = () => {
   const [requests, setRequests] = useState<VehicleRequest[]>();
-  const { users } = useAppSelector(({ users }) => ({ users }));
+  const { users, auth } = useAppSelector(({ users, auth }) => ({
+    users,
+    auth,
+  }));
   const { usersMap = {} } = users || {};
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedReq, setSelectedReq] = useState<VehicleRequest>();
@@ -158,17 +164,33 @@ export const VehicleAdmin = () => {
                               onClick={() => openViewRequest(req)}
                             />
                           </Tooltip>
-                          <Tooltip label="View conversations">
-                            <IconButton
-                              aria-label="delete Button"
-                              icon={<BiChat />}
-                              size="sm"
-                              bg="brand.300"
-                              color="white"
-                              onClick={() => openChatView(req)}
-                            />
-                          </Tooltip>
                         </>
+                        <Box position="relative">
+                          <IconButton
+                            size="sm"
+                            bg="blue.300"
+                            color="white"
+                            aria-label="open chat"
+                            onClick={() => openChatView(req)}
+                            icon={<BsChatFill />}
+                          />
+                          {req.chatCount &&
+                          req.conversation &&
+                          (req.chatCount - req.conversation[auth?.uid || ""] ||
+                            0) > 0 ? (
+                            <Badge
+                              borderRadius="ful"
+                              background="red.300"
+                              color="white"
+                              position="absolute"
+                              top={-2}
+                              right={-3}
+                            >
+                              {req.chatCount -
+                                req.conversation[auth?.uid || ""] || 0}
+                            </Badge>
+                          ) : null}
+                        </Box>
                       </HStack>
                     </Td>
                   </Tr>
@@ -216,6 +238,16 @@ export const VehicleAdmin = () => {
                 onClose={onCloseViewRequest}
               />
             )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+      <Modal isOpen={isRequestChatOpen} onClose={onCloseRequestChat}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalCloseButton />
+          <ModalHeader textAlign="center">🚘 Vehicle Conversations</ModalHeader>
+          <ModalBody>
+            {selectedReq && <VehicleRquestChat request={selectedReq} />}
           </ModalBody>
         </ModalContent>
       </Modal>
