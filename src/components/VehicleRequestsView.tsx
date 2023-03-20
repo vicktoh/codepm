@@ -42,6 +42,7 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
   const toast = useToast();
   const [approving, setApproving] = useState<boolean>();
   const [declining, setDeclining] = useState<boolean>(false);
+  const [reviewing, setReviewing] = useState<boolean>(false);
   const [checking, setChecking] = useState<boolean>();
   const [clash, setClash] = useState<VehicleRequest>();
   const duraction = useMemo(() => {
@@ -98,6 +99,52 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
     } finally {
       if (status === "approved") setApproving(false);
       if (status === "declined") setDeclining(false);
+    }
+  };
+  const onReview = async () => {
+    try {
+      setReviewing(false);
+      await updateVehicleRequestStatus("reviewed", request.id, auth?.uid || "");
+      const notification: Notification = {
+        title: `Vehicle Request Reviewed 👀`,
+        description: `Your vehicle request has been reviewed by ${
+          auth?.displayName || "Unknown"
+        }`,
+        read: false,
+        reciepientId: request.userId,
+        timestamp: Timestamp.now(),
+        type: "request",
+        linkTo: "/requests/vehicle",
+      };
+      const approverNotification: Notification = {
+        title: `Vehicle Request Attention`,
+        description: `${
+          usersMap[request.userId]?.displayName || "Unknown"
+        }'s vehicle request has been reviewed by ${
+          auth?.displayName || "Unknown"
+        }. It is now awaiting your approval`,
+        read: false,
+        reciepientId: request.approverId,
+        timestamp: Timestamp.now(),
+        type: "request",
+        linkTo: "/requests-admin/vehicle",
+      };
+      sendNotification(notification);
+      sendNotification(approverNotification);
+
+      toast({
+        title: `Request has been reviewed`,
+        status: "success",
+      });
+      onClose();
+    } catch (error) {
+      console.log(error);
+      toast({
+        title: "Oops something went wrong",
+        status: "error",
+      });
+    } finally {
+      setReviewing(false);
     }
   };
 
@@ -236,16 +283,29 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
       </Flex>
       {["approved", "declined"].includes(request.status) ? null : (
         <Flex>
-          <Button
-            variant="solid"
-            colorScheme="brand"
-            isLoading={approving}
-            onClick={() => onApprove("approved")}
-            isFullWidth
-            disabled={clash?.status === "approved"}
-          >
-            Approve
-          </Button>
+          {request.status === "pending" ? (
+            <Button
+              variant="outline"
+              colorScheme="brand"
+              isLoading={reviewing}
+              onClick={onReview}
+              isFullWidth
+            >
+              Review
+            </Button>
+          ) : (
+            <Button
+              variant="solid"
+              colorScheme="brand"
+              isLoading={approving}
+              onClick={() => onApprove("approved")}
+              isFullWidth
+              disabled={clash?.status === "approved"}
+            >
+              Approve
+            </Button>
+          )}
+
           <Button
             variant="outline"
             colorScheme="brand"

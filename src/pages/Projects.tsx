@@ -54,6 +54,7 @@ import { paginationArray } from "../helpers";
 import { Pagination } from "../components/Pagination";
 import { BiLockAlt } from "react-icons/bi";
 import { ProjectAccessForm } from "../components/ProjectAccessForm";
+import { UserRole } from "../types/Profile";
 
 type ProposalRowType = {
   index: number;
@@ -133,7 +134,7 @@ const ProjectRow: FC<ProposalRowType> = ({
       </Td>
       <Td borderRightRadius="md" bg="white" mb={2}>
         <HStack alignItems="center" spacing={2}>
-          {creatorId === auth?.uid ? (
+          {auth?.role === UserRole.master || creatorId === auth?.uid ? (
             <Tooltip label="Manage Access " bg="tetiary.200" placement="top">
               <IconButton
                 aria-label="manage access"
@@ -143,7 +144,9 @@ const ProjectRow: FC<ProposalRowType> = ({
               />
             </Tooltip>
           ) : null}
-          {creatorId === auth?.uid || writeAccess.includes(auth?.uid || "") ? (
+          {auth?.role === UserRole.master ||
+          creatorId === auth?.uid ||
+          writeAccess.includes(auth?.uid || "") ? (
             <>
               <Tooltip label="edit project " bg="tetiary.200" placement="top">
                 <IconButton
@@ -165,7 +168,9 @@ const ProjectRow: FC<ProposalRowType> = ({
             </>
           ) : null}
 
-          {creatorId === auth?.uid || budgetAccess.includes(auth?.uid || "") ? (
+          {auth?.role === UserRole.master ||
+          creatorId === auth?.uid ||
+          budgetAccess.includes(auth?.uid || "") ? (
             <Tooltip label="View Budget" bg="tetiary.200" placement="top">
               <IconButton
                 as={Link}

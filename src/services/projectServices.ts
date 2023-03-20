@@ -95,7 +95,13 @@ export const listenOnProjects = (callback: (data: Project[]) => void) => {
     const projects: Project[] = [];
     projectSnapshot.forEach((snapshot) => {
       const project = snapshot.data() as Project;
-      project.dateAdded = (project.dateAdded as Timestamp).toDate();
+      project.dateAdded = (project.dateAdded as Timestamp).toMillis();
+      project.workplans?.forEach((workplan) => {
+        workplan.dateAdded = (workplan.dateAdded as Timestamp).toMillis();
+      });
+      project.documents?.forEach((document) => {
+        document.dateAdded = (document.dateAdded as Timestamp).toMillis();
+      });
       project.id = snapshot.id;
       projects.push(project);
     });

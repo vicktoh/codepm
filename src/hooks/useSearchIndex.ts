@@ -22,7 +22,7 @@ export function useSearchIndex<T>(
   }>();
   const [data, setData] = useState<T[]>();
   const toast = useToast();
-  console.log("facet", facets);
+  // console.log("facet", facets);
   const search = useCallback(async () => {
     try {
       setLoading(true);

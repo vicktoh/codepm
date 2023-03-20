@@ -41,6 +41,13 @@ export const UserListsPage = () => {
     newUsers[i].role = role;
     setData(newUsers);
   };
+
+  const updateBlocked = (i: number, blocked: boolean) => {
+    if (!users) return;
+    const newUsers = [...users];
+    newUsers[i].blocked = blocked;
+    setData(newUsers);
+  };
   const onEnterQuery = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.keyCode === 13) {
       setQuery(searchInput);
@@ -94,6 +101,7 @@ export const UserListsPage = () => {
               updateUser={(role) => updateUserRole(i, role)}
               user={user}
               key={`user-row-${i}`}
+              updateBlocked={(blocked) => updateBlocked(i, blocked)}
             />
           ))
         )}

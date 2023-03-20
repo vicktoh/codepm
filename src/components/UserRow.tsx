@@ -18,13 +18,14 @@ import {
 import React, { FC, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppSelector } from "../reducers/types";
-import { setUserRole } from "../services/userServices";
+import { disableUser, enableUser, setUserRole } from "../services/userServices";
 import { UserRole } from "../types/Profile";
 import { User } from "../types/User";
 
 type UserRowProps = {
   user: User;
   updateUser: (role: UserRole) => void;
+  updateBlocked: (blocked: boolean) => void;
 };
 export const UserRow: FC<UserRowProps> = ({
   user: {
@@ -35,12 +36,15 @@ export const UserRow: FC<UserRowProps> = ({
     department,
     role,
     photoUrl,
+    blocked,
   },
   updateUser,
+  updateBlocked,
 }) => {
   const { onClose, onOpen, isOpen } = useDisclosure();
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [loading, setLoading] = useState<boolean>(false);
+  const [blocking, setBlocking] = useState<boolean>(false);
   const toast = useToast();
   const isMobile = useBreakpointValue({ lg: false, md: false, base: true });
   const setRole = async (role: UserRole) => {
@@ -61,6 +65,27 @@ export const UserRow: FC<UserRowProps> = ({
       console.log(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const userStatusMod = async (disable: boolean) => {
+    try {
+      setBlocking(true);
+      if (disable) {
+        // console.log({ userId });
+        const result = await disableUser({ userId: objectID || userId });
+        console.log({ result });
+      } else {
+        await enableUser({ userId: objectID || userId });
+      }
+      updateBlocked(disable);
+    } catch (error) {
+      toast({
+        title: "Something went wrong",
+        status: "error",
+      });
+    } finally {
+      setBlocking(false);
     }
   };
   return (
@@ -85,6 +110,25 @@ export const UserRow: FC<UserRowProps> = ({
         {designation || "user"}
       </Text>
       <HStack spacing={3} mt={isMobile ? 5 : 0}>
+        {blocked ? (
+          <Button
+            size="md"
+            isLoading={blocking}
+            disabled={auth?.role !== UserRole.master}
+            onClick={() => userStatusMod(false)}
+          >
+            Enable User
+          </Button>
+        ) : (
+          <Button
+            size="md"
+            isLoading={blocking}
+            disabled={auth?.role !== UserRole.master}
+            onClick={() => userStatusMod(true)}
+          >
+            Disable User
+          </Button>
+        )}
         <Popover onOpen={onOpen} isOpen={isOpen} onClose={onClose}>
           <PopoverTrigger>
             <Button

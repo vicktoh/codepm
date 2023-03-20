@@ -29,15 +29,17 @@ export const RequisitionBeneficiaryTable: FC<
               <Th>Name</Th>
               <Th>Account Number</Th>
               <Th>Bank</Th>
+              <Th>Amount</Th>
             </Tr>
           </Thead>
           <Tbody>
             {beneficiaries.length ? (
-              beneficiaries.map(({ name, accountNumber, bank }, i) => (
+              beneficiaries.map(({ name, accountNumber, bank, amount }, i) => (
                 <Tr key={`requisition-beneficiary-${i}`}>
                   <Td>{name}</Td>
                   <Td>{accountNumber}</Td>
                   <Td>{bank}</Td>
+                  <Td>{Number(amount).toLocaleString()}</Td>
                 </Tr>
               ))
             ) : (

@@ -66,6 +66,7 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
     financeAttentionId: requisition?.financeAttentionId || "",
     operationAttentionId: requisition?.operationAttentionId || "",
   };
+  console.log(initialValues, "initial values");
   const validationSchema = yup.object().shape({
     title: yup.string().required("Requisition title is required"),
     type: yup.string().required(),
@@ -88,6 +89,7 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
           .length(10, "Must be 10 characters"),
         bank: yup.string().required("field required"),
         name: yup.string().required("Required"),
+        amount: yup.string().required("Required"),
       }),
     ),
     currency: yup.string().required(),
@@ -126,6 +128,7 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
           amountInWords,
           lastUpdated: new Date().getTime(),
         };
+        console.log(newRequisition, "new Requisition");
         if (mode === "add") {
           try {
             await addNewRequisition(auth.uid, newRequisition);

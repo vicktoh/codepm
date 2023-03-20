@@ -125,6 +125,18 @@ export const updateVehicleRequestStatus = (
           approvedTimeStamp: new Date().getTime(),
         }
       : {}),
+    ...(status === "reviewed"
+      ? {
+          reviewedBy: userId,
+          reviewedTimestamp: new Date().getTime(),
+        }
+      : {}),
+    ...(status === "declined"
+      ? {
+          declinedBy: userId,
+          declinedTimestamp: new Date().getTime(),
+        }
+      : {}),
   };
 
   return updateDoc(docRef, payload);

@@ -19,7 +19,7 @@ export type ProjectWorkPlan = {
   type: WorkplanType;
   title: string;
   id?: string;
-  dateAdded?: Timestamp;
+  dateAdded?: Timestamp | number;
 };
 
 export interface Project {

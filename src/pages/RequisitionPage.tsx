@@ -274,7 +274,7 @@ export const RequisitionPage: FC = () => {
       ) : (
         <EmptyState title="You dont have any requisitions yet" />
       )}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+      <Modal isOpen={isOpen} onClose={onClose} size="2xl">
         <ModalOverlay />
         <ModalContent>
           <ModalCloseButton />
