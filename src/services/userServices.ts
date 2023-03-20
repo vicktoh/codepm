@@ -17,3 +17,11 @@ export const sendNotificationToGroup = httpsCallable<
   { group: UserRole; data: Notification },
   { status: "success" | "failed"; message?: string }
 >(functions, "sendNotificationToGroup");
+export const disableUser = httpsCallable<
+  { userId: string },
+  { status: "success" | "failed"; message?: string }
+>(functions, "disableUser");
+export const enableUser = httpsCallable<
+  { userId: string },
+  { status: "success" | "failed"; message?: string }
+>(functions, "enableUser");

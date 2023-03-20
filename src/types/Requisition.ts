@@ -100,6 +100,7 @@ export type Beneficiary = {
   name: string;
   accountNumber: string;
   bank: string;
+  amount: string;
 };
 export type RequisitionFormValues = {
   step: number;

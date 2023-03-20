@@ -257,7 +257,7 @@ export const RequisitionAdminPage = () => {
         onClose={onCloseRequisitionModal}
       >
         <ModalOverlay />
-        <ModalContent {...glassEffect}>
+        <ModalContent background="white">
           <ModalCloseButton />
           <ModalHeader>
             <Heading fontSize={isMobile ? "md" : "lg"}>

@@ -29,8 +29,7 @@ import { format } from "date-fns";
 import { request } from "http";
 import React, { useEffect, useState } from "react";
 import { AiFillEye } from "react-icons/ai";
-import { BiChat } from "react-icons/bi";
-import { BsCalendar, BsCalendar2, BsChatFill } from "react-icons/bs";
+import { BsCalendar2, BsChatFill } from "react-icons/bs";
 import { VehicleRquestChat } from "../components/VehicleRequestChat";
 import { VehicleRequestsView } from "../components/VehicleRequestsView";
 import { VehicleSchedule } from "../components/VehicleSchedule";
@@ -145,10 +144,23 @@ export const VehicleAdmin = () => {
                       "KK:mm aaa",
                     )}`}</Td>
                     <Td>
-                      <HStack alignItems="center" spacing={2}>
-                        <Text>{req.status}</Text>
-                        {REQ_STATUS_ICONS[req.status]}
-                      </HStack>
+                      <VStack alignItems="flex-start">
+                        <HStack alignItems="center" spacing={2}>
+                          <Text>{req.status}</Text>
+                          {REQ_STATUS_ICONS[req.status]}
+                        </HStack>
+                        <Text size="xs" my={2}>
+                          {req.status === "approved" && req.approvedBy
+                            ? usersMap[req.approvedBy]?.displayName || "Unknown"
+                            : ""}
+                          {req.status === "reviewed" && req.reviewedBy
+                            ? usersMap[req.reviewedBy]?.displayName || "Unknown"
+                            : ""}
+                          {req.status === "declined" && req.declinedBy
+                            ? usersMap[req.declinedBy]?.displayName || "Unknown"
+                            : ""}
+                        </Text>
+                      </VStack>
                     </Td>
                     <Td>
                       <HStack spacing={2}>

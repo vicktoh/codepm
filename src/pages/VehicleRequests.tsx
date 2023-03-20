@@ -24,6 +24,7 @@ import {
   Tr,
   useDisclosure,
   useToast,
+  VStack,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
 import React, { ReactElement, useEffect, useState } from "react";
@@ -33,6 +34,7 @@ import {
   BsChatFill,
   BsCheck2All,
   BsClock,
+  BsEye,
   BsPencil,
   BsPlus,
   BsPrinter,
@@ -56,9 +58,12 @@ export const REQ_STATUS_ICONS: Record<VehicleRequest["status"], ReactElement> =
     approved: <BsCheck2All color="green" />,
     declined: <BsXCircle color="red" />,
     pending: <BsClock color="orange" />,
+    reviewed: <BsEye color="blue" />,
   };
 export const VehicleRequests = () => {
   const [myVehicleRequest, setMyVehicleRequests] = useState<VehicleRequest[]>();
+  const { users } = useAppSelector(({ users }) => ({ users }));
+  const { usersMap = {} } = users || {};
   const [selectedRequest, setSelectedRequest] = useState<VehicleRequest>();
   const [deleting, setDeleting] = useState<boolean>(false);
   const [printing, setPrinting] = useState(false);
@@ -199,10 +204,23 @@ export const VehicleRequests = () => {
                       "KK:mm aaa",
                     )}`}</Td>
                     <Td>
-                      <HStack alignItems="center" spacing={2}>
-                        <Text>{req.status}</Text>
-                        {REQ_STATUS_ICONS[req.status]}
-                      </HStack>
+                      <VStack alignItems="flex-start">
+                        <HStack alignItems="center" spacing={2}>
+                          <Text>{req.status}</Text>
+                          {REQ_STATUS_ICONS[req.status]}
+                        </HStack>
+                        <Text size="xs">
+                          {req.status === "approved" && req.approvedBy
+                            ? usersMap[req.approvedBy]?.displayName || "Unknown"
+                            : ""}
+                          {req.status === "reviewed" && req.reviewedBy
+                            ? usersMap[req.reviewedBy]?.displayName || "Unknown"
+                            : ""}
+                          {req.status === "declined" && req.declinedBy
+                            ? usersMap[req.declinedBy]?.displayName || "Unknown"
+                            : ""}
+                        </Text>
+                      </VStack>
                     </Td>
                     <Td>
                       <HStack spacing={2}>
@@ -238,6 +256,9 @@ export const VehicleRequests = () => {
                               size="sm"
                               bg="green.300"
                               color="white"
+                              isLoading={
+                                printing && selectedRequest?.id === req.id
+                              }
                               onClick={() => onPrintRequest(req)}
                             />
                           </Tooltip>

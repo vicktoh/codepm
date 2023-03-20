@@ -11,6 +11,8 @@ import {
   useToast,
   Tooltip,
   Avatar,
+  VStack,
+  Text,
 } from "@chakra-ui/react";
 import { format, setHours } from "date-fns";
 import sub from "date-fns/sub";
@@ -21,6 +23,7 @@ import { RiDraftFill } from "react-icons/ri";
 
 import * as yup from "yup";
 import { useAppSelector } from "../reducers/types";
+import { sendNotification } from "../services/notificationServices";
 import { sendNotificationToGroup } from "../services/userServices";
 import {
   sendVehicleRequest,
@@ -67,6 +70,8 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
     destination: "",
     origin: "",
     purpose: "",
+    reviewerId: "",
+    approverId: "",
     ...(rest || {}),
     riders: riders || [auth?.uid || ""],
   };
@@ -83,6 +88,8 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
     destination: yup.string().required("Destination is required"),
     origin: yup.string().required("Location is required"),
     endTime: yup.string().required("This is a required field"),
+    reviewerId: yup.string().required("You have to select a reviewer"),
+    approverId: yup.string().required("You have to select an approver"),
     riders: yup
       .array()
       .min(1, "You have to select at least one rider")
@@ -140,17 +147,14 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
               "do MMM Y",
             )} to ${values.destination} from ${values.startTime} to ${
               values.endTime
-            }`,
+            } and needs to to review thier request`,
             timestamp: Timestamp.now(),
             read: false,
-            reciepientId: "",
+            reciepientId: values.reviewerId,
             linkTo: "/requests-admin/vehicle",
             type: "request",
           };
-          sendNotificationToGroup({
-            group: UserRole.admin,
-            data: notification,
-          });
+          sendNotification(notification);
           toast({
             title: `Request successfully ${
               mode === "edit" ? "edited" : "submitted"
@@ -295,6 +299,65 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
                 <FormErrorMessage>
                   {touched.destination && errors.destination}
                 </FormErrorMessage>
+              </FormControl>
+            </SimpleGrid>
+
+            <SimpleGrid columns={[1, 2]} mb={3} gap={4}>
+              <FormControl isInvalid={!!errors.reviewerId}>
+                {values.reviewerId ? (
+                  <VStack alignItems="center">
+                    <Avatar
+                      src={usersMap[values.reviewerId]?.photoUrl || ""}
+                      name={
+                        usersMap[values.reviewerId]?.displayName ||
+                        "Unknown User"
+                      }
+                      size="sm"
+                    />
+                    <Text fontSize="sm">
+                      {usersMap[values.reviewerId]?.displayName ||
+                        "Unknown User"}
+                    </Text>
+                  </VStack>
+                ) : null}
+                <UserListPopover
+                  assignees={values.reviewerId ? [values.reviewerId] : []}
+                  onSelectUser={(userId) => setFieldValue("reviewerId", userId)}
+                  closeOnSelect={true}
+                >
+                  <Button size="sm" isFullWidth>
+                    Select Reviewer
+                  </Button>
+                </UserListPopover>
+                <FormErrorMessage>{values.reviewerId}</FormErrorMessage>
+              </FormControl>
+              <FormControl isInvalid={!!errors.approverId}>
+                {values.approverId ? (
+                  <VStack alignItems="center">
+                    <Avatar
+                      src={usersMap[values.approverId]?.photoUrl || ""}
+                      name={
+                        usersMap[values.approverId]?.displayName ||
+                        "Unknown User"
+                      }
+                      size="sm"
+                    />
+                    <Text fontSize="sm">
+                      {usersMap[values.approverId]?.displayName ||
+                        "Unknown User"}
+                    </Text>
+                  </VStack>
+                ) : null}
+                <UserListPopover
+                  assignees={values.approverId ? [values.approverId] : []}
+                  onSelectUser={(userId) => setFieldValue("approverId", userId)}
+                  closeOnSelect={true}
+                >
+                  <Button size="sm" isFullWidth>
+                    Select Approver
+                  </Button>
+                </UserListPopover>
+                <FormErrorMessage>{errors.approverId}</FormErrorMessage>
               </FormControl>
             </SimpleGrid>
 

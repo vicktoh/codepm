@@ -6,7 +6,6 @@ import { Link, Outlet, useMatch } from "react-router-dom";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 
 export const RequisitionLayout = () => {
-  const glassEffect = useGlassEffect(true, "lg");
   const isRequisitionPage = !!useMatch("/requisitions");
   const isArchivePage = !!useMatch("/requisitions/archive");
   return (
@@ -20,7 +19,7 @@ export const RequisitionLayout = () => {
         my={[3, 0]}
         px={5}
         py={3}
-        {...glassEffect}
+        background="whiteAlpha.200"
         width="max-content"
       >
         <HStack

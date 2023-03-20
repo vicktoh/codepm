@@ -7,7 +7,7 @@ export type VehicleRequest = {
   destination: string;
   startTime: number;
   endTime: number;
-  status: "pending" | "declined" | "approved";
+  status: "pending" | "reviewed" | "declined" | "approved";
   chats?: Chat[];
   chatCount?: number;
   conversation?: Record<string, number>;
@@ -17,5 +17,11 @@ export type VehicleRequest = {
   riders: string[];
   approvedBy?: string;
   approvedTimeStamp?: number;
+  reviewerId: string;
+  approverId: string;
+  reviewedBy?: string;
+  reviewedTimestamp?: number;
+  declinedBy?: string;
+  declinedTimestamp?: number;
   comments?: Chat[];
 };

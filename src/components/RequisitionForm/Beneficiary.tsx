@@ -99,42 +99,42 @@ export const Beneficiary = () => {
       </HStack>
       <Flex my={5} direction="column">
         {values.beneficiaries.length ? (
-          values.beneficiaries.map(({ name, accountNumber, bank }, i) => (
-            <SimpleGrid
-              gridGap={3}
-              key={`beneficiary-input-${i}`}
-              columns={[1, 3]}
-              alignItems="center"
-            >
-              <Input
-                size="sm"
-                value={name}
-                name={`beneficiaries.${i}.name`}
-                placeholder="Account Name"
-                list="vendorlist"
-                onChange={(e) => onInputChange(i, e.target.value, "name")}
-                onBlur={handleBlur}
-              />
-              <Tooltip
-                colorScheme="danger"
-                label={getIn(errors, `beneficiaries.${i}.accountNumber`)}
+          values.beneficiaries.map(
+            ({ name, accountNumber, bank, amount }, i) => (
+              <SimpleGrid
+                gridGap={3}
+                key={`beneficiary-input-${i}`}
+                columns={[1, 4]}
+                alignItems="center"
               >
                 <Input
-                  isInvalid={
-                    !!getIn(errors, `beneficiaries.${i}.accountNumber`)
-                  }
                   size="sm"
-                  value={accountNumber}
-                  name={`beneficiaries.${i}.accountNumber`}
-                  placeholder="Account Number"
+                  value={name}
+                  name={`beneficiaries.${i}.name`}
+                  placeholder="Account Name"
                   list="vendorlist"
-                  onChange={(e) =>
-                    onInputChange(i, e.target.value, "accountNumber")
-                  }
+                  onChange={(e) => onInputChange(i, e.target.value, "name")}
                   onBlur={handleBlur}
                 />
-              </Tooltip>
-              <HStack spacing={2}>
+                <Tooltip
+                  colorScheme="danger"
+                  label={getIn(errors, `beneficiaries.${i}.accountNumber`)}
+                >
+                  <Input
+                    isInvalid={
+                      !!getIn(errors, `beneficiaries.${i}.accountNumber`)
+                    }
+                    size="sm"
+                    value={accountNumber}
+                    name={`beneficiaries.${i}.accountNumber`}
+                    placeholder="Account Number"
+                    list="vendorlist"
+                    onChange={(e) =>
+                      onInputChange(i, e.target.value, "accountNumber")
+                    }
+                    onBlur={handleBlur}
+                  />
+                </Tooltip>
                 <Input
                   size="sm"
                   value={bank}
@@ -144,14 +144,24 @@ export const Beneficiary = () => {
                   onChange={(e) => onInputChange(i, e.target.value, "bank")}
                   onBlur={handleBlur}
                 />
-                <IconButton
-                  onClick={() => removeItem(i)}
-                  aria-label="remove"
-                  icon={<Icon as={BiMinus} />}
-                />
-              </HStack>
-            </SimpleGrid>
-          ))
+                <HStack spacing={2}>
+                  <Input
+                    size="sm"
+                    value={amount}
+                    name={`beneficiaries.${i}.amount`}
+                    placeholder="Amount"
+                    onChange={(e) => onInputChange(i, e.target.value, "amount")}
+                    onBlur={handleBlur}
+                  />
+                  <IconButton
+                    onClick={() => removeItem(i)}
+                    aria-label="remove"
+                    icon={<Icon as={BiMinus} />}
+                  />
+                </HStack>
+              </SimpleGrid>
+            ),
+          )
         ) : (
           <Text width="100%" textAlign="center" color="mute">
             No Beneficiaries Added yet
