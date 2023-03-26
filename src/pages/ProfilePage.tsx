@@ -163,10 +163,8 @@ export const ProfilePage: FC = () => {
         px={5}
         border="1px solid white"
         mt={5}
-        background="rgba(255, 255, 255, .32)"
+        background="whiteAlpha.100"
         borderRadius={["none", "2xl"]}
-        backdropFilter="blur(5.8px)"
-        boxShadow="0 4px 30px rgba(0, 0, 0, 0.1)"
         direction="column"
         alignItems="flex-start"
         pb={5}

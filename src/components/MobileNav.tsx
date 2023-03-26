@@ -16,7 +16,7 @@ import {
   Text,
   Button,
 } from "@chakra-ui/react";
-import { AiOutlineMenu } from "react-icons/ai";
+import { AiOutlineMenu, AiOutlineRead } from "react-icons/ai";
 import { useAppSelector } from "../reducers/types";
 import { AiOutlineCheckSquare, AiOutlineDashboard } from "react-icons/ai";
 import { BsChat, BsCurrencyDollar, BsPower } from "react-icons/bs";
@@ -27,11 +27,13 @@ import { FaUsersCog } from "react-icons/fa";
 import { GiTakeMyMoney } from "react-icons/gi";
 import { MembersOnline } from "./MembersOnline";
 import { NotificationBar } from "./NotificationBar";
+import { isMatch } from "lodash";
 
 export const MobileNav: FC = () => {
   const auth = useAppSelector(({ auth }) => auth);
   const { isOpen, onClose, onToggle } = useDisclosure();
   const isUsersRoute = !!useMatch("/users");
+  const isRequestAdmin = !!useMatch("/requests-admin");
   const onLogout = useLogout();
   return (
     <>
@@ -78,7 +80,7 @@ export const MobileNav: FC = () => {
               alignItems="flex-start"
               alignSelf="center"
               mt={12}
-              spacing={10}
+              spacing={6}
             >
               <HStack
                 as={Link}
@@ -129,7 +131,33 @@ export const MobileNav: FC = () => {
                 </HStack>
               ) : null}
               {auth?.role === UserRole.admin ||
-              auth?.role === UserRole.master ? (
+              auth?.role === UserRole.master ||
+              auth?.role === UserRole.reviewer ? (
+                <HStack
+                  as={Link}
+                  to="/requests-admin"
+                  spacing={2}
+                  color={isRequestAdmin ? "brand.400" : "tetiary"}
+                >
+                  <Icon as={FaUsersCog} />
+                  <Text>Requests Admin</Text>
+                </HStack>
+              ) : null}
+              <HStack
+                as={Link}
+                to="/requests"
+                spacing={2}
+                color={!!useMatch("/requests") ? "brand.400" : "tetiary"}
+              >
+                <Icon as={AiOutlineRead} />
+                <Text>Requests</Text>
+              </HStack>
+
+              {auth?.role === UserRole.admin ||
+              auth?.role === UserRole.master ||
+              auth?.role === UserRole.budgetHolder ||
+              auth?.role === UserRole.reviewer ||
+              auth?.role === UserRole.finance ? (
                 <HStack
                   as={Link}
                   to="/requisition-admin"

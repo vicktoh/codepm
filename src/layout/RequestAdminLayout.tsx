@@ -4,9 +4,12 @@ import { BiArchive, BiCar } from "react-icons/bi";
 import { BsListOl } from "react-icons/bs";
 import { Link, Outlet, useMatch } from "react-router-dom";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
+import { useAppSelector } from "../reducers/types";
+import { UserRole } from "../types/Profile";
 
 export const RequestAdminLayout = () => {
   const glassEffect = useGlassEffect(true, "lg");
+  const auth = useAppSelector(({ auth }) => auth);
   const isAccessPage = !!useMatch("/requests-admin");
   const isLogPage = !!useMatch("/requests-admin/vehicle");
   return (
@@ -30,14 +33,16 @@ export const RequestAdminLayout = () => {
         bg="white"
         borderRadius="md"
       >
-        <HStack
-          as={Link}
-          to="/requests-admin"
-          textColor={isAccessPage ? "brand.300" : ""}
-        >
-          <Icon as={BiArchive} />
-          <Text color={isAccessPage ? "brand.300" : ""}>Requests</Text>
-        </HStack>
+        {auth?.role === UserRole.admin || auth?.role === UserRole.master ? (
+          <HStack
+            as={Link}
+            to="/requests-admin"
+            textColor={isAccessPage ? "brand.300" : ""}
+          >
+            <Icon as={BiArchive} />
+            <Text color={isAccessPage ? "brand.300" : ""}>Requests</Text>
+          </HStack>
+        ) : null}
         <HStack
           ml={5}
           as={Link}

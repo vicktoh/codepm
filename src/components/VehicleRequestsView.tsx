@@ -15,6 +15,7 @@ import {
 import { format, intervalToDuration } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import React, { FC, useEffect, useMemo, useState } from "react";
+import { BiCheckDouble } from "react-icons/bi";
 import { BASE_URL } from "../constants";
 import { useAppSelector } from "../reducers/types";
 import { sendNotification } from "../services/notificationServices";
@@ -25,6 +26,7 @@ import {
   updateVehicleRequestStatus,
 } from "../services/vehicleServices";
 import { EmailPayLoad, Notification } from "../types/Notification";
+import { UserRole } from "../types/Profile";
 import { VehicleRequest } from "../types/VehicleRequest";
 type VehicleRequestsViewProps = {
   request: VehicleRequest;
@@ -318,6 +320,21 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
           </Button>
         </Flex>
       )}
+      {!["approved", "declined"].includes(request.status) &&
+      auth?.role === UserRole.master ? (
+        <Button
+          size="lg"
+          isFullWidth
+          bg="green"
+          color="white"
+          leftIcon={<BiCheckDouble />}
+          onClick={() => onApprove("approved")}
+          isLoading={approving}
+          my={2}
+        >
+          Approve
+        </Button>
+      ) : null}
     </Flex>
   );
 };

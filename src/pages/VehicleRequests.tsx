@@ -111,7 +111,11 @@ export const VehicleRequests = () => {
       setPrinting(true);
       await printRequest(request);
     } catch (error) {
-      toast({ title: "Could not print request", status: "error" });
+      const err: any = error;
+      toast({
+        title: err?.message || "Could not print request",
+        status: "error",
+      });
     } finally {
       setPrinting(false);
     }

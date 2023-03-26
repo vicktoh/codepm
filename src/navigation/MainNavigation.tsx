@@ -28,8 +28,11 @@ import { VehicleRequests } from "../pages/VehicleRequests";
 import { RequestAdminLayout } from "../layout/RequestAdminLayout";
 import { RequestsAdmin } from "../pages/RequestsAdmin";
 import { VehicleAdmin } from "../pages/VehicleAdmin";
+import { useAppSelector } from "../reducers/types";
+import { UserRole } from "../types/Profile";
 
 export const MainNavigation = () => {
+  const auth = useAppSelector(({ auth }) => auth);
   return (
     <Routes>
       <Route path="/" element={<MainLayout />}>
@@ -54,7 +57,18 @@ export const MainNavigation = () => {
           <Route path="vehicle" element={<VehicleRequests />} />
         </Route>
         <Route path="requests-admin" element={<RequestAdminLayout />}>
-          <Route index element={<PermissionsPage />} />
+          <Route
+            index
+            element={
+              [UserRole.admin, UserRole.master].includes(
+                auth?.role || UserRole.user,
+              ) ? (
+                <PermissionsPage />
+              ) : (
+                <Navigate to="/requests-admin/vehicle" />
+              )
+            }
+          />
           <Route path="vehicle" element={<VehicleAdmin />} />
         </Route>
         <Route path="requisitions" element={<RequisitionLayout />}>

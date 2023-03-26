@@ -16,7 +16,6 @@ import {
   signOut,
 } from "firebase/auth";
 import { System } from "../types/System";
-import { isEmailAllowed } from "../helpers";
 
 type Result = {
   status: "success" | "failed";
@@ -30,13 +29,13 @@ export const loginNormalUser = async () => {
   try {
     const result = await signInWithPopup(firebaseAuth, provider);
     if (result.user) {
-      if (!isEmailAllowed(result.user.email || "")) {
-        console.log("does not match email");
-        signOut(firebaseAuth);
-        return {
-          status: "failed",
-        } as Result;
-      }
+      // if (!isEmailAllowed(result.user.email || "")) {
+      //   console.log("does not match email");
+      //   signOut(firebaseAuth);
+      //   return {
+      //     status: "failed",
+      //   } as Result;
+      // }
       return {
         status: "success",
         user: result.user,
