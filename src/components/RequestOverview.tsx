@@ -15,9 +15,10 @@ import {
   Textarea,
 } from "@chakra-ui/react";
 import { profile } from "console";
-import { format } from "date-fns";
+import { format, intervalToDuration } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import React, { FC, useMemo, useState } from "react";
+import { BiCheckDouble } from "react-icons/bi";
 import { BsCheckCircle, BsStopCircle } from "react-icons/bs";
 import { BASE_URL } from "../constants";
 import { leaveMapper } from "../helpers";
@@ -70,6 +71,13 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
         } day(s) of ${request.leaveType} remaining`
       : null;
   }, [leaveDaysAllowed, request.leaveType, leaveCategory, system]);
+  const duration = useMemo(() => {
+    const interval = intervalToDuration({
+      start: new Date(request.startDate),
+      end: new Date(request.endDate),
+    });
+    return interval.days;
+  }, [request.startDate, request.endDate]);
   const review = async () => {
     if (request.attentionToId !== auth?.uid) {
       toast({
@@ -171,7 +179,11 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
     }
   };
   const approve = async () => {
-    if (request.type === "leave" && request.status !== "reviewed") {
+    if (
+      auth?.role !== UserRole.master &&
+      request.type === "leave" &&
+      request.status !== "reviewed"
+    ) {
       toast({
         title: "This request has to be reviewed first",
         status: "error",
@@ -275,13 +287,16 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
           <Text fontSize="md">{request.memo}</Text>
         </VStack>
       ) : null}
-      <HStack spacing={5} alignItems="center" mt={4}>
+      <HStack spacing={10} alignItems="flex-start" mt={4}>
         <VStack spacing={0} alignItems="flex-start">
           <Heading fontSize="sm">Duration</Heading>
           <Text fontSize="md">{`${format(
             new Date(request.startDate),
             "dd MMM yy",
           )} - ${format(new Date(request.endDate), "dd MMM yy")}`}</Text>
+          {request.type === "leave" ? (
+            <Text fontSize="sm" color="brand.300">{`${duration} days`}</Text>
+          ) : null}
         </VStack>
         <VStack spacing={0} alignItems="flex-start">
           <Heading fontSize="sm">Status</Heading>
@@ -392,18 +407,32 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
               Decline
             </Button>
             {request.type === "leave" ? (
-              <Button
-                onClick={review}
-                isLoading={reviewing}
-                variant="solid"
-                colorScheme="brand"
-                disabled={
-                  request.attentionToId !== auth?.uid ||
-                  request.userId === auth?.uid
-                }
-              >
-                Approve as Head of Dept
-              </Button>
+              <>
+                <Button
+                  onClick={review}
+                  isLoading={reviewing}
+                  variant="solid"
+                  colorScheme="brand"
+                  disabled={
+                    request.attentionToId !== auth?.uid ||
+                    request.userId === auth?.uid
+                  }
+                >
+                  Approve as Head of Dept
+                </Button>
+                {auth?.role === UserRole.master ? (
+                  <Button
+                    onClick={approve}
+                    isLoading={approving}
+                    variant="solid"
+                    bg="green"
+                    color="white"
+                    leftIcon={<BiCheckDouble />}
+                  >
+                    Approve
+                  </Button>
+                ) : null}
+              </>
             ) : (
               <Button
                 variant="solid"

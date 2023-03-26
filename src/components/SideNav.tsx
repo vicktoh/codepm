@@ -163,9 +163,7 @@ export const SideNav: FC<SideNavProps> = ({
             Requisition
           </Text>
         </HStack>
-        {role === UserRole.admin ||
-        role === UserRole.master ||
-        role === UserRole.reviewer ? (
+        {role === UserRole.admin || role === UserRole.master ? (
           <HStack
             as={Link}
             to="/users"
