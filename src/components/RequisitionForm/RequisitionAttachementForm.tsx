@@ -17,7 +17,7 @@ import {
 import { FirebaseError } from "firebase/app";
 import { useFormikContext } from "formik";
 import React, { ChangeEvent, useState } from "react";
-import { BsEye, BsPlus } from "react-icons/bs";
+import { BsEye, BsLink, BsPlus } from "react-icons/bs";
 import { MdCancel } from "react-icons/md";
 import { useGlassEffect } from "../../hooks/useLoadingAnimation";
 import { useAppSelector } from "../../reducers/types";
@@ -25,7 +25,8 @@ import {
   removeInvoice,
   uploadInvoice,
 } from "../../services/requisitionServices";
-import { Requisition } from "../../types/Requisition";
+import { Requisition, RequisitionAttachement } from "../../types/Requisition";
+import { DocumentPopover } from "../DocumentPopover";
 
 export const RequisitionAttachmentForm = () => {
   const { auth, users } = useAppSelector(({ auth, users }) => ({
@@ -106,6 +107,21 @@ export const RequisitionAttachmentForm = () => {
           aria-label="Add new file"
           icon={<Icon as={BsPlus} />}
         />
+        <DocumentPopover
+          onSubmit={(document) => {
+            const newAttachment: RequisitionAttachement[] = [
+              ...(values.attachments || []),
+              {
+                title: document.title,
+                fileUrl: document.url,
+                uploaderId: auth?.uid || "",
+              },
+            ];
+            setFieldValue("attachments", newAttachment);
+          }}
+        >
+          <IconButton icon={<Icon as={BsLink} />} aria-label="attach-link" />
+        </DocumentPopover>
         <VisuallyHidden>
           <Input
             name="file-input"

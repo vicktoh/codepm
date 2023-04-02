@@ -1,6 +1,8 @@
+import { cH } from "@fullcalendar/core/internal-common";
 import { getDatabase, onValue, ref } from "firebase/database";
 import {
   collection,
+  deleteDoc,
   doc,
   limit,
   onSnapshot,
@@ -21,7 +23,8 @@ export const listenOnConversations = (
   callback: (data: Conversation[]) => void,
 ) => {
   const collectionRef = collection(db, `users/${userId}/conversations`);
-  return onSnapshot(collectionRef, (snapshot) => {
+  const q = query(collectionRef, orderBy("lastUpdated", "desc"));
+  return onSnapshot(q, (snapshot) => {
     const conversations: Conversation[] = [];
     snapshot.forEach((snap) => {
       const conversation = snap.data() as Conversation;
@@ -131,8 +134,31 @@ export const createNewGroupConversation = (
 };
 
 export const sendChat = (conversationId: string, newchat: Chat) => {
+  const batch = writeBatch(db);
   const chatRef = doc(collection(db, `conversations/${conversationId}/chats`));
-  return setDoc(chatRef, newchat);
+  const senderConversation = doc(
+    db,
+    `users/${newchat.senderId}/conversations/${conversationId}`,
+  );
+  const reciepientConversation = doc(
+    db,
+    `users/${newchat.recieverId}/conversations/${conversationId}`,
+  );
+
+  batch.set(chatRef, newchat);
+  batch.update(senderConversation, { lastUpdated: new Date().getTime() });
+  batch.update(reciepientConversation, { lastUpdated: new Date().getTime() });
+
+  return batch.commit();
+};
+
+export const removeChat = (chat: Chat) => {
+  if (!chat.id) return;
+  const chatRef = doc(
+    db,
+    `conversations/${chat.conversationId}/chats/${chat.id}`,
+  );
+  return deleteDoc(chatRef);
 };
 
 export const markAsRead = (userId: string, conversationId: string) => {

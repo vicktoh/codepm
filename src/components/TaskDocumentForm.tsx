@@ -52,10 +52,10 @@ export const TaskDocumentForm: FC<DocumentFormProps> = ({
         touched,
         errors,
         isSubmitting,
-        setFieldValue,
+        submitForm,
       }) => (
-        <Flex direction="column" px={3} pb={5}>
-          <Form>
+        <Form>
+          <Flex direction="column" px={3} pb={5}>
             <FormControl
               isRequired
               isInvalid={!!touched.title && !!errors.title}
@@ -93,15 +93,16 @@ export const TaskDocumentForm: FC<DocumentFormProps> = ({
 
             <Flex direction="column" mt={3}>
               <Button
-                type="submit"
+                // type="submit"
+                onClick={submitForm}
                 colorScheme="brand"
                 isLoading={isSubmitting}
               >
                 Save
               </Button>
             </Flex>
-          </Form>
-        </Flex>
+          </Flex>
+        </Form>
       )}
     </Formik>
   );

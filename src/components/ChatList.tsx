@@ -1,11 +1,14 @@
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import {
   Avatar,
   Flex,
   Heading,
   HStack,
+  IconButton,
   Text,
+  toast,
   useBreakpointValue,
+  useToast,
   VStack,
 } from "@chakra-ui/react";
 import { Chat } from "../types/Chat";
@@ -13,6 +16,8 @@ import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { useAppSelector } from "../reducers/types";
 import { formatDistance } from "date-fns";
 import { EmptyState } from "./EmptyState";
+import { BsTrash } from "react-icons/bs";
+import { removeChat } from "../services/chatServices";
 type ChatListProps = {
   chats: Chat[];
 };
@@ -20,24 +25,60 @@ type ChatListProps = {
 const ChatBubble: FC<{ chat: Chat }> = ({ chat }) => {
   const glassEffect = useGlassEffect(false, "sm");
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
+  const [deleting, setDeleting] = useState<boolean>(false);
   const { users, auth } = useAppSelector(({ users, auth }) => ({
     users,
     auth,
   }));
+  const toast = useToast();
   const sender = users?.usersMap[chat.senderId] || chat.sender;
   const time = formatDistance(chat.timestamp as number, new Date());
+  const onDeleteChat = async () => {
+    try {
+      setDeleting(true);
+      await removeChat(chat);
+    } catch (error) {
+      const err: any = error;
+      toast({
+        title: "Could not delete chat",
+        description: err?.message || "smothing went wrong",
+        status: "error",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
   return (
     <Flex
       alignSelf={chat.senderId === auth?.uid ? "flex-end" : "flex-start"}
       maxWidth="50%"
       px={5}
-      py={2}
+      py={4}
       my={5}
       direction="column"
-      {...glassEffect}
+      bg="whiteAlpha.500"
       borderRadius="lg"
       boxShadow="lg"
+      position="relative"
+      role="group"
     >
+      {auth?.uid === chat.senderId && (
+        <IconButton
+          icon={<BsTrash />}
+          aria-label="delete chat"
+          position="absolute"
+          left={2}
+          size="xs"
+          zIndex={1}
+          top={2}
+          bg="red.300"
+          color="white"
+          isLoading={deleting}
+          onClick={onDeleteChat}
+          display="none"
+          _groupHover={{ display: "flex" }}
+        />
+      )}
       <HStack alignItems="flex-start">
         <Avatar
           size={isMobile ? "sm" : "md"}
@@ -48,12 +89,12 @@ const ChatBubble: FC<{ chat: Chat }> = ({ chat }) => {
           <Heading color="black" fontSize={isMobile ? "xs" : "sm"}>
             {sender.displayName}
           </Heading>
-          <Text fontSize={isMobile ? "xx-small" : "xs"} color="red.500">
+          <Text fontSize={isMobile ? "xx-small" : "xx-small"} color="red.500">
             {time} ago
           </Text>
         </VStack>
       </HStack>
-      <Text mt={isMobile ? 1 : 5} fontSize="sm">
+      <Text mt={isMobile ? 1 : 2} fontSize="sm">
         {chat.text}
       </Text>
     </Flex>

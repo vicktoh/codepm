@@ -30,7 +30,7 @@ export const ConversationList: FC<ConversationListProps> = ({
     }),
   );
 
-  const glassEffect = useGlassEffect(true);
+  // const glassEffect = useGlassEffect(true);
 
   if (!conversations) {
     return (
@@ -47,11 +47,11 @@ export const ConversationList: FC<ConversationListProps> = ({
   return conversations.length ? (
     <Flex direction="column" flex="1 1" overflowY="auto">
       <Input
-        size="md"
         _placeholder={{ color: "gray.500" }}
         placeholder="Search conversations"
         my={4}
-        variant="outline"
+        size="lg"
+        variant="filled"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
@@ -76,7 +76,7 @@ export const ConversationList: FC<ConversationListProps> = ({
         ))}
     </Flex>
   ) : (
-    <Flex direction="column" {...glassEffect} px={2} py={3} mt={5}>
+    <Flex direction="column" bg="white" px={2} py={3} mt={5}>
       <HStack alignItems="center" justifyContent="center" my={3} mx={2}>
         <Icon boxSize={8} as={BsChatDots} />
         <Heading fontSize="xl">Nothing to see here</Heading>

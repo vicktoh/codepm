@@ -11,6 +11,8 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { Timestamp } from "firebase/firestore";
+import { MentionsInput, Mention, MentionItem } from "react-mentions";
+import mentionInputStyle from "../helpers/mentionstyle";
 import React, {
   FC,
   KeyboardEvent,
@@ -31,6 +33,7 @@ import { Chat } from "../types/Chat";
 import { Conversation } from "../types/Conversation";
 import { ChatList } from "./ChatList";
 import { UserListPopover } from "./UserListPopover";
+import { sendMultipleNotification } from "../services/notificationServices";
 type ConversationPaneProps = {
   conversation: Conversation;
   toggleView: () => void;
@@ -54,12 +57,22 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
     return recp[0];
   }, [conversation.members, auth?.uid]);
   const [chats, setChats] = useState<Chat[]>();
+  const [chatmention, setChatMention] = useState<string>("");
+  const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [loading, setLoading] = useState<boolean>();
   const [addingMembers, setAddingMembers] = useState<boolean>();
   const [members, setMembers] = useState<string[]>(conversation.members || []);
   const [chatMessage, setChatMessage] = useState<string>("");
   const [sending, setSending] = useState<boolean>(false);
   const toast = useToast();
+  console.log({ chatmention });
+  const chatParse = useMemo(() => {
+    const matches = chatmention.matchAll(/@\[(.*?)]\((.*?):(\d+)\)/g);
+    // eslint-disable-next-line guard-for-in
+    for (const match in matches) {
+      console.log(match);
+    }
+  }, [chatmention]);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!conversation.id) return;
@@ -108,6 +121,18 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
     try {
       setSending(true);
       await sendChat(conversation.id || "", newchat);
+      if (mentions.length) {
+        sendMultipleNotification(
+          mentions.map(({ id }) => id),
+          {
+            title: `💬 Chat Mention`,
+            description: `You were mentioned in a chat by ${auth?.displayName}`,
+            type: "tasks",
+            linkTo: "/chat",
+          },
+        );
+        setMentions([]);
+      }
     } catch (error) {
       const err: any = error;
       toast({
@@ -124,6 +149,17 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
     if (e.key === "Enter") {
       sendChatMessage();
     }
+  };
+
+  const onChangeMention = (
+    e: any,
+    newValue: string,
+    newPlainTextValue: string,
+    mentions: MentionItem[],
+  ) => {
+    setChatMention(e.target.value);
+    setChatMessage(newPlainTextValue);
+    setMentions(mentions);
   };
   const onAddMembersToGroup = async () => {
     setAddingMembers(true);
@@ -189,7 +225,7 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
         ) : null}
       </HStack>
       <Flex flex="1 1" overflowY="auto" direction="column">
-        <Flex direction="column" width="100%" mt="auto">
+        <Flex direction="column" width="100%" mt="auto" px={2}>
           {loading ? (
             <Flex
               flex="1 1"
@@ -209,11 +245,29 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
       <Flex
         width="100%"
         px={5}
-        position="fixed"
-        left={0}
+        position="absolute"
+        right={0}
         bottom={isMobile ? 10 : 5}
       >
         <HStack width="100%" spacing={2}>
+          {/* <MentionsInput
+            placeholder="Enter your message here"
+            value={chatmention}
+            onChange={onChangeMention}
+            style={mentionInputStyle}
+            allowSuggestionsAboveCursor={true}
+            forceSuggestionsAboveCursor={true}
+          >
+            <Mention
+              trigger="@"
+              data={
+                users?.users.map(({ email, userId }) => ({
+                  id: userId,
+                  display: email,
+                })) || []
+              }
+            />
+          </MentionsInput> */}
           <Input
             onKeyUp={onEnterChat}
             value={chatMessage}
