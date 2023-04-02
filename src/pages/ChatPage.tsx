@@ -127,7 +127,7 @@ export const ChatPage: FC = () => {
         display={isMobile ? (showChatPane ? "flex" : "none") : "flex"}
         direction="column"
         flex={isMobile ? 1 : "5 1"}
-        {...glassEffect}
+        bg="whiteAlpha.400"
         borderRadius="lg"
         my={isMobile ? 0 : 5}
       >

@@ -55,7 +55,7 @@ export const ConversationItem: FC<ConversationItemProps> = ({
   const lastUpdated = useMemo(() => {
     return formatDistance(new Date(), conversation.lastUpdated);
   }, [conversation.lastUpdated]);
-  const glassEffect = useGlassEffect(false, "3px");
+  // const glassEffect = useGlassEffect(false, "3px");
   if (conversation.type === "group") {
     return (
       <Flex
@@ -65,7 +65,7 @@ export const ConversationItem: FC<ConversationItemProps> = ({
         onClick={onClick}
         justifyContent="space-between"
         cursor="pointer"
-        {...glassEffect}
+        bg="white"
       >
         <VStack alignItems="flext-start">
           <Heading fontSize="md">
@@ -73,7 +73,7 @@ export const ConversationItem: FC<ConversationItemProps> = ({
           </Heading>
           <AvatarGroup spacing="-1rem">
             {conversation.members
-              .filter((memberId, i) => i < 3)
+              .filter((_memberId, i) => i < 3)
               .map((memberId, i) => (
                 <Avatar
                   size="sm"
@@ -113,7 +113,7 @@ export const ConversationItem: FC<ConversationItemProps> = ({
       justifyContent="space-between"
       onClick={onClick}
       cursor="pointer"
-      {...glassEffect}
+      bg="white"
       px={2}
       py={3}
       my={"2px"}

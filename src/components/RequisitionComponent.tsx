@@ -240,7 +240,16 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
               onClick={onPrint}
               color="white"
               aria-label="delete icon"
-              icon={<Icon color="yellow.300" as={BsPrinter} />}
+              icon={<Icon color="purple.300" as={BsPrinter} />}
+            />
+          </Tooltip>
+          <Tooltip label="Download Requisition">
+            <IconButton
+              onClick={onDownload}
+              bg="green.300"
+              color="white"
+              aria-label="delete icon"
+              icon={<Icon as={BsDownload} />}
             />
           </Tooltip>
         </HStack>
