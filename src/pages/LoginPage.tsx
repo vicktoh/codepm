@@ -40,6 +40,7 @@ export const LoginPage: FC = () => {
       photoUrl: result.user?.photoURL || "",
       uid: result.user?.uid || "",
       role: getRoleFromClaims(idToken?.claims || {}),
+      dateRegistered: result.user?.metadata.creationTime || "",
     };
     dispatch(setAuth(authUser));
   };

@@ -18,33 +18,16 @@ import * as _ from "lodash";
 import { format } from "date-fns";
 type LeaveTableProps = {
   userId: string;
+  permission?: Permission | null;
+  loading: boolean;
 };
-export const LeaveTable: FC<LeaveTableProps> = ({ userId }) => {
-  const [permission, setPermission] = useState<Permission | null>();
-  const [loading, setLoading] = useState<boolean>();
-  const toast = useToast();
+export const LeaveTable: FC<LeaveTableProps> = ({
+  userId,
+  permission,
+  loading,
+}) => {
   const leaveCategory = _.groupBy(permission?.leaveDays, "type");
-  useEffect(() => {
-    const fetchUserPermission = async () => {
-      if (!userId) return;
-      try {
-        setLoading(true);
-        const permission = await getPermissions(userId);
-        setPermission(permission);
-      } catch (error) {
-        const err = error as FirebaseError;
-        console.log(error);
-        toast({
-          title: "Could not fetch LeaveDays for this user",
-          status: "error",
-          description: err.message,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUserPermission();
-  }, [userId, toast]);
+
   if (loading) {
     return <LoadingComponent title="Fetching leave days" />;
   }

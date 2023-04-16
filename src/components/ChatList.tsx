@@ -20,6 +20,7 @@ import { BsTrash } from "react-icons/bs";
 import { removeChat } from "../services/chatServices";
 type ChatListProps = {
   chats: Chat[];
+  userId?: string;
 };
 
 const ChatBubble: FC<{ chat: Chat }> = ({ chat }) => {
@@ -31,6 +32,7 @@ const ChatBubble: FC<{ chat: Chat }> = ({ chat }) => {
     auth,
   }));
   const toast = useToast();
+  const { usersMap = {} } = users || {};
   const sender = users?.usersMap[chat.senderId] || chat.sender;
   const time = formatDistance(chat.timestamp as number, new Date());
   const onDeleteChat = async () => {
@@ -97,11 +99,25 @@ const ChatBubble: FC<{ chat: Chat }> = ({ chat }) => {
       <Text mt={isMobile ? 1 : 2} fontSize="sm">
         {chat.text}
       </Text>
+      {chat.recipient?.length ? (
+        <Flex direction="column" mt={5}>
+          <HStack spacing={-3}>
+            {chat.recipient.map((userid) => (
+              <Avatar
+                size="xs"
+                key={userid}
+                src={usersMap[userid]?.photoUrl || ""}
+                name={usersMap[userid]?.displayName || ""}
+              />
+            ))}
+          </HStack>
+        </Flex>
+      ) : null}
     </Flex>
   );
 };
 
-export const ChatList: FC<ChatListProps> = ({ chats }) => {
+export const ChatList: FC<ChatListProps> = ({ chats, userId }) => {
   if (!chats.length) {
     return (
       <EmptyState
@@ -113,9 +129,17 @@ export const ChatList: FC<ChatListProps> = ({ chats }) => {
 
   return (
     <>
-      {chats.map((chat) => (
-        <ChatBubble chat={chat} key={`chat-bubble-${chat.id}`} />
-      ))}
+      {chats.map((chat) => {
+        if (
+          userId &&
+          chat.senderId !== userId &&
+          chat.recipient?.length &&
+          !chat.recipient.includes(userId)
+        ) {
+          return null;
+        }
+        return <ChatBubble chat={chat} key={`chat-bubble-${chat.id}`} />;
+      })}
     </>
   );
 };

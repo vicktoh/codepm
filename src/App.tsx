@@ -82,6 +82,7 @@ function App() {
             uid: user.uid,
             photoUrl: user?.photoURL || "",
             role: getRoleFromClaims(idToken.claims),
+            dateRegistered: user.metadata.creationTime || "",
           };
 
           dispatch(setAuth(newAuth));

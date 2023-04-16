@@ -331,7 +331,8 @@ export const RequisitionPage: FC = () => {
       <Modal
         isOpen={isConversationModalOpen}
         onClose={onCloseConversationalModal}
-        size="md"
+        size="xl"
+        isCentered={true}
       >
         <ModalOverlay />
         <ModalContent {...glassEffect}>

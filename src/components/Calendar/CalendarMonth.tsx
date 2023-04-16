@@ -23,6 +23,7 @@ import {
   PUBLIC_HOLIDAY_COLOR,
 } from "../../constants";
 import { Log } from "../../types/Log";
+import { Permission } from "../../types/Permission";
 import { CalendarCell, CalendarRow } from "./calendarParts";
 type CalendarMonthProps = {
   year: number;
@@ -31,6 +32,8 @@ type CalendarMonthProps = {
   previousMonth: () => void;
   onClick?: (date: Date) => void;
   userLogs?: Record<string, Log>;
+  permission?: Permission | null;
+  userDateRegistered?: string;
 };
 const TABLE_KEY_COLORS = [
   {
@@ -57,6 +60,8 @@ export const CalendarMonth: FC<CalendarMonthProps> = ({
   previousMonth,
   onClick,
   userLogs,
+  permission,
+  userDateRegistered,
 }) => {
   const dateObj = new Date(year, month);
   const date = format(dateObj, "MMM Y");
@@ -78,6 +83,8 @@ export const CalendarMonth: FC<CalendarMonthProps> = ({
               key={`week-${row}-${column}`}
               onClick={onClick}
               userLogs={userLogs}
+              permission={permission}
+              userDateRegistered={userDateRegistered}
             />,
           );
         } else {
@@ -89,6 +96,8 @@ export const CalendarMonth: FC<CalendarMonthProps> = ({
               key={`week-${row}-${column}`}
               onClick={onClick}
               userLogs={userLogs}
+              permission={permission}
+              userDateRegistered={userDateRegistered}
             />,
           );
           iterDate++;
@@ -102,6 +111,8 @@ export const CalendarMonth: FC<CalendarMonthProps> = ({
             key={`week-${row}-${week.length}`}
             onClick={onClick}
             userLogs={userLogs}
+            permission={permission}
+            userDateRegistered={userDateRegistered}
           />,
         );
       }

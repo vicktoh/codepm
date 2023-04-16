@@ -2,7 +2,7 @@ import { LeaveType } from "./Permission";
 
 export interface System {
   logAllowanceDay: number;
-  publicHolidays?: string[];
+  publicHolidays: { date: string; name: string }[];
   logStartDate: string;
   leaveDays?: number;
   casualLeaveDays: number;
