@@ -1,4 +1,5 @@
 import React, { FC, useMemo, useState } from "react";
+import type { Auth } from "firebase/auth";
 import {
   Flex,
   FormControl,
@@ -22,15 +23,27 @@ import {
   isBetween,
 } from "../helpers";
 import { useAppSelector } from "../reducers/types";
-import { format, isAfter, isSameMonth, lastDayOfMonth } from "date-fns";
+import {
+  format,
+  isAfter,
+  isBefore,
+  isSameMonth,
+  isWeekend,
+  lastDayOfMonth,
+} from "date-fns";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 type LogStatsProps = {
   month: number;
   currentYear: number;
 };
 export const LogStats: FC<LogStatsProps> = ({ month, currentYear }) => {
-  const { logs, system, permission } = useAppSelector(
-    ({ logs, system, permission }) => ({ logs, system, permission }),
+  const { logs, system, permission, auth } = useAppSelector(
+    ({ logs, system, permission, auth }) => ({
+      logs,
+      system,
+      permission,
+      auth,
+    }),
   );
   const [logFilter, setLogFilter] = useState<"all" | "month">("all");
   const glassEffect = useGlassEffect(true);
@@ -38,24 +51,73 @@ export const LogStats: FC<LogStatsProps> = ({ month, currentYear }) => {
     () => new Date(currentYear, month, 1),
     [month, currentYear],
   );
+  const startCountingDate = useMemo(() => {
+    if (!auth || !system?.logStartDate) return new Date();
+    const dateRegistered = new Date(auth.dateRegistered);
+    const logStartDate = new Date(system.logStartDate);
+    return isAfter(dateRegistered, logStartDate)
+      ? dateRegistered
+      : logStartDate;
+  }, [auth, system?.logStartDate]);
+  const publicHols = useMemo(
+    () => system?.publicHolidays?.map(({ date }) => date) || [],
+    [system?.publicHolidays],
+  );
   const loggedDays = useMemo(() => {
     if (!logs?.logs?.length) return 0;
+    const logsAbsolute = logs.logs.filter(
+      (log) =>
+        !isWeekend(new Date(log.dateString)) &&
+        !publicHols.includes(log.dateString) &&
+        !permission?.leaveDays
+          ?.map(({ date }) => date)
+          .includes(log.dateString) &&
+        !isBefore(new Date(log.dateString), startCountingDate),
+    );
     return logFilter === "month"
-      ? logs.logs.filter(({ dateString }) => {
-          const sameMonth = isSameMonth(new Date(dateString), currentDate);
-          return sameMonth;
+      ? logsAbsolute.filter(({ dateString }) => {
+          return isSameMonth(new Date(dateString), currentDate);
         }).length
-      : logs.logs.length;
-  }, [logs, logFilter, currentDate]);
+      : logsAbsolute.length;
+  }, [
+    logs,
+    logFilter,
+    currentDate,
+    permission?.leaveDays,
+    publicHols,
+    startCountingDate,
+  ]);
+  const leaveDays = useMemo(() => {
+    return logFilter === "all"
+      ? (permission?.leaveDays?.length &&
+          permission.leaveDays.filter(
+            ({ date }) => !isBefore(new Date(date), startCountingDate),
+          ).length) ||
+          0
+      : permission?.leaveDays?.filter((date) =>
+          isSameMonth(new Date(date.date), currentDate),
+        ).length || 0;
+  }, [logFilter, permission?.leaveDays, startCountingDate, currentDate]);
+  const publicHolidays = useMemo(() => {
+    return publicHols
+      ? publicHols.filter((date) =>
+          isBetween(
+            new Date(date),
+            new Date(
+              logFilter === "all"
+                ? startCountingDate
+                : `${currentYear}-${month}-01`,
+            ),
+            new Date(),
+          ),
+        ).length
+      : 0;
+  }, [publicHols, currentYear, month, startCountingDate, logFilter]);
   const businessDays = useMemo(() => {
     let dateLeft: Date;
     let dateRight: Date;
     if (logFilter === "all") {
-      console.log("hello");
-      console.log(system?.logStartDate);
-      dateLeft = system?.logStartDate
-        ? new Date(system.logStartDate)
-        : currentDate;
+      dateLeft = startCountingDate;
       dateRight = new Date();
     } else {
       dateLeft = currentDate;
@@ -64,34 +126,11 @@ export const LogStats: FC<LogStatsProps> = ({ month, currentYear }) => {
         : lastDayOfMonth(currentDate);
     }
 
-    return differenceInBusinessDays(dateRight, dateLeft);
-  }, [currentDate, logFilter, system?.logStartDate]);
-  const leaveDays =
-    logFilter === "all"
-      ? (permission?.leaveDays?.length &&
-          permission.leaveDays.filter(({ date }) =>
-            isAfter(new Date(date), new Date(system?.logStartDate || 0)),
-          ).length) ||
-        0
-      : permission?.leaveDays?.filter((date) =>
-          isSameMonth(new Date(date.date), currentDate),
-        ).length || 0;
-  const publicHolidays = system?.publicHolidays
-    ? system.publicHolidays.filter((date) =>
-        isBetween(
-          new Date(date),
-          new Date(
-            logFilter === "all"
-              ? system.logStartDate
-              : `${currentYear}-${month}-01`,
-          ),
-          new Date(),
-        ),
-      ).length
-    : 0;
-  const missedDays = businessDays - leaveDays - publicHolidays - loggedDays;
-  const countDays = businessDays - leaveDays - publicHolidays;
-  const adherence = missedDays === 0 ? 100 : (loggedDays / countDays) * 100;
+    return differenceInBusinessDays(dateRight, dateLeft) - publicHolidays;
+  }, [currentDate, logFilter, startCountingDate, publicHolidays]);
+
+  const missedDays = businessDays - leaveDays - loggedDays;
+  const adherence = missedDays === 0 ? 100 : (loggedDays / businessDays) * 100;
   const adColor = useMemo(() => adherenceColor(adherence), [adherence]);
   const adEmoji = useMemo(() => adherenceEmoji(adherence), [adherence]);
   const adWord = useMemo(() => adherenceWord(adherence), [adherence]);

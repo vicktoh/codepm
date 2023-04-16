@@ -49,6 +49,7 @@ export const ProfileForm: FC<{ onClose: () => void }> = ({
     department: profile?.department || "",
     dateOfBirth: profile?.dateOfBirth || "",
     email: firebaseAuth.currentUser?.email || "",
+    dateRegistered: auth?.dateRegistered || "",
   };
 
   return (
@@ -59,7 +60,10 @@ export const ProfileForm: FC<{ onClose: () => void }> = ({
           await updateUserProfile(auth?.uid || "", {
             ...(profile || {}),
             ...values,
-            ...{ email: firebaseAuth.currentUser?.email || "" },
+            ...{
+              email: firebaseAuth.currentUser?.email || "",
+              dateRegistered: auth?.dateRegistered || "",
+            },
           });
           const fireAuth = getAuth();
           fireAuth.currentUser &&

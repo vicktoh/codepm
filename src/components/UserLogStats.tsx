@@ -21,32 +21,71 @@ import {
 import { useAppSelector } from "../reducers/types";
 import { Log } from "../types/Log";
 import { fetchLogs } from "../services/logsServices";
-import { isWeekend } from "date-fns";
+import { isAfter, isBefore, isWeekend } from "date-fns";
+import { Permission } from "../types/Permission";
 type UserLogStatsProps = {
   userId: string;
+  permission?: Permission | null;
+  userDateRegistered?: string;
 };
-export const UserLogStats: FC<UserLogStatsProps> = ({ userId }) => {
-  const { system, permission } = useAppSelector(({ system, permission }) => ({
+export const UserLogStats: FC<UserLogStatsProps> = ({
+  userId,
+  permission,
+  userDateRegistered,
+}) => {
+  const { system, auth } = useAppSelector(({ system, auth }) => ({
     system,
-    permission,
+    auth,
   }));
   const [logs, setLogs] = useState<Log[]>();
-  const loggedDays =
-    (logs?.length &&
-      logs.filter((log) => !isWeekend(new Date(log.dateString))).length) ||
-    0;
-  const businessDays = system
-    ? differenceInBusinessDays(new Date(), new Date(system?.logStartDate))
-    : 0;
-  const leaveDays = permission?.leaveDays?.length || 0;
+  const startCountingDate = useMemo(() => {
+    if (!userDateRegistered || !system?.logStartDate) return new Date();
+    const dateRegistered = new Date(userDateRegistered);
+    const logStartDate = new Date(system.logStartDate);
+    return isAfter(dateRegistered, logStartDate)
+      ? dateRegistered
+      : logStartDate;
+  }, [userDateRegistered, system?.logStartDate]);
+  const publicHols = useMemo(
+    () => system?.publicHolidays?.map(({ date }) => date) || [],
+    [system?.publicHolidays],
+  );
+  const loggedDays = useMemo(() => {
+    return (
+      (logs?.length &&
+        logs.filter(
+          (log) =>
+            !isWeekend(new Date(log.dateString)) &&
+            !publicHols.includes(log.dateString) &&
+            !permission?.leaveDays
+              ?.map(({ date }) => date)
+              .includes(log.dateString) &&
+            !isBefore(new Date(log.dateString), startCountingDate),
+        ).length) ||
+      0
+    );
+  }, [startCountingDate, publicHols, permission?.leaveDays, logs]);
+
+  const leaveDays = useMemo(() => {
+    return (
+      (permission?.leaveDays?.length &&
+        permission.leaveDays.filter(
+          ({ date }) => !isBefore(new Date(date), startCountingDate),
+        ).length) ||
+      0
+    );
+  }, [startCountingDate, permission?.leaveDays]);
   const publicHolidays = system?.publicHolidays
-    ? system.publicHolidays.filter((date) =>
-        isBetween(new Date(date), new Date(system.logStartDate), new Date()),
+    ? publicHols.filter((date) =>
+        isBetween(new Date(date), new Date(startCountingDate), new Date()),
       ).length
     : 0;
-  const missedDays = Math.max(
-    businessDays - leaveDays - publicHolidays - loggedDays,
-  );
+
+  const businessDays = system
+    ? differenceInBusinessDays(new Date(), new Date(startCountingDate)) -
+      publicHolidays
+    : 0;
+  const missedDays = Math.max(businessDays - loggedDays - leaveDays, 0);
   const adherence = missedDays === 0 ? 100 : (loggedDays / businessDays) * 100;
   const adColor = useMemo(() => adherenceColor(adherence), [adherence]);
   const adEmoji = useMemo(() => adherenceEmoji(adherence), [adherence]);
@@ -81,7 +120,7 @@ export const UserLogStats: FC<UserLogStatsProps> = ({ userId }) => {
         >
           <HStack>
             <Icon boxSize={8} color="green.300" as={BsCheckAll} />
-            <Heading fontSize="2xl">{logs?.length || 0}</Heading>
+            <Heading fontSize="2xl">{loggedDays}</Heading>
           </HStack>
           <Text>Days Logged</Text>
         </Flex>

@@ -14,6 +14,7 @@ import {
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { BsPencil } from "react-icons/bs";
+import { PublicHolidays } from "../components/PublicHolidays";
 import { SystemForm } from "../components/SystemForm";
 import { SystemFields } from "../constants";
 import { useAppSelector } from "../reducers/types";
@@ -24,8 +25,8 @@ export const SystemPage = () => {
   const [mode, setMode] = useState<"edit" | "view">("view");
   return (
     <Flex direction="column" width="100%" px={5} py={10}>
-      <HStack>
-        <Heading my={3} fontSize="lg">
+      <HStack mb={5}>
+        <Heading my={3} size="lg">
           System Settings
         </Heading>
         {mode === "view" ? (
@@ -38,7 +39,7 @@ export const SystemPage = () => {
       </HStack>
       {mode === "view" ? (
         <TableContainer>
-          <Table>
+          <Table bg="white" borderRadius="lg">
             <Thead>
               <Tr>
                 <Th>Setting</Th>
@@ -63,6 +64,8 @@ export const SystemPage = () => {
         </TableContainer>
       ) : null}
       {mode === "edit" ? <SystemForm onClose={() => setMode("view")} /> : null}
+
+      <PublicHolidays />
     </Flex>
   );
 };

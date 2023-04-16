@@ -5,4 +5,5 @@ export type Auth = {
   uid: string;
   photoUrl: string;
   role: UserRole;
+  dateRegistered: string;
 };

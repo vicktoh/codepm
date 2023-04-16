@@ -7,9 +7,11 @@ import {
   IconButton,
   SimpleGrid,
   Text,
+  useToast,
   VStack,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
+import { FirebaseError } from "firebase/app";
 import React, { useEffect, useMemo, useState } from "react";
 import { BiLeftArrow } from "react-icons/bi";
 import { useNavigate, useParams } from "react-router-dom";
@@ -22,18 +24,23 @@ import {
   fetchLogOfParticularDay,
   fetchUserLogs,
 } from "../services/logsServices";
+import { getPermissions } from "../services/permissionServices";
 import { fetchProfile } from "../services/profileServices";
 import { Log } from "../types/Log";
+import { Permission } from "../types/Permission";
 import { Profile } from "../types/Profile";
 
 export const UserProfilePage = () => {
   const params = useParams();
   const [loadingUser, setLoadingUser] = useState<boolean>();
+  const [permission, setPermission] = useState<Permission | null>();
+  const [loadingPermission, setLoadingPermission] = useState<boolean>(false);
   const [profile, setProfile] = useState<Profile>();
   const [fetchingLog, setFetchingLog] = useState<boolean>();
   const [userLogs, setUserLogs] = useState<Record<string, Log>>();
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [log, setLog] = useState<Log>();
+  const toast = useToast();
   const currentDate = useMemo(() => {
     const date = new Date();
     return {
@@ -42,6 +49,7 @@ export const UserProfilePage = () => {
     };
   }, []);
   const [month, setMonth] = useState<number>(currentDate.month);
+  // get user profile
   useEffect(() => {
     const getUserProfile = async () => {
       if (!params.userId) return;
@@ -57,6 +65,7 @@ export const UserProfilePage = () => {
     getUserProfile();
   }, [params.userId]);
 
+  // get user logs
   useEffect(() => {
     const getLogs = async () => {
       try {
@@ -72,6 +81,30 @@ export const UserProfilePage = () => {
     };
     getLogs();
   }, [params.userId]);
+
+  // get user permissions
+  useEffect(() => {
+    const fetchUserPermission = async () => {
+      if (!params.userId) return;
+      try {
+        setLoadingPermission(true);
+        const permission = await getPermissions(params.userId);
+        setPermission(permission);
+      } catch (error) {
+        const err = error as FirebaseError;
+        console.log(error);
+        toast({
+          title: "Could not fetch LeaveDays for this user",
+          status: "error",
+          description: err.message,
+        });
+      } finally {
+        setLoadingPermission(false);
+      }
+    };
+    fetchUserPermission();
+  }, [params.userId, toast]);
+
   const previousMonth = () => {
     const newmonth = month - 1 < 0 ? 0 : month - 1;
     setMonth(newmonth);
@@ -161,15 +194,29 @@ export const UserProfilePage = () => {
                     {profile?.department || "None"}
                   </Heading>
                 </Box>
+                <Box mb={3}>
+                  <Text>Date Joined</Text>
+                  <Heading fontSize="md">
+                    {profile?.dateRegistered || "None"}
+                  </Heading>
+                </Box>
               </SimpleGrid>
             </Flex>
           </Flex>
         )}
 
-        <UserLogStats userId={params?.userId || ""} />
+        <UserLogStats
+          userDateRegistered={profile?.dateRegistered}
+          permission={permission}
+          userId={params?.userId || ""}
+        />
       </SimpleGrid>
       <SimpleGrid mt={5} gridGap={5} columns={[1, 2]} flex="1 1">
-        <LeaveTable userId={params?.userId || ""} />
+        <LeaveTable
+          loading={loadingPermission}
+          permission={permission}
+          userId={params?.userId || ""}
+        />
         <UserTaskStats userId={params?.userId || ""} />
       </SimpleGrid>
       <SimpleGrid mt={5} gridGap={3} columns={[1, 2]} flex="1 1">
@@ -191,6 +238,8 @@ export const UserProfilePage = () => {
             month={month}
             onClick={onClickCalenderCell}
             userLogs={userLogs}
+            permission={permission}
+            userDateRegistered={profile?.dateRegistered}
           />
         </Flex>
         <Flex direction="column" px={5} bg="white" borderRadius="lg" py={5}>

@@ -10,6 +10,7 @@ export type Profile = {
   phoneNumber: string;
   role?: UserRole;
   signatureUrl?: string;
+  dateRegistered: string;
 };
 
 export enum UserRole {

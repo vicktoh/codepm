@@ -5,6 +5,7 @@ export type Chat = {
   senderId: string;
   members?: string[];
   recieverId?: string;
+  recipient?: string[];
   sender: {
     photoUrl: string;
     displayName: string;
