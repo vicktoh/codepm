@@ -16,7 +16,7 @@ import {
 import { format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import { Form, Formik } from "formik";
-import React, { FC } from "react";
+import React, { FC, useMemo } from "react";
 import { BASE_URL } from "../../constants";
 import { useAppSelector } from "../../reducers/types";
 import { sendNotification } from "../../services/notificationServices";
@@ -24,6 +24,7 @@ import { updateRequisition } from "../../services/requisitionServices";
 import { sendEmailNotification } from "../../services/userServices";
 import { EmailPayLoad, Notification } from "../../types/Notification";
 import { UserRole } from "../../types/Profile";
+import { Project } from "../../types/Project";
 import { Requisition, RequisitionStatus } from "../../types/Requisition";
 import { UserReference } from "../../types/User";
 import { RequisitionAttachmentForm } from "./RequisitionAttachementForm";
@@ -98,14 +99,22 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
   requisition,
   onClose,
 }) => {
-  const { users, auth, profile } = useAppSelector(
-    ({ users, auth, profile }) => ({
+  const { users, auth, profile, projects } = useAppSelector(
+    ({ users, auth, profile, projects }) => ({
       users,
       auth,
       profile,
+      projects,
     }),
   );
   const { usersMap = {} } = users || {};
+  const projectsMap = useMemo(() => {
+    const projectMap: Record<string, Project> = {};
+    projects?.forEach((project) => {
+      projectMap[project.id] = project;
+    });
+    return projectMap;
+  }, [projects]);
   const {
     title,
     currency,
@@ -116,7 +125,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
     projectTitle,
     total,
     amountInWords,
-    acitivityTitle,
+    activityTitle,
   } = requisition;
   const isMobile = useBreakpointValue({ base: true, md: false, lg: true });
   const date = format(requisition.timestamp, "dd MMM Y");
@@ -130,6 +139,8 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
     mode: "check",
     budgetIds: [],
   };
+
+  console.log({ requisitionAdmin: requisition });
 
   return (
     <Flex px={5} py={5} direction="column">
@@ -163,14 +174,13 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
         <GridItem colSpan={1}>
           <RequisitionField
             label="Project Title"
-            value={projectTitle || "N/A"}
+            value={
+              projectsMap[requisition.projectId].title || projectTitle || "N/A"
+            }
           />
         </GridItem>
         <GridItem colSpan={1}>
-          <RequisitionField
-            label="Acitivity "
-            value={acitivityTitle || "N/A"}
-          />
+          <RequisitionField label="Acitivity " value={activityTitle || "N/A"} />
         </GridItem>
 
         <GridItem colSpan={1}>

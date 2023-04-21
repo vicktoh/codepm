@@ -27,8 +27,15 @@ import { UserListPopover } from "../UserListPopover";
 import { RequisitionAttachmentForm } from "./RequisitionAttachementForm";
 
 export const Beneficiary = () => {
-  const { values, handleBlur, setFieldValue, isSubmitting, errors, touched } =
-    useFormikContext<RequisitionFormValues>();
+  const {
+    values,
+    handleBlur,
+    handleChange,
+    setFieldValue,
+    isSubmitting,
+    errors,
+    touched,
+  } = useFormikContext<RequisitionFormValues>();
   const { users, vendors } = useAppSelector(({ users, vendors }) => ({
     users,
     vendors,
@@ -37,9 +44,10 @@ export const Beneficiary = () => {
   const addItem = () => {
     setFieldValue("beneficiaries", [
       ...values.beneficiaries,
-      { name: "", bank: "", accountNumber: "" },
+      { name: "", bank: "", accountNumber: "", amount: 0 },
     ]);
   };
+  console.log({ values, errors });
   const onSelectAttentionTo = (userId: string) => {
     if (!values.attentionTo) {
       setFieldValue("attentionTo", [userId]);
@@ -113,7 +121,7 @@ export const Beneficiary = () => {
                   name={`beneficiaries.${i}.name`}
                   placeholder="Account Name"
                   list="vendorlist"
-                  onChange={(e) => onInputChange(i, e.target.value, "name")}
+                  onChange={handleChange}
                   onBlur={handleBlur}
                 />
                 <Tooltip
@@ -129,9 +137,7 @@ export const Beneficiary = () => {
                     name={`beneficiaries.${i}.accountNumber`}
                     placeholder="Account Number"
                     list="vendorlist"
-                    onChange={(e) =>
-                      onInputChange(i, e.target.value, "accountNumber")
-                    }
+                    onChange={(e) => handleChange}
                     onBlur={handleBlur}
                   />
                 </Tooltip>
@@ -141,7 +147,7 @@ export const Beneficiary = () => {
                   name={`beneficiaries.${i}.bank`}
                   placeholder="Bank Name"
                   list="vendorlist"
-                  onChange={(e) => onInputChange(i, e.target.value, "bank")}
+                  onChange={handleChange}
                   onBlur={handleBlur}
                 />
                 <HStack spacing={2}>
@@ -150,7 +156,7 @@ export const Beneficiary = () => {
                     value={amount}
                     name={`beneficiaries.${i}.amount`}
                     placeholder="Amount"
-                    onChange={(e) => onInputChange(i, e.target.value, "amount")}
+                    onChange={handleChange}
                     onBlur={handleBlur}
                   />
                   <IconButton
@@ -223,7 +229,7 @@ export const Beneficiary = () => {
               }
               closeOnSelect={true}
             >
-              <Button size="sm">Select Operations</Button>
+              <Button size="sm">Select Reviewer</Button>
             </UserListPopover>
           </Flex>
           <Flex direction="column">
@@ -244,7 +250,7 @@ export const Beneficiary = () => {
               }
               closeOnSelect={true}
             >
-              <Button size="sm">Select Finance</Button>
+              <Button size="sm">Select Checker</Button>
             </UserListPopover>
           </Flex>
           <Flex direction="column">
@@ -265,7 +271,7 @@ export const Beneficiary = () => {
               }
               closeOnSelect={true}
             >
-              <Button size="sm">Select Admin</Button>
+              <Button size="sm">Select Approver</Button>
             </UserListPopover>
           </Flex>
         </SimpleGrid>

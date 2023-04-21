@@ -31,7 +31,7 @@ type RequisitionComponentProps = {
   requisition: Requisition;
   onEdit: () => void;
   onPrint: () => Promise<void>;
-  onDownload: () => void;
+  onDownload: () => Promise<void>;
   onDelete: () => void;
   openRetirement: () => void;
   openConversations: () => void;
@@ -49,6 +49,7 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
   const date = format(new Date(requisition.timestamp), "do MMM Y");
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [isPrinting, setPrinting] = useState<boolean>();
+  const [downloading, setDownloading] = useState<boolean>();
   // const [isDowloading, setDownloading] = useState<boolean>();
   const toast = useToast();
   const { status } = requisition;
@@ -71,6 +72,21 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
       });
     } finally {
       setPrinting(false);
+    }
+  };
+  const downloadDocument = async () => {
+    try {
+      setDownloading(true);
+      await onDownload();
+    } catch (error) {
+      const err: any = error;
+      toast({
+        title: "Could not print document",
+        description: err?.message || "unkown error",
+        status: "error",
+      });
+    } finally {
+      setDownloading(false);
     }
   };
   const unReadChat =
@@ -245,10 +261,12 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
           </Tooltip>
           <Tooltip label="Download Requisition">
             <IconButton
-              onClick={onDownload}
+              onClick={downloadDocument}
               bg="green.300"
               color="white"
               aria-label="delete icon"
+              isLoading={downloading}
+              disabled={downloading}
               icon={<Icon as={BsDownload} />}
             />
           </Tooltip>
@@ -292,10 +310,12 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
           </Tooltip>
           <Tooltip label="Download Requisition">
             <IconButton
-              onClick={onDownload}
+              onClick={downloadDocument}
               bg="green.300"
               color="white"
               aria-label="delete icon"
+              isLoading={downloading}
+              disabled={downloading}
               icon={<Icon as={BsDownload} />}
             />
           </Tooltip>

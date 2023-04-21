@@ -53,7 +53,7 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
     type: requisition?.type || RequisitionType["procurement request"],
     items: requisition?.items || [],
     projectId: requisition?.projectId || "",
-    activityTitle: requisition?.acitivityTitle || "",
+    activityTitle: requisition?.activityTitle || "",
     date: requisition?.timestamp
       ? format(requisition.timestamp, "y-MM-dd")
       : format(new Date(), "y-MM-dd"),
@@ -109,6 +109,7 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={async (values) => {
+        console.log("Hey");
         if (!auth) return;
         const { date, step, ...rest } = values;
         const total = requisitonTotal(rest.items);
