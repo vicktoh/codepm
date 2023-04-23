@@ -9,6 +9,7 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
+import notificationSlice from "../reducers/notificationSlice";
 import { Notification, ReduxNotification } from "../types/Notification";
 import { db } from "./firebase";
 
@@ -42,6 +43,20 @@ export const markNotificationAsRead = (
     `users/${userId}/notifications/${notificationId}`,
   );
   return updateDoc(notificationDoc, { read: true });
+};
+
+export const markAllNotificationsAsRead = (
+  notifications: ReduxNotification[],
+  userId: string,
+) => {
+  const batch = writeBatch(db);
+  notifications.forEach((not) => {
+    if (!not.read) {
+      const notRef = doc(db, `users/${userId}/notifications/${not.id}`);
+      batch.update(notRef, { read: true });
+    }
+  });
+  return batch.commit();
 };
 
 export const sendNotification = (notification: Notification) => {

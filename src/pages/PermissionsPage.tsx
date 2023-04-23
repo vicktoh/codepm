@@ -30,7 +30,6 @@ import {
 import { format } from "date-fns";
 import { FirebaseError } from "firebase/app";
 import React, { FC, useEffect, useMemo, useState } from "react";
-import { BiCheckCircle } from "react-icons/bi";
 import {
   BsChat,
   BsCheck,
@@ -53,6 +52,7 @@ import {
   reviewRequest,
 } from "../services/permissionServices";
 import { Request } from "../types/Permission";
+import { UserRole } from "../types/Profile";
 
 type RequestProps = {
   request: Request;
@@ -325,9 +325,10 @@ const RequestRow: FC<RequestProps> = ({
   );
 };
 type FilterType = Request["type"] | "all";
-
+const allowedToViewLogs = [UserRole.admin, UserRole.master];
 export const PermissionsPage: FC = () => {
   const [requests, setRequests] = useState<Request[]>();
+  const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedRequest, setSelectedRequest] = useState<Request>();
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
@@ -354,11 +355,9 @@ export const PermissionsPage: FC = () => {
     onOpenViewRequest();
   };
   const onViewConversation = (request: Request) => {
-    console.log("here", request);
     setSelectedRequest(request);
     onOpenRequestChat();
   };
-  console.log({ selectedRequest, isRequestChatOpen });
   useEffect(() => {
     try {
       const unsub = listenOnPermissionRequests((rqts) => {
@@ -380,18 +379,23 @@ export const PermissionsPage: FC = () => {
         <VStack alignItems="flext-start" mb={3}>
           <Heading fontSize="sm">Filter Requests</Heading>
           <HStack spacing={3}>
-            {["all", "leave", "log"].map((type) => (
-              <Button
-                key={`filter-${type}`}
-                value={type}
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedFilter(type as FilterType)}
-                {...(type === selectedFilter ? glassEffect : {})}
-              >
-                {type}
-              </Button>
-            ))}
+            {["all", "leave", "log"].map((type) =>
+              type === "log" &&
+              !allowedToViewLogs.includes(
+                auth?.role || UserRole.user,
+              ) ? null : (
+                <Button
+                  key={`filter-${type}`}
+                  value={type}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedFilter(type as FilterType)}
+                  {...(type === selectedFilter ? glassEffect : {})}
+                >
+                  {type}
+                </Button>
+              ),
+            )}
           </HStack>
         </VStack>
         <TableContainer mb={5}>
@@ -420,14 +424,19 @@ export const PermissionsPage: FC = () => {
                   </Td>
                 </Tr>
               ) : dataToRender?.length ? (
-                dataToRender.map((request, i) => (
-                  <RequestRow
-                    onViewRequest={() => onViewPrompt(request)}
-                    key={`permission-request-${i}`}
-                    request={request}
-                    onViewConversation={() => onViewConversation(request)}
-                  />
-                ))
+                dataToRender.map((request, i) =>
+                  request.type === "log" &&
+                  !allowedToViewLogs.includes(
+                    auth?.role || UserRole.user,
+                  ) ? null : (
+                    <RequestRow
+                      onViewRequest={() => onViewPrompt(request)}
+                      key={`permission-request-${i}`}
+                      request={request}
+                      onViewConversation={() => onViewConversation(request)}
+                    />
+                  ),
+                )
               ) : (
                 <Tr>
                   <Td colSpan={5} textAlign="center">

@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from "react";
+import React, { FC, useMemo, useState } from "react";
 import {
   Avatar,
   Drawer,
@@ -18,6 +18,7 @@ import {
   useBreakpointValue,
   Box,
   Badge,
+  useToast,
 } from "@chakra-ui/react";
 import { AiOutlineMenu } from "react-icons/ai";
 import { useAppSelector } from "../reducers/types";
@@ -31,19 +32,36 @@ import { GiTakeMyMoney } from "react-icons/gi";
 import { MembersOnline } from "./MembersOnline";
 import { BiBell } from "react-icons/bi";
 import { NotifcationBox } from "./Notifications";
+import { markAllNotificationsAsRead } from "../services/notificationServices";
 
 export const NotificationBar: FC = () => {
-  const { auth, notifications } = useAppSelector(({ auth, notifications }) => ({
-    auth,
+  const { notifications, auth } = useAppSelector(({ notifications, auth }) => ({
     notifications,
+    auth,
   }));
-  const isMobile = useBreakpointValue({ base: true, md: false, lg: false });
   const unreadNotifications = useMemo(() => {
     return notifications?.filter((not) => !not.read).length || 0;
   }, [notifications]);
+  const [marking, setMarking] = useState(false);
+  const toast = useToast();
   const { isOpen, onClose, onToggle } = useDisclosure();
-  const isUsersRoute = !!useMatch("/users");
-  const onLogout = useLogout();
+
+  const readAllNotification = async () => {
+    console.log(notifications);
+    try {
+      setMarking(true);
+      await markAllNotificationsAsRead(notifications || [], auth?.uid || "");
+    } catch (error) {
+      const err: any = error;
+      console.log(error);
+      toast({
+        title: "Could not read all notifications",
+        status: "error",
+      });
+    } finally {
+      setMarking(false);
+    }
+  };
   return (
     <>
       <Flex>
@@ -72,9 +90,25 @@ export const NotificationBar: FC = () => {
         <DrawerOverlay />
         <DrawerContent sx={{ width: "300px" }}>
           <DrawerHeader>
-            <Heading fontSize="md" mb={3}>
-              Notifications
-            </Heading>
+            <Flex
+              alignItems="center"
+              direction="row"
+              justifyContent="space-between"
+            >
+              <Heading fontSize="md">Notifications</Heading>
+
+              {notifications?.length && unreadNotifications ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  color="green.300"
+                  isLoading={marking}
+                  onClick={readAllNotification}
+                >
+                  Mark all as read
+                </Button>
+              ) : null}
+            </Flex>
           </DrawerHeader>
           <DrawerBody>
             {notifications === null ? (

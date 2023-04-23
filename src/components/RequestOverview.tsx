@@ -221,10 +221,8 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
           read: false,
           reciepientId: request.handoverId,
           description: `You have been mentioned in a leave request by ${
-            auth?.displayName || "Unknown"
-          }, the of ${
-            auth?.displayName || "Unknown"
-          } duties and responsibilities will be handed over to you`,
+            usersMap[request.userId]?.displayName || "Unknown"
+          }.Their duties and responsibilities will be handed over to you`,
           title: "Leave Request",
           timestamp: Timestamp.now(),
           linkTo: "/requests-admin",

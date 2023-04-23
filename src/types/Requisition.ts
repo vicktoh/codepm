@@ -53,7 +53,7 @@ export interface Requisition {
   title: string;
   projectTitle?: string;
   budgetIds?: string[];
-  acitivityTitle?: string;
+  activityTitle?: string;
   projectId: string;
   project?: {
     title: string;

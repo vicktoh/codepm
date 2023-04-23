@@ -127,21 +127,19 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
               linkTo: "/requests-admin",
               type: "request",
             });
-            // values.handoverId &&
-            //   sendNotification({
-            //     read: false,
-            //     reciepientId: values.handoverId,
-            //     description: `You have been mentioned in a leave request by ${
-            //       auth?.displayName || "Unknown"
-            //     }, the of ${
-            //       auth?.displayName || "Unknown"
-            //     } duties and responsibilities will be handed over to you`,
-            //     title: "Leave Request",
-            //     timestamp: Timestamp.now(),
-            //     linkTo: "/requests-admin",
-            //     type: "request",
-            //   });
           }
+          // values.handoverId &&
+          //   sendNotification({
+          //     read: false,
+          //     reciepientId: values.handoverId,
+          //     description: `You have been mentioned in a leave request by ${
+          //       auth?.displayName || "Unknown"
+          //     }, their duties and responsibilities will be handed over to you`,
+          //     title: "Leave Request",
+          //     timestamp: Timestamp.now(),
+          //     linkTo: "/requests-admin",
+          //     type: "request",
+          //   });
           toast({
             title: `Request successfully ${
               mode === "edit" ? "edited" : "submitted"

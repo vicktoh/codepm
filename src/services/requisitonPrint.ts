@@ -52,6 +52,7 @@ export const requisitionPrintDefinition = (
       width: 80,
       height: 50,
       margin: [10, 0, 0, 20],
+      alignment: "right",
     },
     content: [
       {
@@ -62,7 +63,10 @@ export const requisitionPrintDefinition = (
         alignment: "justify",
         columns: [
           {
-            text: [{ text: "PV No: ", bold: true }, requisition.id || ""],
+            text: [
+              { text: "PV No: ", bold: true },
+              requisition.approvedCheckedTimestamp || "",
+            ],
           },
           {
             text: [
@@ -91,7 +95,36 @@ export const requisitionPrintDefinition = (
         margin: [0, 15, 0, 10],
       },
       dataField("Project title", requisition.projectTitle || "N/A"),
-      dataField("Project activity", requisition.acitivityTitle || "N/A"),
+      dataField("Project activity", requisition.activityTitle || "N/A"),
+      {
+        text: "Items",
+        style: "subheader",
+        margin: [0, 15, 0, 10],
+      },
+      {
+        table: {
+          headerRows: 1,
+          widths: ["*", "*", "*"],
+          body: [
+            [
+              { text: "Item Description", style: "tableheader" },
+              { text: "Budget Line", style: "tableheader" },
+              { text: "Amount", style: "tableheader" },
+            ],
+            ...requisition.items.map(({ amount, title, budget }) => [
+              { text: title },
+              { text: budget },
+              { text: amount.toLocaleString() },
+            ]),
+          ],
+        },
+        layout: {
+          fillColor: function (rowIndex: number) {
+            if (rowIndex === 0) return "#EEB3B3";
+            return rowIndex % 2 === 0 ? "#EFF2F4" : null;
+          },
+        },
+      },
       {
         text: "Beneficiaries",
         style: "subheader",
@@ -125,36 +158,6 @@ export const requisitionPrintDefinition = (
           },
         },
       },
-      {
-        text: "Items",
-        style: "subheader",
-        margin: [0, 15, 0, 10],
-      },
-      {
-        table: {
-          headerRows: 1,
-          widths: ["*", "*", "*"],
-          body: [
-            [
-              { text: "Item Description", style: "tableheader" },
-              { text: "Budget Line", style: "tableheader" },
-              { text: "Amount", style: "tableheader" },
-            ],
-            ...requisition.items.map(({ amount, title, budget }) => [
-              { text: title },
-              { text: budget },
-              { text: amount.toLocaleString() },
-            ]),
-          ],
-        },
-        layout: {
-          fillColor: function (rowIndex: number) {
-            if (rowIndex === 0) return "#EEB3B3";
-            return rowIndex % 2 === 0 ? "#EFF2F4" : null;
-          },
-        },
-      },
-
       {
         columns: [
           dataField(
@@ -249,7 +252,7 @@ export const vehicleApprovalPrint = (
       image: logoImage,
       width: 80,
       height: 50,
-      margin: [10, 10, 0, 20],
+      alignment: "right",
     },
     content: [
       {

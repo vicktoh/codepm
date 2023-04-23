@@ -9,6 +9,12 @@ import {
   Icon,
   IconButton,
   Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
   Table,
   TableContainer,
   Tbody,
@@ -19,18 +25,27 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { format } from "date-fns";
-import React, { FC, useState } from "react";
-import { BsInfo, BsPencil, BsSave } from "react-icons/bs";
+import React, { FC, useMemo, useState } from "react";
+import { BsInfo, BsPencil, BsSave, BsTrash2 } from "react-icons/bs";
 import { useAppSelector } from "../reducers/types";
-import { updateSystemPublicHoliday } from "../services/authServices";
+import {
+  deleteSystemPublicHoliday,
+  updateSystemPublicHoliday,
+} from "../services/authServices";
 import { System } from "../types/System";
+import { DeleteDialog } from "./DeleteDialog";
 import { EmptyState } from "./EmptyState";
 
 type PublicHolidayRowProps = {
   holiday: System["publicHolidays"][number];
   index: number;
+  onDelete: (index: number) => void;
 };
-const PublicHolidayRow: FC<PublicHolidayRowProps> = ({ holiday, index }) => {
+const PublicHolidayRow: FC<PublicHolidayRowProps> = ({
+  holiday,
+  index,
+  onDelete,
+}) => {
   const [date, setDate] = useState<string>(holiday.date);
   const [name, setName] = useState<string>(holiday.name);
   const [mode, setMode] = useState<"view" | "edit">("view");
@@ -86,11 +101,21 @@ const PublicHolidayRow: FC<PublicHolidayRowProps> = ({ holiday, index }) => {
       </Td>
       <Td>
         {mode === "view" ? (
-          <IconButton
-            onClick={() => setMode("edit")}
-            aria-label="edit"
-            icon={<Icon as={BsPencil} />}
-          />
+          <>
+            <IconButton
+              onClick={() => setMode("edit")}
+              aria-label="edit"
+              icon={<Icon as={BsPencil} />}
+            />
+            <IconButton
+              onClick={() => onDelete(index)}
+              aria-label="delete"
+              bg="brand.300"
+              color="white"
+              ml={3}
+              icon={<Icon as={BsTrash2} />}
+            />
+          </>
         ) : (
           <IconButton
             aria-label="save"
@@ -112,7 +137,25 @@ export const PublicHolidays = () => {
     title: "",
   });
   const [loading, setLoading] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
+  const [showDeletePrompt, setShowDeletePrompt] = useState<boolean>(false);
+  const [selectedPublichHolidayIndex, setSelectePublicHolidayIndex] =
+    useState<number>();
   const toast = useToast();
+  const publicHolidaysToRender = useMemo(() => {
+    return (system?.publicHolidays || [])
+      .map((publichHoliday, i) => ({
+        ...publichHoliday,
+        id: i,
+      }))
+      .sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        if (dateA > dateB) return -1;
+        if (dateA < dateB) return 1;
+        return 0;
+      });
+  }, [system?.publicHolidays]);
   const onAddPublicHoliday = async () => {
     if (!date || !title) {
       setErr({
@@ -140,7 +183,29 @@ export const PublicHolidays = () => {
         status: "error",
       });
     } finally {
+      setSelectePublicHolidayIndex(undefined);
       setLoading(false);
+      setShowDeletePrompt(false);
+    }
+  };
+  const onDeletPropmpt = (index: number) => {
+    setSelectePublicHolidayIndex(index);
+    setShowDeletePrompt(true);
+  };
+  const onDeleteHoliday = async () => {
+    if (selectedPublichHolidayIndex === undefined) return;
+    try {
+      setDeleting(true);
+      await deleteSystemPublicHoliday(selectedPublichHolidayIndex);
+    } catch (error) {
+      const err: any = error;
+      toast({
+        title: "Could not delete Public Holiday",
+        description: err?.message || "Unknown error",
+        status: "error",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
   return (
@@ -202,12 +267,13 @@ export const PublicHolidays = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {system?.publicHolidays?.length ? (
-              system.publicHolidays.map((holiday, i) => (
+            {publicHolidaysToRender.length ? (
+              publicHolidaysToRender.map((holiday, i) => (
                 <PublicHolidayRow
-                  key={`holiday-${i}`}
+                  key={`holiday-${holiday.id}`}
                   holiday={holiday}
-                  index={i}
+                  index={holiday.id}
+                  onDelete={onDeletPropmpt}
                 />
               ))
             ) : (
@@ -220,6 +286,27 @@ export const PublicHolidays = () => {
           </Tbody>
         </Table>
       </TableContainer>
+      {showDeletePrompt ? (
+        <Modal
+          isOpen={showDeletePrompt}
+          onClose={() => setShowDeletePrompt(false)}
+        >
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>
+              <ModalCloseButton />
+              Confirm Delete
+            </ModalHeader>
+            <ModalBody>
+              <DeleteDialog
+                isLoading={deleting}
+                onConfirm={onDeleteHoliday}
+                onClose={() => setShowDeletePrompt(false)}
+              />
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+      ) : null}
     </Flex>
   );
 };

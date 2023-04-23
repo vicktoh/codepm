@@ -19,7 +19,7 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { isAfter, isBefore, isEqual } from "date-fns";
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { DeleteDialog } from "../components/DeleteDialog";
@@ -50,19 +50,31 @@ import {
 import { Requisition } from "../types/Requisition";
 import { getBase64FromUrl, tobase64 } from "../helpers";
 import { requisitionPrintDefinition } from "../services/requisitonPrint";
+import { Project } from "../types/Project";
 (pdfMake as any).vfs = pdfFonts.pdfMake.vfs;
 
 export const RequisitionPage: FC = () => {
-  const { auth, requisitions, profile, vendors, users } = useAppSelector(
-    ({ auth, requisitions, profile, vendors, users }) => ({
-      requisitions,
-      auth,
-      profile,
-      vendors,
-      users,
-    }),
-  );
+  const { auth, requisitions, profile, vendors, users, projects } =
+    useAppSelector(
+      ({ auth, requisitions, profile, vendors, users, projects }) => ({
+        requisitions,
+        auth,
+        profile,
+        vendors,
+        users,
+        projects,
+      }),
+    );
   const usersMap = users?.usersMap || {};
+
+  const projectsMap = useMemo(() => {
+    const projectMap: Record<string, Project> = {};
+    projects?.forEach((project) => {
+      projectMap[project.id] = project;
+    });
+    return projectMap;
+  }, [projects]);
+
   const dispatch = useDispatch();
   const toast = useToast();
   const [requisitionFilter, setFilterFilter] =
@@ -95,7 +107,10 @@ export const RequisitionPage: FC = () => {
     setMode("edit");
     onOpen();
   };
-  const printRequisition = async (requisition: Requisition) => {
+  const printRequisition = async (
+    requisition: Requisition,
+    download = false,
+  ) => {
     const {
       creatorId,
       budgetHolderId = "",
@@ -122,11 +137,16 @@ export const RequisitionPage: FC = () => {
     }
     const logoImage = await tobase64(codeLogo);
     const docDefinition = requisitionPrintDefinition(
-      { ...requisition },
+      {
+        ...requisition,
+        projectTitle: projectsMap[requisition.projectId]?.title || "",
+      },
       logoImage as string,
       signatureDataUrls,
     );
-    pdfMake.createPdf(docDefinition as any).open();
+    download
+      ? pdfMake.createPdf(docDefinition as any).download()
+      : pdfMake.createPdf(docDefinition as any).open();
   };
   const downloadRequisition = (requisition: Requisition) => {
     const req = { ...requisition };
@@ -266,7 +286,7 @@ export const RequisitionPage: FC = () => {
               key={`requisition-${i}`}
               requisition={requisition}
               onPrint={() => printRequisition(requisition)}
-              onDownload={() => downloadRequisition(requisition)}
+              onDownload={() => printRequisition(requisition, true)}
               onDelete={() => openDeleteModal(requisition)}
             />
           ))}

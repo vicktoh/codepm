@@ -4,6 +4,7 @@ import {
   onDisconnect,
   onValue,
   ref,
+  remove,
   serverTimestamp,
   set,
   update,
@@ -109,4 +110,10 @@ export const updateSystemPublicHoliday = (
   const database = getDatabase(firebaseApp);
   const systemRef = ref(database, "system");
   return update(systemRef, system);
+};
+
+export const deleteSystemPublicHoliday = (index: number) => {
+  const database = getDatabase(firebaseApp);
+  const systemRef = ref(database, `system/publicHolidays/${index}`);
+  return remove(systemRef);
 };

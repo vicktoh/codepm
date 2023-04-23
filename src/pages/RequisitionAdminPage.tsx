@@ -53,7 +53,7 @@ const roleMap: Record<UserRole, RequisitionStatus | ""> = {
 export const RequisitionAdminPage = () => {
   const [requisitions, setRequisitions] = useState<Requisition[]>();
   const [selectedRequisition, setSelectedRequisition] = useState<Requisition>();
-  const { profile, auth } = useAppSelector(({ profile, auth }) => ({
+  const { profile } = useAppSelector(({ profile, auth }) => ({
     profile,
     auth,
   }));
@@ -62,7 +62,7 @@ export const RequisitionAdminPage = () => {
       type: "",
       endDate: "",
       startDate: "",
-      status: auth ? roleMap[auth.role] : "",
+      status: "",
     });
   const [loading, setLoading] = useState<boolean>(true);
   const {
