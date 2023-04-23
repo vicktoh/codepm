@@ -76,7 +76,6 @@ function App() {
         if (user) {
           if (!isEmailAllowed(user.email || "")) return;
           const idToken = await user.getIdTokenResult();
-          console.log(idToken.claims, "claims");
           const newAuth: Auth = {
             displayName: user.displayName || "Unknown Name",
             uid: user.uid,

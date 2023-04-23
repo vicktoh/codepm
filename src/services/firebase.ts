@@ -30,6 +30,6 @@ const credentials =
     : firebaseConfig;
 export const firebaseApp = initializeApp(credentials);
 
-console.log(credentials, process.env.REACT_APP_APP_ENV);
+// console.log(credentials, process.env.REACT_APP_APP_ENV);
 export const db = getFirestore(firebaseApp);
 export const firebaseAuth = getAuth(firebaseApp);

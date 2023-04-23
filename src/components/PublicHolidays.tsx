@@ -49,7 +49,6 @@ const PublicHolidayRow: FC<PublicHolidayRowProps> = ({
   const [date, setDate] = useState<string>(holiday.date);
   const [name, setName] = useState<string>(holiday.name);
   const [mode, setMode] = useState<"view" | "edit">("view");
-
   const [saving, setSaving] = useState<boolean>(false);
   const { system } = useAppSelector(({ system }) => ({ system }));
   const toast = useToast();
@@ -271,7 +270,7 @@ export const PublicHolidays = () => {
             {publicHolidaysToRender.length ? (
               publicHolidaysToRender.map((holiday, i) => (
                 <PublicHolidayRow
-                  key={`holiday-${i}`}
+                  key={`holiday-${holiday.id}`}
                   holiday={holiday}
                   index={holiday.id}
                   onDelete={onDeletPropmpt}

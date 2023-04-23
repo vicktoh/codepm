@@ -40,12 +40,6 @@ export const ALGOLIA_SEARCH_API_KEY =
     ? "4df18395c02e8cda29ac8aae7a22b0d4"
     : "ab0261aecb9c338551c64d05a4530ecd";
 
-console.log({
-  APP_ENV,
-  ALGOLIA_APP_ID,
-  ALGOLIA_SEARCH_API_KEY,
-  process: process.env.REACT_APP_APP_ENV,
-});
 export const WHITE_LIST = [
   "connecteddevelopment.org",
   "ifollowthemoney.org",
