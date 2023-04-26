@@ -121,7 +121,7 @@ export const Beneficiary = () => {
                   name={`beneficiaries.${i}.name`}
                   placeholder="Account Name"
                   list="vendorlist"
-                  onChange={handleChange}
+                  onChange={(e) => onInputChange(i, e.target.value, "name")}
                   onBlur={handleBlur}
                 />
                 <Tooltip
@@ -137,7 +137,9 @@ export const Beneficiary = () => {
                     name={`beneficiaries.${i}.accountNumber`}
                     placeholder="Account Number"
                     list="vendorlist"
-                    onChange={(e) => handleChange}
+                    onChange={(e) =>
+                      onInputChange(i, e.target.value, "accountNumber")
+                    }
                     onBlur={handleBlur}
                   />
                 </Tooltip>
@@ -147,7 +149,7 @@ export const Beneficiary = () => {
                   name={`beneficiaries.${i}.bank`}
                   placeholder="Bank Name"
                   list="vendorlist"
-                  onChange={handleChange}
+                  onChange={(e) => onInputChange(i, e.target.value, "bank")}
                   onBlur={handleBlur}
                 />
                 <HStack spacing={2}>
