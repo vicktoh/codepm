@@ -25,3 +25,7 @@ export const enableUser = httpsCallable<
   { userId: string },
   { status: "success" | "failed"; message?: string }
 >(functions, "enableUser");
+export const serverTimestamp = httpsCallable<
+  { userId?: string },
+  { status: "success" | "failed"; timestamp: number }
+>(functions, "serverTimestamp");

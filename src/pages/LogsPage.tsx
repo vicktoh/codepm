@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState } from "react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import {
   Button,
   Flex,
@@ -22,9 +22,10 @@ import { LogList } from "../components/LogList";
 import { Period } from "../types/Permission";
 import { useAppSelector } from "../reducers/types";
 import { isBetween } from "../helpers";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { CalendarMonth } from "../components/Calendar/CalendarMonth";
 import { LogStats } from "../components/LogStats";
+import { serverTimestamp } from "../services/userServices";
 
 export const LogsPage: FC = () => {
   const currentDate = useMemo(() => {
@@ -36,6 +37,8 @@ export const LogsPage: FC = () => {
   }, []);
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [month, setMonth] = useState<number>(currentDate.month);
+  const [isTimeCorrect, setIsTimeCorrect] = useState<boolean>(true);
+  console.log("Hey");
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
   const [logFilter, setLogFilter] = useState<Period>();
   const { logs } = useAppSelector(({ logs }) => ({ logs }));
@@ -64,6 +67,20 @@ export const LogsPage: FC = () => {
     const newMonth = month + 1 > 11 ? 11 : month + 1;
     setMonth(newMonth);
   };
+  // useEffect(() => {
+  //   const getServerTimestamp = async () => {
+  //     const res = await serverTimestamp({});
+  //     console.log(res);
+  //     const serverDay = new Date(res.data.timestamp);
+  //     const sameDay = isSameDay(new Date(), res.data.timestamp);
+  //     console.log({
+  //       serverDay,
+  //       sameDay,
+  //     });
+  //     setIsTimeCorrect(isSameDay(new Date(), res.data.timestamp));
+  //   };
+  //   getServerTimestamp();
+  // });
   return (
     <Flex width="100%" direction="row" px={5} flex="1 1" height="100%">
       <Flex

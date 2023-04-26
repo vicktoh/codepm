@@ -1,4 +1,8 @@
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
   Flex,
   Heading,
   HStack,
@@ -12,10 +16,12 @@ import {
   ModalOverlay,
   useDisclosure,
 } from "@chakra-ui/react";
-import React, { FC, useState } from "react";
+import { isSameDay } from "date-fns";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import { BsPlus } from "react-icons/bs";
 import { useAppSelector } from "../reducers/types";
 import { removeLog, removeLogActivity } from "../services/logsServices";
+import { serverTimestamp } from "../services/userServices";
 import { Log } from "../types/Log";
 import { EmptyState } from "./EmptyState";
 import { LoadingComponent } from "./LoadingComponent";
@@ -31,13 +37,20 @@ export const LogList: FC<LogListProps> = ({ logList }) => {
     activityIndex: number;
   }>();
   const [mode, setMode] = useState<"add" | "edit">("add");
+  const [serverTime, setServerTime] = useState<number>();
   const {
     isOpen: isLogModalOpen,
     onClose: onCloseLogModal,
     onOpen: onOpenLogModal,
   } = useDisclosure();
 
-  const onAddLog = () => {
+  const isTimeCorrect = useMemo(() => {
+    if (!serverTime) return true;
+    return isSameDay(new Date(serverTime), new Date());
+  }, [serverTime]);
+  const onAddLog = async () => {
+    await getServerTimestamp();
+    if (serverTime && !isSameDay(new Date(), new Date(serverTime))) return;
     setSelectedLog(undefined);
     setMode("add");
     onOpenLogModal();
@@ -58,17 +71,42 @@ export const LogList: FC<LogListProps> = ({ logList }) => {
       await removeLog(auth?.uid || "", log.dateString);
     }
   };
+  const getServerTimestamp = async () => {
+    const res = await serverTimestamp({});
+    setServerTime(res.data.timestamp);
+  };
+  useEffect(() => {
+    getServerTimestamp();
+  }, []);
 
   if (!logList) {
     return <LoadingComponent title="Fetching Logs..." />;
   }
+
   return (
     <Flex direction="column" flex="1 1">
+      {isTimeCorrect ? null : (
+        <Alert
+          status="error"
+          my={5}
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <AlertIcon />
+          <AlertTitle>Incorrect time</AlertTitle>
+          <AlertDescription>
+            Your system time is incorrect. Please set your date to the correct
+            date and refresh the page before you fill your logs
+          </AlertDescription>
+        </Alert>
+      )}
       <HStack spacing={4}>
         <Heading fontSize="md">Logs</Heading>
         <IconButton
           borderRadius="full"
           variant="outline"
+          disabled={!isTimeCorrect}
           onClick={onAddLog}
           icon={<Icon as={BsPlus} />}
           aria-label="Add new Log"
