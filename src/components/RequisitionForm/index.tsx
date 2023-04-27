@@ -129,10 +129,10 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
           amountInWords,
           lastUpdated: new Date().getTime(),
         };
-        console.log(newRequisition, "new Requisition");
+        let newId = "";
         if (mode === "add") {
           try {
-            await addNewRequisition(auth.uid, newRequisition);
+            newId = await addNewRequisition(auth.uid, newRequisition);
             await updateVendorsList(
               auth.uid,
               vendors || {},
@@ -150,7 +150,9 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
                 reciepientId: values.bugetHolderAttentionId,
                 timestamp: Timestamp.now(),
                 type: "requisition",
-                linkTo: "/requisition-admin",
+                linkTo: newId
+                  ? `/requisition-admin/${newId}`
+                  : "/requisition-admin",
               };
               const email: EmailPayLoad = {
                 to: usersMap[values.bugetHolderAttentionId]?.email || "",
@@ -161,7 +163,7 @@ export const RequisitionForm: FC<RequisitionFormProps> = ({
                   } is requesting your review as a budget holder of thier requisition titled "${
                     values.title
                   }"`,
-                  action: `${BASE_URL}/requisition-admin`,
+                  action: `${BASE_URL}/requisition-admin/${newId}`,
                   date: format(new Date(), "do MMM Y"),
                 },
               };

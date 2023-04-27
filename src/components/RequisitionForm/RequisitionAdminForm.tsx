@@ -319,7 +319,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                 }. It is now your turn to work on this requisition`,
                 reciepientId: nextReciepient,
                 timestamp: Timestamp.now(),
-                linkTo: "/requisition-admin",
+                linkTo: `/requisition-admin/${requisition.id}`,
               };
               const emailTonext: EmailPayLoad = {
                 to: `${usersMap[nextReciepient]?.displayName || ""} <${
@@ -335,7 +335,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                     roleMap[auth.role]
                   }. It is now your turn to work on this requisition`,
                   date: format(new Date(), "do MMM Y"),
-                  action: `${BASE_URL}/requisition-admin`,
+                  action: `${BASE_URL}/requisition-admin/${requisition.id}`,
                 },
               };
               sendNotification(not);

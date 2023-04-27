@@ -118,7 +118,7 @@ export const removeLog = (userId: string, dateString: string) => {
   return deleteDoc(logRef);
 };
 
-export const makeRequest = (
+export const makeRequest = async (
   userId: string,
   values: Omit<Request, "status" | "userId" | "timestamp">,
 ) => {
@@ -129,9 +129,10 @@ export const makeRequest = (
     status: "pending",
     timestamp: new Date().getTime(),
   };
-  return setDoc(requestRef, newRequest);
+  await setDoc(requestRef, newRequest);
+  return requestRef.id;
 };
-export const makeLeaveRequest = (
+export const makeLeaveRequest = async (
   userId: string,
   values: Omit<Request, "type" | "status" | "userId" | "timestamp">,
   type: Request["type"],
@@ -145,7 +146,8 @@ export const makeLeaveRequest = (
     type,
     timestamp: new Date().getTime(),
   };
-  return setDoc(requestRef, newRequest);
+  await setDoc(requestRef, newRequest);
+  return requestRef.id;
 };
 
 export const updateRequest = async (req: Request) => {

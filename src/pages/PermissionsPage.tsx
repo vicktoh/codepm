@@ -39,6 +39,7 @@ import {
 } from "react-icons/bs";
 import { FaCross, FaTimes } from "react-icons/fa";
 import { MdCancel, MdCheckCircle, MdPending } from "react-icons/md";
+import { useParams } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
 import { LoadingComponent } from "../components/LoadingComponent";
 import { RequestChat } from "../components/RequestChat";
@@ -332,7 +333,7 @@ export const PermissionsPage: FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedRequest, setSelectedRequest] = useState<Request>();
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
-
+  const { requestId } = useParams<{ requestId?: string }>();
   const dataToRender = useMemo(() => {
     if (selectedFilter === "all") return requests;
     return requests?.filter((value) => value.type === selectedFilter);
@@ -373,6 +374,15 @@ export const PermissionsPage: FC = () => {
     }
   }, [toast]);
 
+  useEffect(() => {
+    if (!requestId || !requests?.length) return;
+    const preselect = requests.find(({ id }) => id === requestId);
+    if (preselect) {
+      setSelectedRequest(preselect);
+      onOpenViewRequest();
+    }
+  }, [requestId, requests, onOpenViewRequest]);
+
   if (!isMobile) {
     return (
       <>
@@ -398,7 +408,7 @@ export const PermissionsPage: FC = () => {
             )}
           </HStack>
         </VStack>
-        <TableContainer mb={5}>
+        <TableContainer mb={8}>
           <Table>
             <Thead>
               <Tr>

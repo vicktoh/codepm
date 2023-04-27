@@ -207,7 +207,10 @@ export const removeDocument = (path: string) => {
   return deleteObject(invoiceRef);
 };
 
-export const addNewRequisition = (userId: string, requisition: Requisition) => {
+export const addNewRequisition = async (
+  userId: string,
+  requisition: Requisition,
+) => {
   const requisitionCollection = collection(db, "requisitions");
   const requisitionRef = doc(requisitionCollection);
   const userRequisitionRef = doc(
@@ -217,7 +220,8 @@ export const addNewRequisition = (userId: string, requisition: Requisition) => {
   const batch = writeBatch(db);
   batch.set(requisitionRef, requisition);
   batch.set(userRequisitionRef, requisition);
-  return batch.commit();
+  await batch.commit();
+  return requisitionRef.id;
 };
 
 export const updateRequisition = (

@@ -110,6 +110,7 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={async (values) => {
+        let newId = "";
         try {
           if (mode === "add") {
             const { startTime, endTime, ...rest } = values;
@@ -124,7 +125,7 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
               endTime: new Date(`${values.date} ${endTime}`).getTime(),
               datetimestamp: new Date(`${values.date}`).getTime(),
             };
-            await sendVehicleRequest(vehRequest);
+            newId = await sendVehicleRequest(vehRequest);
             onClose();
           }
           if (mode === "edit") {
@@ -151,7 +152,10 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
             timestamp: Timestamp.now(),
             read: false,
             reciepientId: values.reviewerId,
-            linkTo: "/requests-admin/vehicle",
+            linkTo:
+              newId || request?.id
+                ? `requests-admin/vehicle/${newId || request?.id}`
+                : "/requests-admin/vehicle",
             type: "request",
           };
           sendNotification(notification);

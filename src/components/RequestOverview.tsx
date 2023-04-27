@@ -100,7 +100,7 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
         read: false,
         timestamp: Timestamp.now(),
         type: "request",
-        linkTo: "/requests-admin",
+        linkTo: `/requests-admin/${request.id}`,
       };
       const userNotification: Notification = {
         title: "Leave Request Reviewed 👀",
@@ -225,7 +225,7 @@ export const RequestOverview: FC<RequestOverviewProps> = ({
           }.Their duties and responsibilities will be handed over to you`,
           title: "Leave Request",
           timestamp: Timestamp.now(),
-          linkTo: "/requests-admin",
+          linkTo: `/requests-admin/${request.id}`,
           type: "request",
         });
         const handoverEmail: EmailPayLoad = {
