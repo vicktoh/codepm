@@ -26,7 +26,7 @@ import {
 } from "@chakra-ui/react";
 import { isAfter, isBefore, isEqual } from "date-fns";
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
 import { LoadingComponent } from "../components/LoadingComponent";
 import { RequisitionAdminComponent } from "../components/RequisitionAdminComponent";
@@ -53,6 +53,7 @@ const roleMap: Record<UserRole, RequisitionStatus | ""> = {
 export const RequisitionAdminPage = () => {
   const [requisitions, setRequisitions] = useState<Requisition[]>();
   const [selectedRequisition, setSelectedRequisition] = useState<Requisition>();
+  const { requisitionId } = useParams<{ requisitionId?: string }>();
   const { profile } = useAppSelector(({ profile, auth }) => ({
     profile,
     auth,
@@ -113,6 +114,14 @@ export const RequisitionAdminPage = () => {
     );
     return unsubscribe;
   }, [toast]);
+  useEffect(() => {
+    if (!requisitionId || !requisitions?.length) return;
+    const requisition = requisitions.find(({ id }) => id === requisitionId);
+    if (requisition) {
+      setSelectedRequisition(requisition);
+      onOpenRequisitionModal();
+    }
+  }, [requisitionId, requisitions, onOpenRequisitionModal]);
   const onFilterRequisition = (requisitionFilter: RequisitionFilterType) => {
     setRequisitionFilter(requisitionFilter);
   };
@@ -199,7 +208,7 @@ export const RequisitionAdminPage = () => {
           )}
         </Flex>
       ) : (
-        <TableContainer maxWidth="100%" whiteSpace="break-spaces">
+        <TableContainer maxWidth="100%" whiteSpace="break-spaces" mb={8}>
           <Table whiteSpace="break-spaces">
             <Thead>
               <Tr>

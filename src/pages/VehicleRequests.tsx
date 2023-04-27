@@ -188,7 +188,7 @@ export const VehicleRequests = () => {
           <Text>Loading....</Text>
         </Flex>
       ) : (
-        <TableContainer>
+        <TableContainer mb={8}>
           <Table>
             <Thead>
               <Tr>

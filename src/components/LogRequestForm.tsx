@@ -27,7 +27,7 @@ type LogRequestFormProps = {
   type: Request["type"];
   onSubmit: (
     duration: Omit<Request, "userId" | "status" | "timestamp">,
-  ) => Promise<void>;
+  ) => Promise<string>;
   onClose: () => void;
 };
 export const LogRequestForm: FC<LogRequestFormProps> = ({
@@ -64,9 +64,10 @@ export const LogRequestForm: FC<LogRequestFormProps> = ({
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={async (values) => {
+        let newId = "";
         try {
           if (mode === "add") {
-            await onSubmit(values);
+            newId = await onSubmit(values);
             const notification: Notification = {
               read: false,
               title: "Log Request",
@@ -78,7 +79,10 @@ export const LogRequestForm: FC<LogRequestFormProps> = ({
               reciepientId: "",
               timestamp: Timestamp.now(),
               type: "request",
-              linkTo: "/requests-admin",
+              linkTo:
+                newId || request?.id
+                  ? `/requests-admin/${newId || request?.id}`
+                  : "/requests-admin",
             };
             sendNotificationToGroup({
               group: UserRole.admin,

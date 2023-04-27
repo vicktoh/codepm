@@ -108,15 +108,17 @@ const RequestView: FC = () => {
   const onRequestForLeave = async (
     values: Omit<Request, "status" | "type" | "userId" | "timestamp">,
   ) => {
-    await makeLeaveRequest(auth?.uid || "", values, "leave");
+    const id = await makeLeaveRequest(auth?.uid || "", values, "leave");
     onCloseLeaveRequest();
+    return id;
   };
   const onAccessRequest = async (
     values: Omit<Request, "status" | "userId" | "timestamp">,
   ) => {
     // console.log({ values }, "from send");
-    await makeRequest(auth?.uid || "", values);
+    const id = await makeRequest(auth?.uid || "", values);
     onCloseLeaveRequest();
+    return id;
   };
   const onOpenEditRequest = async (
     req: Request,

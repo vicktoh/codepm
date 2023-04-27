@@ -32,7 +32,7 @@ import { UserListPopover } from "./UserListPopover";
 type LeaveRequestFormProps = {
   onSubmit: (
     values: Omit<Request, "status" | "type" | "userId" | "timestamp">,
-  ) => Promise<void>;
+  ) => Promise<string>;
   mode?: "add" | "edit";
   request?: Request;
   onEdit?: (values: Request) => Promise<void>;
@@ -87,9 +87,10 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
       initialValues={initialValues}
       validationSchema={validationSchema}
       onSubmit={async (values) => {
+        let newId = "";
         try {
           if (mode === "add") {
-            await onSubmit(values);
+            newId = await onSubmit(values);
           }
           if (mode === "edit" && onEdit && request) {
             await onEdit({ ...(request || {}), ...values, status: "pending" });
@@ -110,7 +111,10 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
             sendEmailNotification({
               to: emailAttentionTo,
               data: {
-                action: `${BASE_URL}/requests-admin`,
+                action:
+                  newId || request?.id
+                    ? `${BASE_URL}/requests-admin/${newId || request?.id}`
+                    : `${BASE_URL}/requests-admin`,
                 title: "Leave Request",
                 message,
                 date: today,
@@ -124,7 +128,10 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
               }`,
               title: "Leave Request",
               timestamp: Timestamp.now(),
-              linkTo: "/requests-admin",
+              linkTo:
+                newId || request?.id
+                  ? `/requests-admin/${newId || request?.id}`
+                  : "/requests-admin/",
               type: "request",
             });
           }

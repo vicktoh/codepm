@@ -30,6 +30,7 @@ import { request } from "http";
 import React, { useEffect, useState } from "react";
 import { AiFillEye } from "react-icons/ai";
 import { BsCalendar2, BsChatFill } from "react-icons/bs";
+import { useParams } from "react-router-dom";
 import { VehicleRquestChat } from "../components/VehicleRequestChat";
 import { VehicleRequestsView } from "../components/VehicleRequestsView";
 import { VehicleSchedule } from "../components/VehicleSchedule";
@@ -47,6 +48,8 @@ export const VehicleAdmin = () => {
   const { usersMap = {} } = users || {};
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedReq, setSelectedReq] = useState<VehicleRequest>();
+  const { requestId } = useParams<{ requestId?: string }>();
+
   useEffect(() => {
     setLoading(true);
     const unsub = listenOnVehicleAdmin((reqs) => {
@@ -80,6 +83,14 @@ export const VehicleAdmin = () => {
     setSelectedReq(req);
     onOnpenRequestChat();
   };
+  useEffect(() => {
+    if (!requestId || !requests?.length) return;
+    const preselect = requests.find(({ id }) => id === requestId);
+    if (preselect) {
+      setSelectedReq(preselect);
+      onOnpenViewRequest();
+    }
+  }, [requestId, requests, onOnpenViewRequest]);
 
   return (
     <Flex direction="column">
