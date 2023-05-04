@@ -408,7 +408,7 @@ export const PermissionsPage: FC = () => {
             )}
           </HStack>
         </VStack>
-        <TableContainer mb={8}>
+        <TableContainer mb={8} overflowY="auto">
           <Table>
             <Thead>
               <Tr>
