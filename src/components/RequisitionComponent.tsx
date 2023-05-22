@@ -107,7 +107,7 @@ export const RequisitionComponent: FC<RequisitionComponentProps> = ({
           <VStack spacing={0} alignItems="flex-start">
             <Text fontSize="sm">Approved by</Text>
             <Heading fontSize="md">
-              {requisition.checkedby?.displayName}
+              {requisition.approvedBy?.displayName}
             </Heading>
           </VStack>
         );
