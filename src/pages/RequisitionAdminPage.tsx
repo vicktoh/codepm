@@ -189,22 +189,26 @@ export const RequisitionAdminPage = () => {
                     onOpenChat={() => onOpenConversation(requisition)}
                   />
                 )) || (
-                <Tr>
-                  <Td colSpan={5}>
-                    <EmptyState
-                      title="No requisition to show"
-                      description="Note❗️ showing filtered requisitions"
-                    />
-                  </Td>
-                </Tr>
+                <Flex
+                  direction="column"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <EmptyState
+                    title="No requisition to show"
+                    description="Note❗️ showing filtered requisitions"
+                  />
+                </Flex>
               )}
             </>
           ) : (
-            <Tr>
-              <Td colSpan={5}>
-                <EmptyState title="Empty requisition list" />
-              </Td>
-            </Tr>
+            <Flex
+              direction={"column"}
+              alignItems="center"
+              justifyContent="center"
+            >
+              <EmptyState title="Empty requisition list" />
+            </Flex>
           )}
         </Flex>
       ) : (

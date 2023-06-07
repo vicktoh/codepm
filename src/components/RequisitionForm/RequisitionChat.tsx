@@ -189,7 +189,13 @@ export const RequisitionChat: FC<RequisitionChatProps> = ({ requisition }) => {
               <Text>Loading Chats...</Text>
             </Flex>
           ) : (
-            chats && <ChatList userId={auth?.uid || ""} chats={chats} />
+            chats && (
+              <ChatList
+                requisitionId={requisition.id || ""}
+                userId={auth?.uid || ""}
+                chats={chats}
+              />
+            )
           )}
           <Flex ref={endRef}></Flex>
         </Flex>

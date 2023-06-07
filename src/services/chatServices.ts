@@ -161,6 +161,12 @@ export const removeChat = (chat: Chat) => {
   return deleteDoc(chatRef);
 };
 
+export const removeRequisitionChat = (requisitionId: string, chat: Chat) => {
+  if (!chat.id) return;
+  const chatRef = doc(db, `requisitions/${requisitionId}/chats/${chat.id}`);
+  return deleteDoc(chatRef);
+};
+
 export const markAsRead = (userId: string, conversationId: string) => {
   const conversationRef = doc(
     db,
