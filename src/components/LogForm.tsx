@@ -8,7 +8,7 @@ import {
   Textarea,
   useToast,
 } from "@chakra-ui/react";
-import { format } from "date-fns";
+import { endOfDay, format } from "date-fns";
 import { Form, Formik } from "formik";
 import React, { FC, useMemo } from "react";
 import * as yup from "yup";
@@ -40,6 +40,7 @@ export const LogForm: FC<LogFormProps> = ({ logIndex, actvityIndex, mode }) => {
   const today = useMemo(() => {
     return format(new Date(), "y-MM-dd");
   }, []);
+
   const initialValues: LogFormType = {
     title:
       mode === "add"
@@ -62,7 +63,10 @@ export const LogForm: FC<LogFormProps> = ({ logIndex, actvityIndex, mode }) => {
   };
   const validationSchema = yup.object().shape({
     title: yup.string().required("This field is required"),
-    date: yup.string().required("This date is required"),
+    date: yup
+      .date()
+      .max(endOfDay(new Date()), "Cannot select a future date")
+      .required("This field is required"),
     link: yup.string().url("Must be valid url"),
   });
   return (

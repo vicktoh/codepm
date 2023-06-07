@@ -17,13 +17,17 @@ import { useAppSelector } from "../reducers/types";
 import { formatDistance } from "date-fns";
 import { EmptyState } from "./EmptyState";
 import { BsTrash } from "react-icons/bs";
-import { removeChat } from "../services/chatServices";
+import { removeChat, removeRequisitionChat } from "../services/chatServices";
 type ChatListProps = {
   chats: Chat[];
   userId?: string;
+  requisitionId?: string;
 };
 
-const ChatBubble: FC<{ chat: Chat }> = ({ chat }) => {
+const ChatBubble: FC<{ chat: Chat; requisitionId?: string }> = ({
+  chat,
+  requisitionId,
+}) => {
   const glassEffect = useGlassEffect(false, "sm");
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
   const [deleting, setDeleting] = useState<boolean>(false);
@@ -38,7 +42,9 @@ const ChatBubble: FC<{ chat: Chat }> = ({ chat }) => {
   const onDeleteChat = async () => {
     try {
       setDeleting(true);
-      await removeChat(chat);
+      await (requisitionId
+        ? removeRequisitionChat(requisitionId, chat)
+        : removeChat(chat));
     } catch (error) {
       const err: any = error;
       toast({
@@ -117,7 +123,11 @@ const ChatBubble: FC<{ chat: Chat }> = ({ chat }) => {
   );
 };
 
-export const ChatList: FC<ChatListProps> = ({ chats, userId }) => {
+export const ChatList: FC<ChatListProps> = ({
+  chats,
+  userId,
+  requisitionId,
+}) => {
   if (!chats.length) {
     return (
       <EmptyState
@@ -138,7 +148,13 @@ export const ChatList: FC<ChatListProps> = ({ chats, userId }) => {
         ) {
           return null;
         }
-        return <ChatBubble chat={chat} key={`chat-bubble-${chat.id}`} />;
+        return (
+          <ChatBubble
+            requisitionId={requisitionId}
+            chat={chat}
+            key={`chat-bubble-${chat.id}`}
+          />
+        );
       })}
     </>
   );
