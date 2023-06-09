@@ -34,8 +34,9 @@ export const SideNav: FC<SideNavProps> = ({
   auth: { displayName, photoUrl, role },
 }) => {
   const onLogout = useLogout();
-  const { conversations } = useAppSelector(({ conversations }) => ({
+  const { conversations, auth } = useAppSelector(({ conversations, auth }) => ({
     conversations,
+    auth,
   }));
   const isUsersPath = !!useMatch("/users");
   const isDashboardpath = !!useMatch("/dashboard");
@@ -46,11 +47,18 @@ export const SideNav: FC<SideNavProps> = ({
   const isRequestsAdminPath = !!useMatch("/requests-admin");
   const unreadMessages = useMemo(() => {
     let count = 0;
-    (conversations || []).forEach((converastion) => {
-      count += converastion?.unreadCount || 0;
+    (conversations || []).forEach((conversation) => {
+      const number = Math.max(
+        (conversation.chatCount || 0) -
+          (conversation.conversation
+            ? conversation.conversation[auth?.uid || 0] || 0
+            : 0),
+        0,
+      );
+      count += number;
     });
     return count > 9 ? "9+" : count;
-  }, [conversations]);
+  }, [conversations, auth?.uid]);
   return (
     <Flex
       display={{ base: "none", md: "none", lg: "flex" }}

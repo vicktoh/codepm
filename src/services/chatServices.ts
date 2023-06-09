@@ -29,7 +29,6 @@ export const listenOnConversations = (
     snapshot.forEach((snap) => {
       const conversation = snap.data() as Conversation;
       conversation.id = snap.id;
-      conversation.timestamp = (conversation.timestamp as Timestamp).seconds;
       conversations.push(conversation);
     });
 
@@ -86,9 +85,11 @@ export const startConversation = async (
   const converSationRef = doc(collection(db, "conversations"));
   const batch = writeBatch(db);
   const conversation: Conversation = {
-    timestamp: Timestamp.now(),
-    lastUpdated: Timestamp.now().toMillis(),
+    timestamp: new Date().getTime(),
+    lastUpdated: new Date().getTime(),
     creatorId,
+    chatCount: 0,
+    conversation: { [creatorId]: 0 },
     members: [creatorId, recipientId],
     type,
     id: converSationRef.id,
@@ -97,13 +98,15 @@ export const startConversation = async (
     db,
     `users/${creatorId}/conversations/${converSationRef.id}`,
   );
-  const recipientRef = doc(
-    db,
-    `users/${recipientId}/conversations/${converSationRef.id}`,
-  );
+  if (recipientId) {
+    const recipientRef = doc(
+      db,
+      `users/${recipientId}/conversations/${converSationRef.id}`,
+    );
+    batch.set(recipientRef, conversation);
+  }
   batch.set(converSationRef, conversation);
   batch.set(senderRef, conversation);
-  batch.set(recipientRef, conversation);
   await batch.commit();
 };
 
@@ -120,8 +123,10 @@ export const createNewGroupConversation = (
     type: "group",
     title: groupName,
     creatorId,
-    timestamp: Timestamp.now(),
-    lastUpdated: Timestamp.now().toMillis(),
+    chatCount: 0,
+    conversation: { [creatorId]: 0 },
+    timestamp: new Date().getTime(),
+    lastUpdated: new Date().getTime(),
     members: [creatorId],
     id: conversationRef.id,
   };
@@ -133,21 +138,36 @@ export const createNewGroupConversation = (
   return batch.commit();
 };
 
-export const sendChat = (conversationId: string, newchat: Chat) => {
+export const removeGroupConversation = async (conversation: Conversation) => {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, `conversations/${conversation.id}`));
+  for (const member of conversation.members) {
+    batch.delete(doc(db, `users/${member}/conversations/${conversation.id}`));
+  }
+  await batch.commit();
+};
+
+export const sendChat = (
+  conversationId: string,
+  newchat: Chat,
+  members: string[],
+  chatCount: number,
+  conversation: Conversation["conversation"],
+) => {
   const batch = writeBatch(db);
   const chatRef = doc(collection(db, `conversations/${conversationId}/chats`));
-  const senderConversation = doc(
-    db,
-    `users/${newchat.senderId}/conversations/${conversationId}`,
-  );
-  const reciepientConversation = doc(
-    db,
-    `users/${newchat.recieverId}/conversations/${conversationId}`,
-  );
-
+  for (const member of members) {
+    const memberRef = doc(
+      db,
+      `users/${member}/conversations/${conversationId}`,
+    );
+    batch.update(memberRef, {
+      lastUpdated: new Date().getTime(),
+      chatCount: chatCount,
+      conversation,
+    });
+  }
   batch.set(chatRef, newchat);
-  batch.update(senderConversation, { lastUpdated: new Date().getTime() });
-  batch.update(reciepientConversation, { lastUpdated: new Date().getTime() });
 
   return batch.commit();
 };
@@ -167,35 +187,80 @@ export const removeRequisitionChat = (requisitionId: string, chat: Chat) => {
   return deleteDoc(chatRef);
 };
 
-export const markAsRead = (userId: string, conversationId: string) => {
+export const markAsRead = (
+  userId: string,
+  conversationId: string,
+  conversation: Record<string, number | undefined>,
+) => {
   const conversationRef = doc(
     db,
     `users/${userId}/conversations/${conversationId}`,
   );
+  console.log(conversation);
   return updateDoc(conversationRef, {
-    unreadCount: 0,
+    conversation,
   });
 };
 
 export const addNewMembersToConversation = (
   conversation: Conversation,
-  members: string[],
+  newMembers: string[],
 ) => {
   const generalConverationRef = doc(db, `conversations/${conversation.id}`);
   const batch = writeBatch(db);
-  batch.update(generalConverationRef, { members });
-  const newConversation: Conversation = {
+  const members = [...conversation.members, ...newMembers];
+  console.log(
+    "Adding members to conversation",
+    conversation.members,
+    newMembers,
+    conversation.id,
+    conversation.title,
+  );
+  batch.update(generalConverationRef, {
+    members,
+  });
+  const newConversation = {
     ...conversation,
-    members: members,
-    lastUpdated: Timestamp.now().toMillis(),
+    members,
+    lastUpdated: new Date().getTime(),
   };
-
-  members.forEach((userId) => {
+  console.log({ newConversation });
+  conversation.members.forEach((member) => {
+    batch.update(
+      doc(db, `users/${member}/conversations/${conversation.id}`),
+      newConversation,
+    );
+  });
+  newMembers.forEach((userId) => {
     batch.set(
       doc(db, `users/${userId}/conversations/${conversation.id}`),
       newConversation,
     );
   });
 
+  return batch.commit();
+};
+
+export const removeMembersFromConversation = (
+  conversation: Conversation,
+  newMembers: string[],
+  removedMembers: string[],
+) => {
+  const generalConverationRef = doc(db, `conversations/${conversation.id}`);
+  const batch = writeBatch(db);
+  const newConversation = {
+    members: newMembers,
+    lastUpdated: new Date().getTime(),
+  };
+  batch.update(generalConverationRef, newConversation);
+  for (const member of newMembers) {
+    batch.update(
+      doc(db, `users/${member}/conversations/${conversation.id}`),
+      newConversation,
+    );
+  }
+  for (const member of removedMembers) {
+    batch.delete(doc(db, `users/${member}/conversations/${conversation.id}`));
+  }
   return batch.commit();
 };

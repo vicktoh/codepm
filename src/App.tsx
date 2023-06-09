@@ -153,9 +153,11 @@ function App() {
   useEffect(() => {
     if (conversations || !auth?.uid) return;
     try {
-      listenOnConversations(auth?.uid, (data) => {
+      const unsub = listenOnConversations(auth?.uid, (data) => {
         dispatch(setConversations(data));
       });
+
+      // return () => unsub();
     } catch (error) {
       console.log(error);
     }

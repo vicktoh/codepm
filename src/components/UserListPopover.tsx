@@ -21,6 +21,7 @@ type UserListPopverProps = {
   onSelectUser: (userId: string) => void;
   assignees: string[];
   onCloseSuccess?: () => void;
+  omit?: string[];
   closeOnSelect?: boolean;
 };
 
@@ -30,6 +31,7 @@ export const UserListPopover: FC<UserListPopverProps> = ({
   assignees,
   onCloseSuccess,
   closeOnSelect = false,
+  omit,
 }) => {
   const [search, setSearch] = useState<string>("");
   const initialFocusRef = React.useRef();
@@ -73,6 +75,7 @@ export const UserListPopover: FC<UserListPopverProps> = ({
               ? users.users
                   .filter((user) => {
                     if (user.userId === auth?.uid) return false;
+                    if (omit && omit.includes(user.userId)) return false;
                     if (!search) return true;
                     const position = user.displayName
                       .toLowerCase()

@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from "react";
+import React, { FC, useMemo, useState } from "react";
 import {
   Avatar,
   AvatarGroup,
@@ -6,6 +6,13 @@ import {
   Flex,
   Heading,
   HStack,
+  IconButton,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  ModalOverlay,
   Text,
   useBreakpointValue,
   VStack,
@@ -14,6 +21,9 @@ import { formatDistance } from "date-fns";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { useAppSelector } from "../reducers/types";
 import { Conversation } from "../types/Conversation";
+import { BsTrash } from "react-icons/bs";
+import { DeleteDialog } from "./DeleteDialog";
+import { removeGroupConversation } from "../services/chatServices";
 type ConversationItemProps = {
   conversation: Conversation;
   onClick: () => void;
@@ -35,12 +45,24 @@ export const ConversationItem: FC<ConversationItemProps> = ({
     lg: "10px",
   });
   const { usersMap = {} } = users || {};
+  const [showDelete, setShowDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const recipientId = useMemo(() => {
     const recp = conversation.members.filter(
       (memberId) => memberId !== auth?.uid,
     );
     return recp[0];
   }, [conversation.members, auth?.uid]);
+  const unreadCount = useMemo(() => {
+    // console.log(conversation.title, conversation);
+    return Math.max(
+      (conversation.chatCount || 0) -
+        (conversation.conversation
+          ? conversation.conversation[auth?.uid || ""] || 0
+          : 0),
+      0,
+    );
+  }, [conversation, auth?.uid]);
 
   const lastseen = useMemo(() => {
     if (!presence || !presence[recipientId]) return "unavailable";
@@ -56,12 +78,23 @@ export const ConversationItem: FC<ConversationItemProps> = ({
     return formatDistance(new Date(), conversation.lastUpdated);
   }, [conversation.lastUpdated]);
   // const glassEffect = useGlassEffect(false, "3px");
+  const onDeleteConversation = async () => {
+    setIsDeleting(true);
+    try {
+      await removeGroupConversation(conversation);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   if (conversation.type === "group") {
     return (
       <Flex
         direction="row"
         py={3}
         px={2}
+        my={"2px"}
         onClick={onClick}
         justifyContent="space-between"
         cursor="pointer"
@@ -71,40 +104,81 @@ export const ConversationItem: FC<ConversationItemProps> = ({
           <Heading fontSize="md">
             {conversation?.title || "Unknown Username"}
           </Heading>
-          <AvatarGroup spacing="-1rem">
-            {conversation.members
-              .filter((_memberId, i) => i < 3)
-              .map((memberId, i) => (
-                <Avatar
-                  size="sm"
-                  key={`member-${i}`}
-                  src={usersMap[memberId]?.photoUrl || ""}
-                  name={usersMap[memberId]?.displayName || ""}
-                />
-              ))}
-          </AvatarGroup>
+          <HStack>
+            <AvatarGroup spacing="-1rem">
+              {conversation.members
+                .filter((_memberId, i) => i < 3)
+                .map((memberId, i) => (
+                  <Avatar
+                    size="sm"
+                    key={`member-${i}`}
+                    src={usersMap[memberId]?.photoUrl || ""}
+                    name={usersMap[memberId]?.displayName || ""}
+                  />
+                ))}
+            </AvatarGroup>
+            {conversation.members.length > 3 && (
+              <Badge
+                variant="outline"
+                colorScheme="green"
+                fontSize={timelabelFontsize}
+                ml={2}
+              >
+                {conversation.members.length - 3}+
+              </Badge>
+            )}
+          </HStack>
         </VStack>
         <VStack alignItems="flex-end">
-          {conversation.unreadCount ? (
-            <Badge
-              color="white"
-              fontSize="x-small"
-              bg="brand.500"
-              boxSize={5}
-              display="inline-flex"
-              justifyContent="center"
-              alignItems="center"
-              rounded="full"
-            >
-              {conversation.unreadCount > 9 ? "9+" : conversation.unreadCount}
-            </Badge>
-          ) : null}
           {conversation.lastUpdated ? (
             <Text fontSize={timelabelFontsize} color="brand.400">
               {lastUpdated}
             </Text>
           ) : null}
+          <HStack>
+            {conversation.creatorId === auth?.uid ? (
+              <IconButton
+                size="xs"
+                aria-label="Delete group"
+                icon={<BsTrash />}
+                onClick={() => setShowDelete(true)}
+                isLoading={isDeleting}
+              />
+            ) : null}
+            {unreadCount ? (
+              <Badge
+                color="white"
+                fontSize="x-small"
+                bg="brand.500"
+                boxSize={5}
+                display="inline-flex"
+                justifyContent="center"
+                alignItems="center"
+                rounded="full"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </Badge>
+            ) : null}
+          </HStack>
         </VStack>
+        {showDelete ? (
+          <Modal isOpen={showDelete} onClose={() => setShowDelete(false)}>
+            <ModalOverlay />
+            <ModalContent>
+              <ModalCloseButton />
+              <ModalHeader>Delete Group</ModalHeader>
+              <ModalBody>
+                <DeleteDialog
+                  title={`Delete Group ${conversation.title}`}
+                  onClose={() => setShowDelete(false)}
+                  onConfirm={onDeleteConversation}
+                  isLoading={isDeleting}
+                  description="This group will be deleted for all members as well. Are you sure?"
+                />
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+        ) : null}
       </Flex>
     );
   }
@@ -146,7 +220,7 @@ export const ConversationItem: FC<ConversationItemProps> = ({
         </VStack>
       </HStack>
       <VStack>
-        {conversation.unreadCount ? (
+        {unreadCount ? (
           <Badge
             color="white"
             fontSize="x-small"
@@ -157,7 +231,7 @@ export const ConversationItem: FC<ConversationItemProps> = ({
             alignItems="center"
             rounded="full"
           >
-            {conversation.unreadCount > 9 ? "9+" : conversation.unreadCount}
+            {unreadCount > 9 ? "9+" : unreadCount}
           </Badge>
         ) : null}
         {conversation.lastUpdated ? (
