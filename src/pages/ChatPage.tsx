@@ -122,10 +122,16 @@ export const ChatPage: FC = () => {
         </Flex>
         {isMobile ? (
           showChatPane ? null : (
-            <ConversationList onSelectConversation={selectConversation} />
+            <ConversationList
+              onSelectConversation={selectConversation}
+              selectetdConversation={selectedConversation}
+            />
           )
         ) : (
-          <ConversationList onSelectConversation={selectConversation} />
+          <ConversationList
+            onSelectConversation={selectConversation}
+            selectetdConversation={selectedConversation}
+          />
         )}
       </Flex>
       <Flex
