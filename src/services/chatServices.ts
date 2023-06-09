@@ -4,6 +4,8 @@ import {
   collection,
   deleteDoc,
   doc,
+  FieldValue,
+  increment,
   limit,
   onSnapshot,
   orderBy,
@@ -172,13 +174,29 @@ export const sendChat = (
   return batch.commit();
 };
 
-export const removeChat = (chat: Chat) => {
+export const removeChat = (chat: Chat, conversation: Conversation) => {
   if (!chat.id) return;
+  const batch = writeBatch(db);
+  // const generalConverationRef = doc(db, `conversations/${chat.conversationId}`);
+  // batch.update(generalConverationRef, {
+  //   chatCount: increment(-1),
+  // });
   const chatRef = doc(
     db,
     `conversations/${chat.conversationId}/chats/${chat.id}`,
   );
-  return deleteDoc(chatRef);
+  batch.delete(chatRef);
+  conversation.members.forEach((member) => {
+    const memberRef = doc(
+      db,
+      `users/${member}/conversations/${chat.conversationId}`,
+    );
+    batch.update(memberRef, {
+      chatCount: increment(-1),
+    });
+  });
+
+  return batch.commit();
 };
 
 export const removeRequisitionChat = (requisitionId: string, chat: Chat) => {
@@ -240,6 +258,30 @@ export const addNewMembersToConversation = (
 
   return batch.commit();
 };
+export const addNewAdminsToConversation = (
+  conversation: Conversation,
+  newAdmins: string[],
+) => {
+  const generalConverationRef = doc(db, `conversations/${conversation.id}`);
+  const batch = writeBatch(db);
+  const admins = [...(conversation.admins || []), ...newAdmins];
+  batch.update(generalConverationRef, {
+    admins,
+  });
+  const newConversation = {
+    ...conversation,
+    admins,
+    lastUpdated: new Date().getTime(),
+  };
+  conversation.members.forEach((member) => {
+    batch.update(
+      doc(db, `users/${member}/conversations/${conversation.id}`),
+      newConversation,
+    );
+  });
+
+  return batch.commit();
+};
 
 export const removeMembersFromConversation = (
   conversation: Conversation,
@@ -262,5 +304,62 @@ export const removeMembersFromConversation = (
   for (const member of removedMembers) {
     batch.delete(doc(db, `users/${member}/conversations/${conversation.id}`));
   }
+  return batch.commit();
+};
+export const removeAdminsFromGrop = (
+  conversation: Conversation,
+  newAdmins: string[],
+) => {
+  const generalConverationRef = doc(db, `conversations/${conversation.id}`);
+  const batch = writeBatch(db);
+  const newConversation = {
+    admins: newAdmins,
+    lastUpdated: new Date().getTime(),
+  };
+  batch.update(generalConverationRef, newConversation);
+  conversation.members.forEach((member) => {
+    batch.update(
+      doc(db, `users/${member}/conversations/${conversation.id}`),
+      newConversation,
+    );
+  });
+  return batch.commit();
+};
+export const exitConversation = (
+  conversation: Conversation,
+  update: { admins?: string[]; members: string[] },
+  userId: string,
+) => {
+  const generalConverationRef = doc(db, `conversations/${conversation.id}`);
+  const batch = writeBatch(db);
+  batch.update(generalConverationRef, update);
+  update.members.forEach((member) => {
+    batch.update(
+      doc(db, `users/${member}/conversations/${conversation.id}`),
+      update,
+    );
+  });
+  const userConversationRef = doc(
+    db,
+    `users/${userId}/conversations/${conversation.id}`,
+  );
+  batch.delete(userConversationRef);
+  return batch.commit();
+};
+
+export const changeGroupName = (
+  newName: string,
+  conversation: Conversation,
+) => {
+  const generalConverationRef = doc(db, `conversations/${conversation.id}`);
+  const batch = writeBatch(db);
+  batch.update(generalConverationRef, {
+    title: newName,
+  });
+  conversation.members.forEach((member) => {
+    batch.update(doc(db, `users/${member}/conversations/${conversation.id}`), {
+      title: newName,
+    });
+  });
   return batch.commit();
 };

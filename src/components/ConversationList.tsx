@@ -18,9 +18,11 @@ import { ConversationItem } from "./ConversationItem";
 
 type ConversationListProps = {
   onSelectConversation: (conversaton: Conversation, index: number) => void;
+  selectetdConversation?: Conversation;
 };
 export const ConversationList: FC<ConversationListProps> = ({
   onSelectConversation,
+  selectetdConversation,
 }) => {
   const [search, setSearch] = useState("");
   const { conversations, users } = useAppSelector(
@@ -68,11 +70,15 @@ export const ConversationList: FC<ConversationListProps> = ({
           return true;
         })
         .map((conversation, i) => (
-          <ConversationItem
-            key={`conversation-${conversation.id || i}`}
-            conversation={conversation}
-            onClick={() => onSelectConversation(conversation, i)}
-          />
+          <>
+            {console.log(selectetdConversation, conversation.id)}
+            <ConversationItem
+              key={`conversation-${conversation.id || i}`}
+              conversation={conversation}
+              onClick={() => onSelectConversation(conversation, i)}
+              isSelected={selectetdConversation?.id === conversation.id}
+            />
+          </>
         ))}
     </Flex>
   ) : (

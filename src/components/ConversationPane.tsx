@@ -24,15 +24,21 @@ import React, {
 import {
   BsChevronLeft,
   BsFileMinus,
+  BsPencil,
   BsPlus,
+  BsSave,
   BsShieldMinus,
   BsSubtract,
 } from "react-icons/bs";
 import { useAppSelector } from "../reducers/types";
 import {
+  addNewAdminsToConversation,
   addNewMembersToConversation,
+  changeGroupName,
+  exitConversation,
   listenOnChats,
   markAsRead,
+  removeAdminsFromGrop,
   removeMembersFromConversation,
   sendChat,
 } from "../services/chatServices";
@@ -41,6 +47,10 @@ import { Conversation } from "../types/Conversation";
 import { ChatList } from "./ChatList";
 import { UserListPopover } from "./UserListPopover";
 import { sendMultipleNotification } from "../services/notificationServices";
+import {
+  AiOutlineUsergroupAdd,
+  AiOutlineUsergroupDelete,
+} from "react-icons/ai";
 type ConversationPaneProps = {
   conversation: Conversation;
   toggleView: () => void;
@@ -69,12 +79,20 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
   const [loading, setLoading] = useState<boolean>();
   const [addingMembers, setAddingMembers] = useState<boolean>();
   const [removingMembers, setRemovingMembers] = useState<boolean>();
+  const [addingAdmins, setAddingAdmins] = useState<boolean>();
+  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [title, setTitle] = useState<string>(conversation.title || "");
+  const [editingTitle, setEditingTitle] = useState<boolean>();
+  const [exiting, setExiting] = useState<boolean>();
+  const [removingAdmins, setRemovingAdmins] = useState<boolean>();
   const [members, setMembers] = useState<string[]>([]);
   const [membersToRemove, setMembersToRemove] = useState<string[]>([]);
+  const [admins, setAdmins] = useState<string[]>([]);
+  const [adminsToRemove, setAdminsToRemove] = useState<string[]>([]);
   const [chatMessage, setChatMessage] = useState<string>("");
   const [sending, setSending] = useState<boolean>(false);
   const toast = useToast();
-  console.log({ chatmention });
+  console.log(conversation.admins, "adminds");
   const chatParse = useMemo(() => {
     const matches = chatmention.matchAll(/@\[(.*?)]\((.*?):(\d+)\)/g);
     // eslint-disable-next-line guard-for-in
@@ -105,6 +123,11 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
       .filter((user) => !conversation.members.includes(user.userId))
       .map(({ userId }) => userId);
   }, [conversation.members, users?.users]);
+  const nonAdmins = useMemo(() => {
+    return users?.users
+      .filter((user) => !(conversation.admins || []).includes(user.userId))
+      .map(({ userId }) => userId);
+  }, [conversation.admins, users?.users]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -187,6 +210,22 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
       setChatMessage("");
     }
   };
+  const onEditTitle = async () => {
+    try {
+      setEditingTitle(true);
+      await changeGroupName(title, conversation);
+      setMode("view");
+    } catch (error) {
+      const err = error as any;
+      toast({
+        description: err?.message || "Unexpected error",
+        title: "Error",
+        status: "error",
+      });
+    } finally {
+      setEditingTitle(false);
+    }
+  };
   const onEnterChat = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       sendChatMessage();
@@ -203,16 +242,105 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
     setChatMessage(newPlainTextValue);
     setMentions(mentions);
   };
+  const onAddAdminToGroup = async () => {
+    if (!admins.length) return;
+    setAddingAdmins(true);
+    try {
+      await addNewAdminsToConversation(conversation, admins);
+      sendMultipleNotification(admins, {
+        title: `🔐 Admin Added`,
+        description: `You were added as an admin in a group "${conversation.title}" by ${auth?.displayName}`,
+        type: "tasks",
+        linkTo: "/chat",
+      });
+      setAdmins([]);
+    } catch (e) {
+      const err: any = e;
+      toast({
+        description: err?.message || "Unexpected error",
+        title: "Error",
+        status: "error",
+      });
+    } finally {
+      setAddingAdmins(false);
+    }
+  };
+
   const onAddMembersToGroup = async () => {
     setAddingMembers(true);
     try {
       await addNewMembersToConversation(conversation, members);
+      sendMultipleNotification(members, {
+        title: "New Group 👨‍👨‍👦‍👦",
+        type: "tasks",
+        description: `You have been added to a new group ${conversation.title} by ${auth?.displayName}`,
+        linkTo: "/chat",
+      });
       setMembers([]);
     } catch (error) {
       const err: any = error;
       console.log(error);
     } finally {
       setAddingMembers(false);
+    }
+  };
+  const onExitGroup = async () => {
+    if (!auth?.uid) {
+      toast({
+        title: "Please login again",
+        status: "error",
+        isClosable: true,
+      });
+      return;
+    }
+    const members = [...conversation.members];
+    const index = members.findIndex((member) => member === auth.uid);
+    if (index !== -1) {
+      members.splice(index, 1);
+      const admins = [...(conversation.admins || [])];
+      const adminIndex = admins.findIndex((admin) => admin === auth.uid);
+      if (adminIndex !== -1) {
+        admins.splice(adminIndex, 1);
+      }
+      try {
+        setExiting(true);
+        await exitConversation(conversation, { members, admins }, auth.uid);
+        sendMultipleNotification(conversation.members, {
+          title: "Exit Group",
+          type: "tasks",
+          description: ` ${auth?.displayName} has exited the group ${conversation.title}`,
+          linkTo: "/chat",
+        });
+      } catch (error) {
+        const err = error as any;
+        toast({
+          description: err?.message || "Unexpected error",
+          title: "Error",
+          status: "error",
+        });
+      } finally {
+        setExiting(false);
+      }
+    }
+  };
+  const onRemoveAdminsFromGroup = async () => {
+    if (!adminsToRemove.length) return;
+    setRemovingAdmins(true);
+    const newAdmins = (conversation.admins || []).filter(
+      (admins) => !adminsToRemove.includes(admins),
+    );
+    try {
+      await removeAdminsFromGrop(conversation, newAdmins);
+      setAdminsToRemove([]);
+    } catch (error) {
+      const err: any = error;
+      toast({
+        description: err?.message || "Unexpected error",
+        title: "Error",
+        status: "error",
+      });
+    } finally {
+      setRemovingAdmins(false);
     }
   };
   const onRemoveMembersFromGroup = async () => {
@@ -246,6 +374,17 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
 
     toRemove ? setMembersToRemove(membersCopy) : setMembers(membersCopy);
   };
+  const onSelectAdmin = (userId: string, toRemove = false) => {
+    const adminsCopy = [...(toRemove ? adminsToRemove : admins)];
+    const index = adminsCopy.indexOf(userId);
+    if (index > -1) {
+      adminsCopy.splice(index, 1);
+    } else {
+      adminsCopy.push(userId);
+    }
+
+    toRemove ? setAdminsToRemove(adminsCopy) : setAdmins(adminsCopy);
+  };
   return (
     <Flex
       position="relative"
@@ -269,50 +408,127 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
             icon={<Icon as={BsChevronLeft} />}
           />
         ) : null}
-        <Heading my={isMobile ? "3" : 0} fontSize="md">{`Conversation with ${
-          conversation.title ||
-          (users?.usersMap ? users.usersMap[recipientId]?.displayName : "")
-        }`}</Heading>
-        {conversation.type === "group" &&
-        conversation.creatorId === auth?.uid ? (
-          <HStack>
-            <UserListPopover
-              onCloseSuccess={onRemoveMembersFromGroup}
-              assignees={membersToRemove}
-              onSelectUser={(userId) => onSelectMember(userId, true)}
-              omit={nonMembers}
-            >
-              <Button
-                isLoading={removingMembers}
-                loadingText="Adding Member(s)"
-                ml="auto"
-                size="xs"
+        {mode === "view" ? (
+          <HStack spacing={2} alignItems="center">
+            <Heading my={isMobile ? "3" : 0} fontSize="md">{`${
+              conversation.type === "private" ? "Conversation with" : ""
+            } ${
+              conversation.title ||
+              (users?.usersMap ? users.usersMap[recipientId]?.displayName : "")
+            }`}</Heading>
+            {conversation.type === "group" &&
+            (conversation.creatorId === auth?.uid ||
+              (conversation.admins || []).includes(auth?.uid || "")) ? (
+              <IconButton
+                onClick={() => setMode("edit")}
+                aria-label="Edit Group name"
                 variant="outline"
-                leftIcon={<Icon as={BsShieldMinus} />}
-              >
-                Remove Members
-              </Button>
-            </UserListPopover>
-            <UserListPopover
-              onCloseSuccess={onAddMembersToGroup}
-              assignees={members}
-              onSelectUser={onSelectMember}
-              omit={conversation.members}
-            >
-              <Button
-                isLoading={addingMembers}
-                loadingText="Adding Member(s)"
-                ml="auto"
-                size="xs"
-                variant="outline"
-                leftIcon={<Icon as={BsPlus} />}
-              >
-                Add Members
-              </Button>
-            </UserListPopover>
+                size="sm"
+                icon={<Icon as={BsPencil} fontSize={10} />}
+              />
+            ) : null}
           </HStack>
-        ) : null}
+        ) : (
+          <HStack spacing={2}>
+            <Input
+              size="sm"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <IconButton
+              onClick={onEditTitle}
+              aria-label="Edit Group name"
+              isLoading={editingTitle}
+              alignSelf={isMobile ? "flex-start" : undefined}
+              icon={<Icon as={BsSave} />}
+            />
+          </HStack>
+        )}
       </Flex>
+      {conversation.type === "group" &&
+      (conversation.creatorId === auth?.uid ||
+        (conversation.admins || []).includes(auth?.uid || "")) ? (
+        <HStack mt={3} flexWrap="wrap" gap={2}>
+          <Button
+            isLoading={exiting}
+            loadingText="Exiting Group"
+            ml="auto"
+            size="xs"
+            variant="outline"
+            onClick={onExitGroup}
+          >
+            🏃🏾 Exit Group
+          </Button>
+          <UserListPopover
+            onCloseSuccess={onAddAdminToGroup}
+            assignees={admins}
+            onSelectUser={(userId) => onSelectAdmin(userId)}
+            omit={conversation.admins || []}
+          >
+            <Button
+              isLoading={addingAdmins}
+              loadingText="Adding Admin(s)"
+              ml="auto"
+              size="xs"
+              variant="outline"
+              leftIcon={<Icon as={AiOutlineUsergroupAdd} />}
+            >
+              Add Admin
+            </Button>
+          </UserListPopover>
+          <UserListPopover
+            onCloseSuccess={onRemoveAdminsFromGroup}
+            assignees={adminsToRemove}
+            onSelectUser={(userId) => onSelectAdmin(userId, true)}
+            omit={nonAdmins}
+          >
+            <Button
+              isLoading={removingAdmins}
+              loadingText="Removing Admin(s)"
+              ml="auto"
+              size="xs"
+              variant="outline"
+              leftIcon={<Icon as={AiOutlineUsergroupDelete} />}
+            >
+              Remove Admins
+            </Button>
+          </UserListPopover>
+          <UserListPopover
+            onCloseSuccess={onRemoveMembersFromGroup}
+            assignees={membersToRemove}
+            onSelectUser={(userId) => onSelectMember(userId, true)}
+            omit={nonMembers}
+          >
+            <Button
+              isLoading={removingMembers}
+              loadingText="Removing Member(s)"
+              ml="auto"
+              size="xs"
+              variant="outline"
+              leftIcon={<Icon as={BsShieldMinus} />}
+            >
+              Remove Members
+            </Button>
+          </UserListPopover>
+          <UserListPopover
+            onCloseSuccess={onAddMembersToGroup}
+            assignees={members}
+            onSelectUser={onSelectMember}
+            omit={conversation.members}
+          >
+            <Button
+              isLoading={addingMembers}
+              loadingText="Adding Member(s)"
+              ml="auto"
+              size="xs"
+              variant="outline"
+              leftIcon={<Icon as={BsPlus} />}
+            >
+              Add Members
+            </Button>
+          </UserListPopover>
+        </HStack>
+      ) : null}
       <Flex flex="1 1" overflowY="auto" direction="column">
         <Flex direction="column" width="100%" mt="auto" px={2}>
           {loading ? (
@@ -326,7 +542,7 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
               <Text>Loading Chats...</Text>
             </Flex>
           ) : (
-            chats && <ChatList chats={chats} />
+            chats && <ChatList conversation={conversation} chats={chats} />
           )}
           <Flex ref={endRef}></Flex>
         </Flex>
@@ -339,24 +555,6 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
         bottom={isMobile ? 10 : 5}
       >
         <HStack width="100%" spacing={2}>
-          {/* <MentionsInput
-            placeholder="Enter your message here"
-            value={chatmention}
-            onChange={onChangeMention}
-            style={mentionInputStyle}
-            allowSuggestionsAboveCursor={true}
-            forceSuggestionsAboveCursor={true}
-          >
-            <Mention
-              trigger="@"
-              data={
-                users?.users.map(({ email, userId }) => ({
-                  id: userId,
-                  display: email,
-                })) || []
-              }
-            />
-          </MentionsInput> */}
           <Input
             onKeyUp={onEnterChat}
             value={chatMessage}

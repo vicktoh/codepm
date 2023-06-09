@@ -27,10 +27,12 @@ import { removeGroupConversation } from "../services/chatServices";
 type ConversationItemProps = {
   conversation: Conversation;
   onClick: () => void;
+  isSelected: boolean;
 };
 export const ConversationItem: FC<ConversationItemProps> = ({
   conversation,
   onClick,
+  isSelected,
 }) => {
   const { users, presence, auth } = useAppSelector(
     ({ users, presence, auth }) => ({
@@ -78,6 +80,7 @@ export const ConversationItem: FC<ConversationItemProps> = ({
     return formatDistance(new Date(), conversation.lastUpdated);
   }, [conversation.lastUpdated]);
   // const glassEffect = useGlassEffect(false, "3px");
+  console.log(conversation.title, isSelected);
   const onDeleteConversation = async () => {
     setIsDeleting(true);
     try {
@@ -98,7 +101,7 @@ export const ConversationItem: FC<ConversationItemProps> = ({
         onClick={onClick}
         justifyContent="space-between"
         cursor="pointer"
-        bg="white"
+        {...(isSelected ? { bg: "brand.200" } : { bg: "white" })}
       >
         <VStack alignItems="flext-start">
           <Heading fontSize="md">
@@ -187,7 +190,6 @@ export const ConversationItem: FC<ConversationItemProps> = ({
       justifyContent="space-between"
       onClick={onClick}
       cursor="pointer"
-      bg="white"
       px={2}
       py={3}
       my={"2px"}
@@ -205,6 +207,7 @@ export const ConversationItem: FC<ConversationItemProps> = ({
           ? 1
           : 0
       }
+      {...(isSelected ? { bg: "brand.200" } : { bg: "white" })}
     >
       <HStack alignItems="flex-start">
         <Avatar

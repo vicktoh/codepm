@@ -18,16 +18,19 @@ import { formatDistance } from "date-fns";
 import { EmptyState } from "./EmptyState";
 import { BsTrash } from "react-icons/bs";
 import { removeChat, removeRequisitionChat } from "../services/chatServices";
+import { Conversation } from "../types/Conversation";
 type ChatListProps = {
   chats: Chat[];
   userId?: string;
   requisitionId?: string;
+  conversation?: Conversation;
 };
 
-const ChatBubble: FC<{ chat: Chat; requisitionId?: string }> = ({
-  chat,
-  requisitionId,
-}) => {
+const ChatBubble: FC<{
+  chat: Chat;
+  requisitionId?: string;
+  conversation?: Conversation;
+}> = ({ chat, requisitionId, conversation }) => {
   const glassEffect = useGlassEffect(false, "sm");
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
   const [deleting, setDeleting] = useState<boolean>(false);
@@ -44,7 +47,7 @@ const ChatBubble: FC<{ chat: Chat; requisitionId?: string }> = ({
       setDeleting(true);
       await (requisitionId
         ? removeRequisitionChat(requisitionId, chat)
-        : removeChat(chat));
+        : conversation && removeChat(chat, conversation));
     } catch (error) {
       const err: any = error;
       toast({
@@ -127,6 +130,7 @@ export const ChatList: FC<ChatListProps> = ({
   chats,
   userId,
   requisitionId,
+  conversation,
 }) => {
   if (!chats.length) {
     return (
@@ -153,6 +157,7 @@ export const ChatList: FC<ChatListProps> = ({
             requisitionId={requisitionId}
             chat={chat}
             key={`chat-bubble-${chat.id}`}
+            conversation={conversation}
           />
         );
       })}
