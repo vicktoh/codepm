@@ -21,12 +21,19 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { BsChevronLeft, BsPlus } from "react-icons/bs";
+import {
+  BsChevronLeft,
+  BsFileMinus,
+  BsPlus,
+  BsShieldMinus,
+  BsSubtract,
+} from "react-icons/bs";
 import { useAppSelector } from "../reducers/types";
 import {
   addNewMembersToConversation,
   listenOnChats,
   markAsRead,
+  removeMembersFromConversation,
   sendChat,
 } from "../services/chatServices";
 import { Chat } from "../types/Chat";
@@ -61,7 +68,9 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
   const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [loading, setLoading] = useState<boolean>();
   const [addingMembers, setAddingMembers] = useState<boolean>();
-  const [members, setMembers] = useState<string[]>(conversation.members || []);
+  const [removingMembers, setRemovingMembers] = useState<boolean>();
+  const [members, setMembers] = useState<string[]>([]);
+  const [membersToRemove, setMembersToRemove] = useState<string[]>([]);
   const [chatMessage, setChatMessage] = useState<string>("");
   const [sending, setSending] = useState<boolean>(false);
   const toast = useToast();
@@ -87,24 +96,47 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
       // console.log(error);
     }
   }, [conversation.id]);
+  useEffect(() => {
+    setMembers([]);
+    setMembersToRemove([]);
+  }, [conversation.members]);
+  const nonMembers = useMemo(() => {
+    return users?.users
+      .filter((user) => !conversation.members.includes(user.userId))
+      .map(({ userId }) => userId);
+  }, [conversation.members, users?.users]);
 
   useEffect(() => {
     setTimeout(() => {
+      if (!auth?.uid) return;
       if (!chats || !chats.length) return;
-      if (chats[chats.length - 1]?.senderId !== auth?.uid) {
-        try {
-          markAsRead(auth?.uid || "", conversation.id || "");
-        } catch (error) {
-          // console.log(error);
-        }
+      // if (chats[chats.length - 1]?.senderId !== auth?.uid) {
+
+      // }
+      try {
+        console.log("marking as read");
+        markAsRead(auth?.uid || "", conversation.id || "", {
+          ...(conversation.conversation || {}),
+          [auth.uid]: chats.length,
+        });
+      } catch (error) {
+        // console.log(error);
       }
     }, 1200);
     setTimeout(() => {
       endRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 800);
-  }, [chats, auth?.uid, conversation.id]);
+  }, [chats, auth?.uid, conversation.id, conversation.conversation]);
 
   const sendChatMessage = async () => {
+    if (!auth?.uid) {
+      toast({
+        title: "Please login to send a message",
+        status: "error",
+        isClosable: true,
+      });
+      return;
+    }
     if (!chatMessage) return;
     const newchat: Chat = {
       text: chatMessage,
@@ -118,9 +150,19 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
       members,
       conversationId: conversation.id || "",
     };
+    const newConversation = {
+      ...conversation.conversation,
+      [auth.uid]: (chats?.length || 0) + 1,
+    };
     try {
       setSending(true);
-      await sendChat(conversation.id || "", newchat);
+      await sendChat(
+        conversation.id || "",
+        newchat,
+        conversation.members,
+        (chats?.length || 0) + 1,
+        newConversation,
+      );
       if (mentions.length) {
         sendMultipleNotification(
           mentions.map(({ id }) => id),
@@ -165,15 +207,36 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
     setAddingMembers(true);
     try {
       await addNewMembersToConversation(conversation, members);
+      setMembers([]);
     } catch (error) {
       const err: any = error;
-      // console.log(err);
+      console.log(error);
     } finally {
       setAddingMembers(false);
     }
   };
-  const onSelectMember = (userId: string) => {
-    const membersCopy = [...members];
+  const onRemoveMembersFromGroup = async () => {
+    if (!membersToRemove.length) return;
+    setRemovingMembers(true);
+    const newMembers = conversation.members.filter(
+      (m) => !membersToRemove.includes(m),
+    );
+    try {
+      await removeMembersFromConversation(
+        conversation,
+        newMembers,
+        membersToRemove,
+      );
+      setMembersToRemove([]);
+    } catch (error) {
+      const err: any = error;
+      // console.log(err);
+    } finally {
+      setRemovingMembers(false);
+    }
+  };
+  const onSelectMember = (userId: string, toRemove = false) => {
+    const membersCopy = [...(toRemove ? membersToRemove : members)];
     const index = membersCopy.indexOf(userId);
     if (index > -1) {
       membersCopy.splice(index, 1);
@@ -181,7 +244,7 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
       membersCopy.push(userId);
     }
 
-    setMembers(membersCopy);
+    toRemove ? setMembersToRemove(membersCopy) : setMembers(membersCopy);
   };
   return (
     <Flex
@@ -194,36 +257,62 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
       pt={5}
       pb="80px"
     >
-      <HStack justifyContent="space-between">
+      <Flex
+        direction={isMobile ? "column" : "row"}
+        justifyContent={isMobile ? "flex-start" : "space-between"}
+      >
         {isMobile ? (
           <IconButton
             onClick={toggleView}
             aria-label="go back"
+            alignSelf={isMobile ? "flex-start" : undefined}
             icon={<Icon as={BsChevronLeft} />}
           />
         ) : null}
-        <Heading fontSize="md">{`Conversation with ${
+        <Heading my={isMobile ? "3" : 0} fontSize="md">{`Conversation with ${
           conversation.title ||
           (users?.usersMap ? users.usersMap[recipientId]?.displayName : "")
         }`}</Heading>
-        {conversation.type === "group" ? (
-          <UserListPopover
-            onCloseSuccess={onAddMembersToGroup}
-            assignees={members}
-            onSelectUser={onSelectMember}
-          >
-            <Button
-              isLoading={addingMembers}
-              loadingText="Adding Member(s)"
-              ml="auto"
-              variant="outline"
-              leftIcon={<Icon as={BsPlus} />}
+        {conversation.type === "group" &&
+        conversation.creatorId === auth?.uid ? (
+          <HStack>
+            <UserListPopover
+              onCloseSuccess={onRemoveMembersFromGroup}
+              assignees={membersToRemove}
+              onSelectUser={(userId) => onSelectMember(userId, true)}
+              omit={nonMembers}
             >
-              Add Members
-            </Button>
-          </UserListPopover>
+              <Button
+                isLoading={removingMembers}
+                loadingText="Adding Member(s)"
+                ml="auto"
+                size="xs"
+                variant="outline"
+                leftIcon={<Icon as={BsShieldMinus} />}
+              >
+                Remove Members
+              </Button>
+            </UserListPopover>
+            <UserListPopover
+              onCloseSuccess={onAddMembersToGroup}
+              assignees={members}
+              onSelectUser={onSelectMember}
+              omit={conversation.members}
+            >
+              <Button
+                isLoading={addingMembers}
+                loadingText="Adding Member(s)"
+                ml="auto"
+                size="xs"
+                variant="outline"
+                leftIcon={<Icon as={BsPlus} />}
+              >
+                Add Members
+              </Button>
+            </UserListPopover>
+          </HStack>
         ) : null}
-      </HStack>
+      </Flex>
       <Flex flex="1 1" overflowY="auto" direction="column">
         <Flex direction="column" width="100%" mt="auto" px={2}>
           {loading ? (

@@ -28,6 +28,8 @@ export const ChatPage: FC = () => {
   const [showChatPane, setShowChartPane] = useState<boolean>(!isMobile);
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation>();
+  const [selectedConverstationIndex, setSelectedConverstationIndex] =
+    useState<number>();
   const [creatingConversation, setCreatingConversation] =
     useState<boolean>(false);
   const [creatingGroup, setCreatingGroup] = useState<boolean>(false);
@@ -52,14 +54,18 @@ export const ChatPage: FC = () => {
       setCreatingGroup(false);
     }
   };
-  const selectConversation = (conversation: Conversation) => {
+  const selectConversation = (conversation: Conversation, index: number) => {
     setSelectedConversation(conversation);
+    setSelectedConverstationIndex(index);
     if (isMobile) setShowChartPane((view) => !view);
   };
   const onCreateConversation = async (userId: string) => {
     const conversation = conversationExist(userId, conversations || []);
-    if (conversation) {
-      selectConversation(conversation);
+    const index = conversations?.findIndex(
+      (con) => con.id === conversation?.id,
+    );
+    if (conversation && index && index >= 0) {
+      selectConversation(conversation, index);
       return;
     }
 
@@ -131,10 +137,15 @@ export const ChatPage: FC = () => {
         borderRadius="lg"
         my={isMobile ? 0 : 5}
       >
-        {selectedConversation ? (
+        {selectedConversation &&
+        conversations &&
+        selectedConverstationIndex !== undefined ? (
           <ConversationPane
             toggleView={() => setShowChartPane((view) => !view)}
-            conversation={selectedConversation}
+            conversation={
+              conversations[selectedConverstationIndex || 0] ||
+              selectedConversation
+            }
           />
         ) : null}
       </Flex>

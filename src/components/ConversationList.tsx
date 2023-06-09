@@ -17,7 +17,7 @@ import { Conversation } from "../types/Conversation";
 import { ConversationItem } from "./ConversationItem";
 
 type ConversationListProps = {
-  onSelectConversation: (conversaton: Conversation) => void;
+  onSelectConversation: (conversaton: Conversation, index: number) => void;
 };
 export const ConversationList: FC<ConversationListProps> = ({
   onSelectConversation,
@@ -71,7 +71,7 @@ export const ConversationList: FC<ConversationListProps> = ({
           <ConversationItem
             key={`conversation-${conversation.id || i}`}
             conversation={conversation}
-            onClick={() => onSelectConversation(conversation)}
+            onClick={() => onSelectConversation(conversation, i)}
           />
         ))}
     </Flex>
