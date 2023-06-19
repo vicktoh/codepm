@@ -142,7 +142,8 @@ export const listenOnTaskComment = (
       ? `projects/${projectId}/tasks/${taskId}/comments`
       : `tasks/${taskId}/comments`,
   );
-  return onSnapshot(commentCollectionRef, (snapshot) => {
+  const q = query(commentCollectionRef, orderBy("timestamp", "asc"));
+  return onSnapshot(q, (snapshot) => {
     const taskComments: TaskComment[] = [];
     snapshot.forEach((snap) => {
       const taskComment = snap.data() as TaskComment;
