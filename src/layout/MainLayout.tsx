@@ -15,6 +15,7 @@ import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { MembersOnline } from "../components/MembersOnline";
 import { Notifications } from "../components/Notifications";
 import { NotificationBar } from "../components/NotificationBar";
+import { Attendance } from "../components/Attendance";
 export const MainLayout: FC = () => {
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
@@ -80,6 +81,7 @@ export const MainLayout: FC = () => {
             {isMobile ? null : <MembersOnline />}
             {isMobile ? null : <NotificationBar />}
           </Flex>
+          <Attendance />
           {isMobile ? <MobileNav /> : null}
 
           <Outlet />

@@ -38,7 +38,6 @@ export const LogsPage: FC = () => {
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
   const [month, setMonth] = useState<number>(currentDate.month);
   const [isTimeCorrect, setIsTimeCorrect] = useState<boolean>(true);
-  console.log("Hey");
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
   const [logFilter, setLogFilter] = useState<Period>();
   const { logs } = useAppSelector(({ logs }) => ({ logs }));
