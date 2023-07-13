@@ -108,6 +108,9 @@ export const updateSystemPublicHoliday = (
   system: Pick<System, "publicHolidays">,
 ) => {
   const database = getDatabase(firebaseApp);
+  system.publicHolidays = (system.publicHolidays || []).filter(
+    (holiday) => !!holiday,
+  );
   const systemRef = ref(database, "system");
   return update(systemRef, system);
 };
