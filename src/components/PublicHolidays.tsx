@@ -61,6 +61,7 @@ const PublicHolidayRow: FC<PublicHolidayRowProps> = ({
     };
     try {
       setSaving(true);
+      console.log({ publicHolidays });
       await updateSystemPublicHoliday({ publicHolidays });
     } catch (error) {
       const err: any = error;
@@ -197,6 +198,7 @@ export const PublicHolidays = () => {
     try {
       setDeleting(true);
       await deleteSystemPublicHoliday(selectedPublichHolidayIndex);
+      setShowDeletePrompt(false);
     } catch (error) {
       const err: any = error;
       toast({
@@ -302,6 +304,11 @@ export const PublicHolidays = () => {
                 isLoading={deleting}
                 onConfirm={onDeleteHoliday}
                 onClose={() => setShowDeletePrompt(false)}
+                title={`Are you sure you want to delete ${
+                  selectedPublichHolidayIndex
+                    ? publicHolidaysToRender[selectedPublichHolidayIndex].name
+                    : ""
+                }`}
               />
             </ModalBody>
           </ModalContent>
