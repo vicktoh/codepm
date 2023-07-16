@@ -14,8 +14,15 @@ import {
   useToast,
   useBreakpoint,
   useBreakpointValue,
+  Menu,
+  MenuButton,
+  IconButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
 import React, { FC, useState } from "react";
+import { BiUserPin } from "react-icons/bi";
+import { BsCalendarCheck, BsThreeDots } from "react-icons/bs";
 import { Link } from "react-router-dom";
 import { useAppSelector } from "../reducers/types";
 import { disableUser, enableUser, setUserRole } from "../services/userServices";
@@ -157,9 +164,23 @@ export const UserRow: FC<UserRowProps> = ({
             </PopoverBody>
           </PopoverContent>
         </Popover>
-        <Button as={Link} to={`/users/profile/${objectID}`}>
-          Profile
-        </Button>
+        <Menu>
+          <MenuButton as={IconButton} icon={<BsThreeDots />} />
+          <MenuList>
+            <MenuItem as={Link} to={`/users/profile/${objectID}`}>
+              <HStack>
+                <BiUserPin />
+                <Text>Profile</Text>
+              </HStack>
+            </MenuItem>
+            <MenuItem as={Link} to={`/users/attendance/${objectID}`}>
+              <HStack>
+                <BsCalendarCheck />
+                <Text>Attendance</Text>
+              </HStack>
+            </MenuItem>
+          </MenuList>
+        </Menu>
       </HStack>
     </Flex>
   );

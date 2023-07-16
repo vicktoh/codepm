@@ -28,6 +28,8 @@ import { VehicleRequests } from "../pages/VehicleRequests";
 import { RequestAdminLayout } from "../layout/RequestAdminLayout";
 import { VehicleAdmin } from "../pages/VehicleAdmin";
 import { useAppSelector } from "../reducers/types";
+import { UserAttendancePage } from "../pages/UserAttendancePage";
+import { Attendance } from "../components/Attendance";
 
 export const MainNavigation = () => {
   return (
@@ -69,6 +71,8 @@ export const MainNavigation = () => {
         <Route path="users" element={<UsersLayout />}>
           <Route index element={<UserListsPage />} />
           <Route path="profile/:userId" element={<UserProfilePage />} />
+          <Route path="attendance/:userId" element={<UserAttendancePage />} />
+          <Route path="attendance" element={<Attendance />} />
         </Route>
         <Route path="requisition-admin" element={<RequisitionAdminLayout />}>
           <Route index element={<RequisitionAdminPage />} />
