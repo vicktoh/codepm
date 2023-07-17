@@ -79,7 +79,6 @@ export const reportMyPresence = (userId: string) => {
   const connectedRef = ref(database, ".info/connected");
   onValue(connectedRef, (snapshot) => {
     if (snapshot.val() === false) {
-      console.log("it is not connected");
       return;
     }
     onDisconnect(statusRef).set(isOfflineForDatabase);
