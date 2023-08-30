@@ -27,6 +27,7 @@ export interface Project {
   id: string;
   title: string;
   description: string;
+  objectives: string;
   funder: string;
   documents?: ProjectDocument[];
   budgetId?: string;

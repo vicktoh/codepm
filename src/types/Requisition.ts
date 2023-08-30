@@ -1,3 +1,8 @@
+import { TypeOf } from "yup";
+import {
+  requisitionCategories,
+  timeSeries,
+} from "../services/requisitionAnalytics";
 import { UserReference } from "./User";
 
 export type RequisitionItem = {
@@ -119,4 +124,8 @@ export type RequisitionFormValues = {
   operationAttentionId?: string;
   financeAttentionId?: string;
   adminAttentionId?: string;
+};
+export type RequisitionStatsData = {
+  stats: ReturnType<typeof requisitionCategories>;
+  series: ReturnType<typeof timeSeries>;
 };

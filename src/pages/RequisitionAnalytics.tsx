@@ -11,8 +11,10 @@ import {
   VStack,
   Tooltip,
   Icon,
+  toast,
+  useToast,
 } from "@chakra-ui/react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSearchIndex } from "../hooks/useSearchIndex";
 import { useAppSelector } from "../reducers/types";
 import {
@@ -22,7 +24,7 @@ import {
   timeFilterToAlgoliaFilter,
   timeSeries,
 } from "../services/requisitionAnalytics";
-import { Requisition } from "../types/Requisition";
+import { Requisition, RequisitionStatsData } from "../types/Requisition";
 
 import {
   VictoryArea,
@@ -33,15 +35,41 @@ import {
   VictoryLine,
   VictoryTooltip,
 } from "victory";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartTooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from "recharts";
 import { Project } from "../types/Project";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { UserListPopover } from "../components/UserListPopover";
-import { BiAbacus, BiMoney } from "react-icons/bi";
+import { BiAbacus, BiCalculator, BiMoney } from "react-icons/bi";
 import { formatNumber, requisitionsToCSV } from "../services/helpers";
-import { BsPeople } from "react-icons/bs";
+import {
+  BsCalculator,
+  BsCheck2All,
+  BsCheck2Circle,
+  BsClockHistory,
+  BsEye,
+  BsFileCheckFill,
+  BsFileDiff,
+  BsPeople,
+  BsTrash2,
+} from "react-icons/bs";
 import { AnalyticsTable } from "../components/AnalyticsTable";
 import { AnalyticsUserTable } from "../components/AnalyticsUserTable";
 import { AnalyticsProjectTable } from "../components/AnalyticsProjectsTable";
+import { IconType } from "react-icons";
+import { requisitionStats } from "../services/userServices";
+import { J } from "@fullcalendar/core/internal-common";
+import { LoadingComponent } from "../components/LoadingComponent";
 
 export interface DataFilters {
   creatorId?: string[];
@@ -49,21 +77,72 @@ export interface DataFilters {
   approvedById?: string[];
   projectId?: string[];
 }
+
+const statusIcon: Record<
+  Requisition["status"],
+  { color: string; icon: IconType }
+> = {
+  approved: {
+    color: "green.500",
+    icon: BsCheck2All,
+  },
+  checked: {
+    color: "yellow.500",
+    icon: BsCheck2Circle,
+  },
+  pending: {
+    color: "orange.500",
+    icon: BsClockHistory,
+  },
+  retired: {
+    color: "blue.500",
+    icon: BsCalculator,
+  },
+  reviewed: {
+    color: "green.300",
+    icon: BsEye,
+  },
+  budgetholder: {
+    color: "orange.700",
+    icon: BsFileDiff,
+  },
+  "retirement-approved": {
+    color: "green.300",
+    icon: BsCheck2Circle,
+  },
+  abandoned: {
+    color: "red.500",
+    icon: BsTrash2,
+  },
+  paid: {
+    color: "green.500",
+    icon: BiMoney,
+  },
+};
+const USER_PERPAGE = 10;
 export const RequisitionAnalytics = () => {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>();
+  const [statusFilter, setStatusFilter] = useState<string>();
   const [filter, setFilter] = useState<DataFilters>({});
   const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [loadingStats, setLoadingStats] = useState<boolean>(false);
+  const [stats, setStats] = useState<RequisitionStatsData>();
+  const toast = useToast();
 
   const {
     loading,
     data,
     pageStat,
+    page,
+    setPage,
     setQuery,
     setFacets,
     setFilters: setAlgoliaFilter,
+    groups,
   } = useSearchIndex<Requisition>(
     "requisitions",
     timeFilter ? timeFilterToAlgoliaFilter(timeFilter) : "",
+    USER_PERPAGE,
   );
 
   const { users, projects } = useAppSelector(({ users, projects }) => ({
@@ -87,21 +166,20 @@ export const RequisitionAnalytics = () => {
     }
     return map;
   }, [projects]);
-  const projectCategories = useMemo(() => {
-    if (data) {
-      return requisitionCategories(data);
-    }
-  }, [data]);
+  const statusCategories = useMemo(() => {
+    return groups ? groups["status"] || {} : {};
+  }, [groups]);
   const chartData = useMemo(() => {
-    if (data) {
-      const { userCategories, projectCategories } = requisitionCategories(data);
+    if (stats) {
       return {
-        users: Object.entries(userCategories).map(([userId, data], i) => {
-          const userName =
-            users?.usersMap[userId]?.displayName || "Unknown User";
-          return { ...data, user: userName };
-        }),
-        project: Object.entries(projectCategories).map(
+        users: Object.entries(stats?.stats.userCategories || []).map(
+          ([userId, data], i) => {
+            const userName =
+              users?.usersMap[userId]?.displayName || "Unknown User";
+            return { ...data, user: userName };
+          },
+        ),
+        project: Object.entries(stats?.stats.projectCategories || []).map(
           ([projectId, data], i) => {
             const projectTitle =
               projectsMap[projectId]?.title || "Unknown Project";
@@ -110,13 +188,8 @@ export const RequisitionAnalytics = () => {
         ),
       };
     }
-  }, [data, users, projectsMap]);
+  }, [users, projectsMap, stats]);
 
-  const timedata = useMemo(() => {
-    if (!data) return [];
-    const series = timeSeries(data, timeFilter || TimeFilter["Last 6 Months"]);
-    return series;
-  }, [data, timeFilter]);
   const onSelectUser = (
     userId: string,
     key: keyof Omit<DataFilters, "timestamp">,
@@ -144,6 +217,19 @@ export const RequisitionAnalytics = () => {
       setFacets(consolidateFilter(newFilter));
     }
   };
+  const onSelectStatus = (value?: string) => {
+    if (value) {
+      const newFilter: DataFilters & { status: string[] } = {
+        ...filter,
+        status: [value],
+      };
+      setStatusFilter(value);
+      setFacets(consolidateFilter(newFilter));
+    } else {
+      setStatusFilter(undefined);
+      setFacets(consolidateFilter(filter));
+    }
+  };
   const onSelectTime = (timeFilter: TimeFilter | undefined) => {
     if (!timeFilter) {
       setTimeFilter(timeFilter);
@@ -154,11 +240,33 @@ export const RequisitionAnalytics = () => {
     setAlgoliaFilter(timeFilterToAlgoliaFilter(timeFilter));
   };
   const usersList = useMemo(() => {
-    return Object.values(projectCategories?.userCategories || []);
-  }, [projectCategories?.userCategories]);
+    return Object.values(stats?.stats.userCategories || []);
+  }, [stats?.stats.userCategories]);
   const projectsList = useMemo(() => {
-    return Object.values(projectCategories?.projectCategories || []);
-  }, [projectCategories?.projectCategories]);
+    return Object.values(stats?.stats.projectCategories || []);
+  }, [stats?.stats.projectCategories]);
+  useEffect(() => {
+    const fetchRequisitionStats = async () => {
+      try {
+        setLoadingStats(true);
+        const facets = consolidateFilter(filter);
+        const requsetFilter = timeFilter
+          ? timeFilterToAlgoliaFilter(timeFilter)
+          : "";
+        const response = await requisitionStats({
+          filter: requsetFilter,
+          facets: facets as any,
+          timeframe: timeFilter,
+        });
+        setStats(response.data);
+      } catch (error) {
+        toast({ title: "Could not retrieve stats", status: "error" });
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    fetchRequisitionStats();
+  }, [filter, timeFilter, toast]);
   return (
     <Flex direction="column" position="relative">
       <Heading>Analytics</Heading>
@@ -364,67 +472,124 @@ export const RequisitionAnalytics = () => {
                     </Button>
                   ))}
                 </Flex>
+                <Heading fontSize="md" my={3}>
+                  Filter by Status
+                </Heading>
+                <Flex alignItems="center">
+                  <Button
+                    key={`status-filter-all`}
+                    variant={statusFilter === undefined ? "solid" : "outline"}
+                    onClick={() => onSelectStatus(undefined)}
+                    colorScheme="brand"
+                    size="xs"
+                  >
+                    All
+                  </Button>
+                  {Object.entries(statusCategories).map(
+                    ([status, count], i) => (
+                      <Button
+                        key={`status-filter-${status}-${i}`}
+                        variant={statusFilter === status ? "solid" : "outline"}
+                        onClick={() => onSelectStatus(status)}
+                        colorScheme="brand"
+                        size="xs"
+                      >
+                        {status}
+                      </Button>
+                    ),
+                  )}
+                </Flex>
               </Flex>
             </SimpleGrid>
           </Flex>
         ) : null}
       </Flex>
-      <SimpleGrid columns={[1, 3, 3]} gap={3} my={3}>
-        <Flex
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-          borderRadius="lg"
-          bg="white"
-          py={4}
-        >
-          <Icon as={BiMoney} boxSize={10} color="green.300" mr={2} />
-          <VStack alignItems="flex-start" spacing={0}>
-            <Heading>
-              {projectCategories?.totalValue
-                ? formatNumber(projectCategories?.totalValue)
-                : "-"}
-            </Heading>
-            <Text fontSize="sm">Total Requisitin Value</Text>
-          </VStack>
+      {loadingStats ? (
+        <LoadingComponent />
+      ) : (
+        <Flex width="100%" justifyContent="space-between">
+          <Flex
+            alignItems="center"
+            justifyContent="center"
+            borderRadius="lg"
+            bg="white"
+            p={5}
+            gap={2}
+          >
+            <Icon as={BiMoney} color="green.400" boxSize={10} />
+            <VStack alignItems="flex-start" spacing={0}>
+              <Heading>
+                {stats?.stats?.totalValue
+                  ? formatNumber(stats.stats.totalValue)
+                  : "-"}
+              </Heading>
+              <Text mt={0}>Total Requisition Value</Text>
+            </VStack>
+          </Flex>
+          <Flex
+            alignItems="center"
+            justifyContent="center"
+            borderRadius="lg"
+            bg="white"
+            p={5}
+            gap={2}
+          >
+            <Icon as={BiCalculator} color="orange.400" boxSize={10} />
+            <VStack alignItems="flex-start" spacing={0}>
+              <Heading>
+                {stats?.stats?.totalValue
+                  ? formatNumber(stats.stats.totalCount)
+                  : "-"}
+              </Heading>
+              <Text mt={0}>Total Requisition Count</Text>
+            </VStack>
+          </Flex>
+          <Flex
+            alignItems="center"
+            justifyContent="center"
+            borderRadius="lg"
+            bg="white"
+            p={5}
+            gap={2}
+          >
+            <Icon as={BsPeople} color="blue.400" boxSize={10} />
+            <VStack alignItems="flex-start" spacing={0}>
+              <Heading>
+                {stats?.stats?.totalValue
+                  ? formatNumber(stats.stats.totalUsersCount)
+                  : "-"}
+              </Heading>
+              <Text mt={0}>Total User Count</Text>
+            </VStack>
+          </Flex>
         </Flex>
-        <Flex
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-          borderRadius="lg"
-          bg="white"
-          py={4}
-        >
-          <Icon as={BiAbacus} boxSize={10} color="orange.300" mr={2} />
-          <VStack alignItems="flex-start" spacing={0}>
-            <Heading>
-              {projectCategories?.totalCount
-                ? formatNumber(projectCategories?.totalCount)
-                : "-"}
-            </Heading>
-            <Text fontSize="sm">Total Requisition Count</Text>
-          </VStack>
-        </Flex>
-        <Flex
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-          borderRadius="lg"
-          bg="white"
-          py={4}
-        >
-          <Icon as={BsPeople} boxSize={10} color="blue.300" mr={2} />
-          <VStack alignItems="flex-start" spacing={0}>
-            <Heading>
-              {projectCategories?.totalUsersCount
-                ? formatNumber(projectCategories?.totalUsersCount)
-                : "-"}
-            </Heading>
-            <Text fontSize="sm">Total User Count</Text>
-          </VStack>
-        </Flex>
-      </SimpleGrid>
+      )}
+      <Flex justifyContent="space-between" gap={3} my={3} flexWrap="wrap">
+        {Object.entries(statusCategories).map(([key, value]) => (
+          <Flex
+            direction="row"
+            alignItems="center"
+            justifyContent="center"
+            borderRadius="lg"
+            bg="white"
+            py={4}
+            key={`status-{key}`}
+            maxWidth="150px"
+            width="100%"
+          >
+            <VStack spacing={0}>
+              <Icon
+                as={statusIcon[key as Requisition["status"]].icon}
+                boxSize={5}
+                color={statusIcon[key as Requisition["status"]].color}
+                mb={2}
+              />
+              <Heading fontSize="lg">{value}</Heading>
+              <Text fontSize="sm">{key}</Text>
+            </VStack>
+          </Flex>
+        ))}
+      </Flex>
       <Flex
         direction="column"
         bg="white"
@@ -453,90 +618,79 @@ export const RequisitionAnalytics = () => {
             Download CSV
           </Button>
         </Flex>
-        {data ? <AnalyticsTable data={data} total={pageStat?.total} /> : null}
+        {data ? (
+          <AnalyticsTable
+            page={page}
+            setPage={setPage}
+            data={data}
+            perpage={USER_PERPAGE}
+            total={pageStat?.total}
+          />
+        ) : null}
       </Flex>
-      <SimpleGrid columns={2} spacing={3} my={3}>
+      <SimpleGrid columns={[1, 2]} spacing={3} my={3}>
         {chartData?.users ? (
           <GridItem
             colSpan={1}
-            bg="white"
+            bg="whiteAlpha.400"
             borderRadius="lg"
             alignItems="center"
             px={3}
             py={4}
+            height="500px"
           >
             <Heading fontSize="md" my={2}>
               User Requisition by Value
             </Heading>
-            <VictoryChart domainPadding={30}>
-              <VictoryAxis dependentAxis tickFormat={(x) => `${x / 1000}k`} />
-              <VictoryAxis />
-              <VictoryLabel title="Total Amount by Users" x={200} y={20} />
-              <VictoryBar
-                animate={true}
-                labels={({ datum }) => {
-                  if (datum.value > 1000) {
-                    return `${datum.user}
-                  ${(datum.value / 1000).toFixed()}k`;
-                  }
-                  return `${datum.user}/n ${datum.value}`;
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData.users}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 40,
                 }}
-                style={{ data: { fill: "tomato" } }}
-                labelComponent={<VictoryTooltip dy={0} />}
-                data={chartData?.users || []}
-                x="user"
-                y="value"
-              />
-              <VictoryLine
-                style={{ data: { stroke: "teal" } }}
-                data={chartData?.users || []}
-                x="user"
-                y="value"
-              />
-            </VictoryChart>
+              >
+                <XAxis dataKey="user" />
+                <YAxis />
+                <RechartTooltip
+                  formatter={(value) => formatNumber(value as any)}
+                />
+                <Bar dataKey="value" fill="#17B9E8" />
+              </BarChart>
+            </ResponsiveContainer>
           </GridItem>
         ) : null}
         {chartData?.users ? (
           <GridItem
             colSpan={[1, 1, 1]}
-            bg="white"
+            bg="whiteAlpha.400"
             borderRadius="lg"
             alignItems="center"
             px={3}
             py={4}
+            height="500px"
           >
             <Heading fontSize="md" my={2}>
               User Requisition by Count
             </Heading>
-            <VictoryChart domainPadding={30}>
-              <VictoryLabel
-                title="Total Value by User"
-                x={225}
-                y={20}
-                textAnchor="middle"
-              />
-              <VictoryAxis
-                dependentAxis
-                tickFormat={(x) => `${formatNumber(x)}`}
-              />
-              <VictoryAxis />
-              <VictoryBar
-                animate={true}
-                labels={({ datum }) => {
-                  if (datum.count > 1000) {
-                    return `${datum.user}
-                    ${(datum.count / 1000).toFixed()}k`;
-                  }
-                  return `${datum.user} 
-                  ${datum.count}`;
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData.users}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 40,
                 }}
-                style={{ data: { fill: "teal" } }}
-                labelComponent={<VictoryTooltip dy={0} />}
-                data={chartData?.users || []}
-                x="user"
-                y="count"
-              />
-            </VictoryChart>
+              >
+                <XAxis dataKey="user" />
+                <YAxis />
+                <RechartTooltip />
+                <Bar dataKey="count" fill="#A15E9D" />
+              </BarChart>
+            </ResponsiveContainer>
           </GridItem>
         ) : null}
       </SimpleGrid>
@@ -552,98 +706,67 @@ export const RequisitionAnalytics = () => {
         {chartData?.project ? (
           <GridItem
             colSpan={1}
-            bg="white"
+            bg="whiteAlpha.400"
             borderRadius="lg"
             alignItems="center"
             px={3}
             py={4}
+            height="500px"
           >
             <Heading fontSize="md" my={2}>
               Project Requisitions by Value
             </Heading>
-            <VictoryChart domainPadding={30}>
-              <VictoryAxis
-                dependentAxis
-                style={{ tickLabels: { fontSize: 10 } }}
-                tickFormat={(x) => `${x / 1000}k`}
-              />
-              <VictoryAxis
-                tickFormat={(x) => {
-                  if (x.length > 10) return `${x.slice(0, 20)}...`;
-                  return x;
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData.project}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 40,
                 }}
-              />
-              <VictoryLabel title="Total Amount by Users" x={200} y={20} />
-              <VictoryBar
-                animate={true}
-                labels={({ datum }) => {
-                  if (datum.value > 1000) {
-                    return `${datum.project}
-                  ${(datum.value / 1000).toFixed()}k`;
-                  }
-                  return `${datum.project}/n ${datum.value}`;
-                }}
-                style={{ data: { fill: "tomato" } }}
-                labelComponent={<VictoryTooltip dy={0} />}
-                data={chartData?.project || []}
-                x="project"
-                y="value"
-              />
-              <VictoryLine
-                style={{ data: { stroke: "yellow" } }}
-                data={chartData?.project || []}
-                x="project"
-                y="value"
-              />
-            </VictoryChart>
+              >
+                <XAxis dataKey="project" />
+                <YAxis />
+                <RechartTooltip
+                  formatter={(value) => formatNumber(value as any)}
+                />
+                <Bar dataKey="value" fill="#99D42B" />
+              </BarChart>
+            </ResponsiveContainer>
           </GridItem>
         ) : null}
         {chartData?.project ? (
           <GridItem
             colSpan={[1, 1, 1]}
-            bg="white"
+            bg="whiteAlpha.400"
             borderRadius="lg"
             alignItems="center"
             px={3}
             py={4}
+            height="500px"
           >
             <Heading fontSize="md" my={2}>
               Project Requisitions by Count
             </Heading>
-            <VictoryChart domainPadding={30}>
-              <VictoryLabel
-                title="Total Value by User"
-                x={225}
-                y={20}
-                textAnchor="middle"
-              />
-              <VictoryAxis
-                dependentAxis
-                tickFormat={(x) => `${formatNumber(x)}`}
-              />
-              <VictoryAxis
-                tickFormat={(x) => {
-                  if (x.length > 10) return `${x.slice(0, 20)}...`;
-                  return x;
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData.project}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 40,
                 }}
-              />
-              <VictoryBar
-                animate={true}
-                labels={({ datum }) => {
-                  if (datum.count > 1000) {
-                    return `${datum.project}
-                    ${(datum.count / 1000).toFixed()}k`;
-                  }
-                  return `${datum.project} 
-                  ${datum.count}`;
-                }}
-                style={{ data: { fill: "orange" } }}
-                labelComponent={<VictoryTooltip dy={0} />}
-                data={chartData?.project || []}
-                x="project"
-                y="count"
-              />
-            </VictoryChart>
+              >
+                <XAxis dataKey="project" />
+                <YAxis />
+                <RechartTooltip
+                  formatter={(value) => formatNumber(value as any)}
+                />
+                <Bar dataKey="count" fill="#DD22BF" />
+              </BarChart>
+            </ResponsiveContainer>
           </GridItem>
         ) : null}
       </SimpleGrid>
@@ -656,23 +779,44 @@ export const RequisitionAnalytics = () => {
           total={projectsList.length}
         />
       </GridItem>
-      <GridItem colSpan={4} bg="white" mb={3} borderRadius="lg" px={3} py={4}>
+      <GridItem
+        colSpan={4}
+        bg="white"
+        mb={3}
+        borderRadius="lg"
+        px={3}
+        py={4}
+        height="500px"
+      >
         <Heading fontSize="md">Time series Requisition Count</Heading>
-        <VictoryChart domainPadding={30}>
-          <VictoryAxis
-            dependentAxis
-            tickFormat={(x) => `${formatNumber(x)}`}
-            style={{ tickLabels: { fontSize: 8 } }}
-          />
-          <VictoryAxis style={{ tickLabels: { fontSize: 8 } }} />
-          <VictoryArea
-            animate={true}
-            data={timedata || []}
-            x="date"
-            y="value"
-            style={{ data: { fill: "orange" }, labels: { fontSize: 10 } }}
-          />
-        </VictoryChart>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart
+            data={stats?.series || []}
+            margin={{
+              top: 5,
+              right: 30,
+              left: 20,
+              bottom: 40,
+            }}
+          >
+            <defs>
+              <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="date" fontSize={10} />
+            <YAxis />
+            <RechartTooltip formatter={(value) => formatNumber(value as any)} />
+            <Area
+              type="natural"
+              dataKey="value"
+              stroke="#8884d8"
+              fillOpacity={1}
+              fill="url(#colorUv)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </GridItem>
     </Flex>
   );

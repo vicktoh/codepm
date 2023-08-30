@@ -194,6 +194,14 @@ export const ProjectDetails = () => {
                 Description
               </Heading>
               <Text fontSize="sm">{project.description}</Text>
+              {project.objectives ? (
+                <>
+                  <Heading fontSize="md" mb={2}>
+                    Goals and Objectives
+                  </Heading>
+                  <Text fontSize="sm">{project.objectives}</Text>
+                </>
+              ) : null}
 
               <HStack mt={3} mb={3}>
                 <Heading fontSize="md">Documents</Heading>

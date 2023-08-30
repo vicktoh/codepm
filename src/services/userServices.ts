@@ -1,7 +1,9 @@
 import { httpsCallable, getFunctions } from "firebase/functions";
 import { EmailPayLoad, Notification } from "../types/Notification";
 import { UserRole } from "../types/Profile";
+import { RequisitionStatsData } from "../types/Requisition";
 import { firebaseApp } from "./firebase";
+import { requisitionCategories, TimeFilter } from "./requisitionAnalytics";
 
 const functions = getFunctions(firebaseApp);
 
@@ -29,3 +31,7 @@ export const serverTimestamp = httpsCallable<
   { userId?: string },
   { status: "success" | "failed"; timestamp: number }
 >(functions, "serverTimestamp");
+export const requisitionStats = httpsCallable<
+  { filter?: string; facets?: string[]; timeframe?: TimeFilter },
+  RequisitionStatsData
+>(functions, "requisitionStats");

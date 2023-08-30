@@ -24,6 +24,7 @@ export function useSearchIndex<T>(
   const toast = useToast();
   // console.log("facet", facets);
   const search = useCallback(async () => {
+    console.log({ filters, facets });
     try {
       setLoading(true);
       const usersIndex = algoliaIndex(index);
@@ -48,7 +49,7 @@ export function useSearchIndex<T>(
         currentPage: currentPage,
       });
       setPage(currentPage);
-      if (!groups) setGroups(categories as any);
+      setGroups(categories as any);
     } catch (error) {
       const err: any = error;
       toast({
@@ -59,7 +60,7 @@ export function useSearchIndex<T>(
     } finally {
       setLoading(false);
     }
-  }, [page, query, toast, index, groups, filters, facets, perpage]);
+  }, [page, query, toast, index, filters, facets, perpage]);
   useEffect(() => {
     search();
   }, [search]);
