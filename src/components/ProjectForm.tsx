@@ -48,6 +48,7 @@ export const ProjectForm: FC<ProjectFormType> = ({
   const initialValues: Omit<Project, "id" | "dateAdded"> = {
     title: project?.title || "",
     description: project?.description || "",
+    objectives: project?.objectives || "",
     funder: project?.funder || "",
     budgetAccess: project?.budgetAccess || [],
     writeAccess: project?.writeAccess || [],
@@ -137,6 +138,26 @@ export const ProjectForm: FC<ProjectFormType> = ({
               <Textarea
                 name="description"
                 value={values.description}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              />
+              <FormHelperText>
+                Minimum 100 character and Max 300 character
+              </FormHelperText>
+
+              <FormErrorMessage>
+                {touched.description && errors.description}
+              </FormErrorMessage>
+            </FormControl>
+            <FormControl
+              isRequired
+              isInvalid={!!touched.objectives && !!errors.objectives}
+              mb={3}
+            >
+              <FormLabel>Goals and Objectives</FormLabel>
+              <Textarea
+                name="objecttives"
+                value={values.objectives}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />

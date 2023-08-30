@@ -147,21 +147,27 @@ const RequestRow: FC<RequestProps> = ({
         my={3}
         py={3}
       >
-        <HStack alignItems="center">
-          <Avatar
-            size="sm"
-            src={usersMap[request.userId]?.photoUrl || ""}
-            name={usersMap[request.userId]?.displayName}
-          />
-          <VStack spacing={0} alignItems="flex-start">
-            <Heading fontSize="lg">
-              {usersMap[request.userId]?.displayName || "Unknown Name"}
-            </Heading>
-            <Text>
-              {usersMap[request.userId]?.designation || "Unknown User"}
-            </Text>
-          </VStack>
-        </HStack>
+        <Flex direction="row" justifyContent="space-between">
+          <HStack alignItems="center">
+            <Avatar
+              size="sm"
+              src={usersMap[request.userId]?.photoUrl || ""}
+              name={usersMap[request.userId]?.displayName}
+            />
+            <VStack spacing={0} alignItems="flex-start">
+              <Heading fontSize="lg">
+                {usersMap[request.userId]?.displayName || "Unknown Name"}
+              </Heading>
+              <Text>
+                {usersMap[request.userId]?.designation || "Unknown User"}
+              </Text>
+            </VStack>
+          </HStack>
+          <Text fontSize="sm" color="brand.300">
+            {format(request.timestamp, "do MMM yyyy")}
+          </Text>
+        </Flex>
+
         <HStack spacing={4} mt={3} alignItems="center">
           {request.type === "leave" ? (
             <VStack spacing={0} alignItems="flex-start">
@@ -245,6 +251,7 @@ const RequestRow: FC<RequestProps> = ({
           </VStack>
         </HStack>
       </Td>
+      <Td>{format(request.timestamp, "do MMM yyyy")}</Td>
       <Td>
         {request.type === "leave" ? (
           <VStack spacing={0} alignItems="flex-start">
@@ -413,6 +420,7 @@ export const PermissionsPage: FC = () => {
             <Thead>
               <Tr>
                 <Th>Requested By</Th>
+                <Th>Date of Request</Th>
                 <Th>Type of Request</Th>
                 <Th>Duration</Th>
                 <Th>Status</Th>
@@ -422,7 +430,7 @@ export const PermissionsPage: FC = () => {
             <Tbody>
               {loading ? (
                 <Tr>
-                  <Td colSpan={5} textAlign="center">
+                  <Td colSpan={6} textAlign="center">
                     <Flex
                       alignItems="center"
                       direction="column"

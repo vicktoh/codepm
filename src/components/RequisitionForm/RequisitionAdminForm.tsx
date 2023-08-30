@@ -47,7 +47,10 @@ const roleMap: Record<UserRole, string> = {
   master: "Master",
   user: "User",
 };
-const RequisitionField: FC<RequisitionFieldProps> = ({ label, value }) => {
+export const RequisitionField: FC<RequisitionFieldProps> = ({
+  label,
+  value,
+}) => {
   const isMobile = useBreakpointValue({ base: true, md: false, lg: true });
   return (
     <VStack alignItems="flex-start" spacing={0}>
@@ -139,8 +142,6 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
     mode: "check",
     budgetIds: [],
   };
-
-  console.log({ requisitionAdmin: requisition });
 
   return (
     <Flex px={5} py={5} direction="column">

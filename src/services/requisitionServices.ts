@@ -30,13 +30,10 @@ import {
 } from "../types/Requisition";
 import { db, firebaseApp } from "./firebase";
 import { BudgetItem } from "../types/Project";
-import { StoreType } from "../reducers/store";
 import { User } from "../types/User";
 
 import { EmailPayLoad, NotificationPayload } from "../types/Notification";
 import { BASE_URL } from "../constants";
-import { format } from "date-fns";
-import { sendEmailVerification } from "firebase/auth";
 import { sendEmailNotification } from "./userServices";
 
 export const listenOnRequisition = (

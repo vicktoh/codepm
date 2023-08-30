@@ -288,7 +288,10 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
                   ) : null}
                 </Box>
               </Tooltip>
-              {requisition.status === RequisitionStatus.retired ? (
+              {requisition.status === RequisitionStatus.retired &&
+              [UserRole.master, UserRole.finance].includes(
+                auth?.role || UserRole.user,
+              ) ? (
                 <Tooltip title="View Retirement">
                   <IconButton
                     onClick={onOpenRetirement}
