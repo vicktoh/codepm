@@ -12,6 +12,7 @@ export type Chat = {
   };
   text: string;
   attachement?: string;
+  attachementType?: string;
   conversationId: string;
   id?: string;
 };
