@@ -9,6 +9,14 @@ import {
   Text,
   useBreakpointValue,
   useToast,
+  Textarea,
+  VStack,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverHeader,
+  PopoverBody,
 } from "@chakra-ui/react";
 import { Timestamp } from "firebase/firestore";
 import { MentionsInput, Mention, MentionItem } from "react-mentions";
@@ -24,11 +32,13 @@ import React, {
 import {
   BsChevronLeft,
   BsFileMinus,
+  BsFilePlus,
   BsPencil,
   BsPlus,
   BsSave,
   BsShieldMinus,
   BsSubtract,
+  BsThreeDots,
 } from "react-icons/bs";
 import { useAppSelector } from "../reducers/types";
 import {
@@ -77,6 +87,8 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
   const [chatmention, setChatMention] = useState<string>("");
   const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [loading, setLoading] = useState<boolean>();
+  const [uploading, setUploading] = useState<boolean>();
+
   const [addingMembers, setAddingMembers] = useState<boolean>();
   const [removingMembers, setRemovingMembers] = useState<boolean>();
   const [addingAdmins, setAddingAdmins] = useState<boolean>();
@@ -92,7 +104,12 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
   const [chatMessage, setChatMessage] = useState<string>("");
   const [sending, setSending] = useState<boolean>(false);
   const toast = useToast();
-  console.log(conversation.admins, "adminds");
+  const chatMembers = useMemo(() => {
+    return (conversation.members || []).map((userId) => ({
+      id: userId,
+      display: users?.usersMap[userId]?.displayName || "Unknown",
+    }));
+  }, [conversation.members, users]);
   const chatParse = useMemo(() => {
     const matches = chatmention.matchAll(/@\[(.*?)]\((.*?):(\d+)\)/g);
     // eslint-disable-next-line guard-for-in
@@ -137,7 +154,6 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
 
       // }
       try {
-        console.log("marking as read");
         markAsRead(auth?.uid || "", conversation.id || "", {
           ...(conversation.conversation || {}),
           [auth.uid]: chats.length,
@@ -190,8 +206,11 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
         sendMultipleNotification(
           mentions.map(({ id }) => id),
           {
-            title: `💬 Chat Mention`,
-            description: `You were mentioned in a chat by ${auth?.displayName}`,
+            title: `💬 Chat Mention ${
+              conversation.type === "group" ? `(${conversation.title})` : ""
+            }`,
+            description: `You were mentioned in a chat by ${auth?.displayName}
+             """${newchat.text}"""`,
             type: "tasks",
             linkTo: "/chat",
           },
@@ -226,9 +245,10 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
       setEditingTitle(false);
     }
   };
-  const onEnterChat = (e: KeyboardEvent<HTMLInputElement>) => {
+  const onEnterChat = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
-      sendChatMessage();
+      // sendChatMessage();
+      e.preventDefault();
     }
   };
 
@@ -236,11 +256,18 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
     e: any,
     newValue: string,
     newPlainTextValue: string,
-    mentions: MentionItem[],
+    newMentions: MentionItem[],
   ) => {
     setChatMention(e.target.value);
     setChatMessage(newPlainTextValue);
-    setMentions(mentions);
+    if (newMentions.length) {
+      setMentions((m) => [...m, ...newMentions]);
+    } else {
+      const mens = mentions.filter(
+        (men) => newPlainTextValue.indexOf(`${men.display}`) > -1,
+      );
+      setMentions(mens);
+    }
   };
   const onAddAdminToGroup = async () => {
     if (!admins.length) return;
@@ -555,25 +582,57 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
         bottom={isMobile ? 10 : 5}
       >
         <HStack width="100%" spacing={2}>
-          <Input
+          {/* <Textarea
             onKeyUp={onEnterChat}
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
             variant="outline"
             borderColor="brand.300"
             placeholder="Enter your message here"
+            rows={2}
             _placeholder={{
               color: "gray.700",
             }}
-          />
-          <Button
-            isLoading={sending}
-            onClick={() => sendChatMessage()}
-            variant="solid"
-            colorScheme="red"
+          /> */}
+          <MentionsInput
+            onChange={onChangeMention}
+            value={chatMessage}
+            style={mentionInputStyle}
           >
-            Send
-          </Button>
+            <Mention
+              trigger="@"
+              data={chatMembers}
+              displayTransform={(id, display) => `@${display}`}
+              style={{
+                backgroundColor: "red",
+              }}
+            />
+          </MentionsInput>
+
+          <HStack>
+            <Button
+              isLoading={sending}
+              onClick={() => sendChatMessage()}
+              variant="solid"
+              colorScheme="red"
+            >
+              Send
+            </Button>
+            {/* <Popover>
+              <PopoverTrigger>
+                <IconButton icon={<BsThreeDots />} aria-label="add file" />
+              </PopoverTrigger>
+              <PopoverContent>
+                <PopoverArrow />
+                <PopoverHeader></PopoverHeader>
+                <PopoverBody>
+                  <Flex direction="column" px={5}>
+                    <Button size="sm">Add Image</Button>
+                  </Flex>
+                </PopoverBody>
+              </PopoverContent>
+            </Popover> */}
+          </HStack>
         </HStack>
       </Flex>
     </Flex>

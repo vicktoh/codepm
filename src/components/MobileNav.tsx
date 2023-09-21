@@ -28,11 +28,13 @@ import { GiTakeMyMoney } from "react-icons/gi";
 import { MembersOnline } from "./MembersOnline";
 import { NotificationBar } from "./NotificationBar";
 import { isMatch } from "lodash";
+import { BiCar } from "react-icons/bi";
 
 export const MobileNav: FC = () => {
   const auth = useAppSelector(({ auth }) => auth);
   const { isOpen, onClose, onToggle } = useDisclosure();
   const isUsersRoute = !!useMatch("/users");
+  const isVehicleRoute = !!useMatch("/vehicle");
   const isRequestAdmin = !!useMatch("/requests-admin");
   const onLogout = useLogout();
   return (
@@ -166,6 +168,19 @@ export const MobileNav: FC = () => {
                 >
                   <Icon as={GiTakeMyMoney} />
                   <Text>Requisition Admin</Text>
+                </HStack>
+              ) : null}
+              {auth?.role === UserRole.admin ||
+              auth?.role === UserRole.driver ||
+              auth?.role === UserRole.master ? (
+                <HStack
+                  as={Link}
+                  to="/vehicle"
+                  spacing={2}
+                  color={isVehicleRoute ? "brand.400" : "tetiary"}
+                >
+                  <Icon as={BiCar} />
+                  <Text>Vehicle Admin</Text>
                 </HStack>
               ) : null}
             </VStack>

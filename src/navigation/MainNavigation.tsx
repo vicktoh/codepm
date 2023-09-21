@@ -37,6 +37,7 @@ export const MainNavigation = () => {
       <Route path="/" element={<MainLayout />}>
         <Route index element={<Navigate to="/dashboard" />} />
         <Route path="/dashboard" element={<Dashboard />}>
+          <Route path=":taskId" element={<DashboardHome />} />
           <Route index element={<DashboardHome />} />
           <Route path="proposals" element={<Proposals />} />
 
@@ -60,7 +61,11 @@ export const MainNavigation = () => {
         <Route path="requests-admin" element={<RequestAdminLayout />}>
           <Route index element={<PermissionsPage />} />
           <Route path=":requestId" element={<PermissionsPage />} />
-          <Route path="vehicle" element={<VehicleAdmin />} />
+          {/* <Route path="vehicle" element={<VehicleAdmin />} />
+          <Route path="vehicle/:requestId" element={<VehicleAdmin />} /> */}
+        </Route>
+        <Route path="vehicle">
+          <Route index element={<VehicleAdmin />} />
           <Route path="vehicle/:requestId" element={<VehicleAdmin />} />
         </Route>
         <Route path="requisitions" element={<RequisitionLayout />}>

@@ -29,6 +29,7 @@ import { Notification, ReduxNotification } from "../types/Notification";
 
 type NotificationBoxProps = {
   notification: ReduxNotification;
+  onClose: () => void;
 };
 
 const iconMap: Record<Notification["type"], string> = {
@@ -36,7 +37,10 @@ const iconMap: Record<Notification["type"], string> = {
   requisition: "🤑",
   tasks: "💼",
 };
-export const NotifcationBox: FC<NotificationBoxProps> = ({ notification }) => {
+export const NotifcationBox: FC<NotificationBoxProps> = ({
+  notification,
+  onClose,
+}) => {
   const { title, timestamp, description, linkTo, read } = notification;
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
 
@@ -83,6 +87,7 @@ export const NotifcationBox: FC<NotificationBoxProps> = ({ notification }) => {
           variant="solid"
           size="xs"
           mt={3}
+          onClick={onClose}
           as={Link}
           to={linkTo}
         >
@@ -145,7 +150,11 @@ export const Notifications: FC = () => {
               </Text>
             ) : notifications?.length ? (
               notifications.map((not) => (
-                <NotifcationBox key={not.id} notification={not} />
+                <NotifcationBox
+                  key={not.id}
+                  notification={not}
+                  onClose={onClose}
+                />
               ))
             ) : (
               <Flex direction="column" alignItems="center">

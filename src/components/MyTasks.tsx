@@ -40,7 +40,7 @@ import { useAppSelector } from "../reducers/types";
 import { AiOutlineCalendar } from "react-icons/ai";
 import { STATUS_COLORSCHEME } from "../constants";
 import { BsCheckAll, BsChevronRight, BsListTask, BsPlus } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { MdCancel, MdPending } from "react-icons/md";
 import { FaFile } from "react-icons/fa";
 import { IconType } from "react-icons";
@@ -137,6 +137,7 @@ export type TaskStats = {
 const TASK_PER_PAGE = 10;
 export const MyTasks: FC = () => {
   const { auth } = useAppSelector(({ auth }) => ({ auth }));
+  const params = useParams<{ taskId?: string }>();
   const [selectedTask, setSelectedTask] = useState<
     Task & { draft?: boolean }
   >();
@@ -165,6 +166,7 @@ export const MyTasks: FC = () => {
     return { tasksToRender: totalData.slice(start, end), pages, total };
   }, [createdTask, tasks, page, searchInput]);
   const isMobile = useBreakpointValue({ base: true, md: true, lg: false });
+
   const taskCategories: Record<TaskStatus, TaskStats> = useMemo(() => {
     const categoryCount = {
       completed: {
@@ -201,6 +203,7 @@ export const MyTasks: FC = () => {
   }, [taskPage]);
 
   const onOpenTask = (task: Task & { draft?: boolean }) => {
+    console.log(task.id);
     setSelectedTask(task);
     onOpen();
   };
@@ -235,6 +238,20 @@ export const MyTasks: FC = () => {
     });
     return () => unsub();
   }, [auth?.uid]);
+
+  useEffect(() => {
+    console.log({ paramsId: params.taskId, tasks });
+
+    if (params.taskId && tasks?.length && createdTask?.length) {
+      const task = [...tasks, ...createdTask].find(
+        (t) => t.id === params.taskId,
+      );
+      if (task) {
+        setSelectedTask(task);
+        onOpen();
+      }
+    }
+  }, [tasks, params.taskId, onOpen, createdTask]);
 
   return (
     <Flex direction="column" mt={5}>

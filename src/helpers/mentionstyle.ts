@@ -10,7 +10,9 @@ export default {
   "&multiLine": {
     control: {
       minHeight: 63,
-      backgroundColor: "transaprent",
+      backgroundColor: "white",
+      border: "1px solid red",
+      borderRadius: 5,
       width: "100%",
     },
     highlighter: {
@@ -20,7 +22,6 @@ export default {
     input: {
       padding: 10,
       backgroundColor: "transparent",
-      border: "1px solid red",
     },
   },
 

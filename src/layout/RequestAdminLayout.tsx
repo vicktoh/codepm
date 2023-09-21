@@ -35,15 +35,6 @@ export const RequestAdminLayout = () => {
           <Icon as={BiArchive} />
           <Text color={isAccessPage ? "brand.300" : ""}>Requests</Text>
         </HStack>
-        <HStack
-          ml={5}
-          as={Link}
-          to="/requests-admin/vehicle"
-          textColor={isLogPage ? "brand.300" : ""}
-        >
-          <Icon as={BiCar} />
-          <Text color={isLogPage ? "brand.300" : ""}>Vehicle Request</Text>
-        </HStack>
       </Flex>
       <Flex height="100%" direction="column" flex="1 1" overflowY="auto">
         <Outlet />

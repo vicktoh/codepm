@@ -20,4 +20,5 @@ export enum UserRole {
   budgetHolder = "budgetHolder",
   reviewer = "reviewer",
   master = "master",
+  driver = "driver",
 }

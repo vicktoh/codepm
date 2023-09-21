@@ -24,7 +24,7 @@ import { FaUsersCog } from "react-icons/fa";
 import { UserRole } from "../types/Profile";
 import { GiTakeMyMoney } from "react-icons/gi";
 import { useAppSelector } from "../reducers/types";
-import { BiCog } from "react-icons/bi";
+import { BiCar, BiCog } from "react-icons/bi";
 
 type SideNavProps = {
   auth: Auth;
@@ -44,6 +44,7 @@ export const SideNav: FC<SideNavProps> = ({
   const isAdminReqPath = !!useMatch("/requisition-admin");
   const isSettingPath = !!useMatch("/system-settings");
   const isRequestsPath = !!useMatch("/requests");
+  const isVehiclePath = !!useMatch("/vehicle");
   const isRequestsAdminPath = !!useMatch("/requests-admin");
   const unreadMessages = useMemo(() => {
     let count = 0;
@@ -222,6 +223,24 @@ export const SideNav: FC<SideNavProps> = ({
               fontWeight={isAdminReqPath ? "extrabold" : "medium"}
             >
               Requisition Admin
+            </Text>
+          </HStack>
+        ) : null}
+        {role === UserRole.admin ||
+        role === UserRole.driver ||
+        role === UserRole.master ? (
+          <HStack
+            as={Link}
+            to="/vehicle"
+            spacing={2}
+            color={isVehiclePath ? "brand.400" : "tetiary"}
+          >
+            <Icon as={BiCar} />
+            <Text
+              color={isVehiclePath ? "brand.400" : "tetiary"}
+              fontWeight={isVehiclePath ? "extrabold" : "medium"}
+            >
+              Vehicle Admin
             </Text>
           </HStack>
         ) : null}

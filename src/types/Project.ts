@@ -67,6 +67,7 @@ export type TimePeriod = {
 
 export interface Task {
   workplanId: string;
+  isUrgent?: boolean;
   title: string;
   description?: string;
   assignees?: string[];
