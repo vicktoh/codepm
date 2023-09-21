@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import {
   Avatar,
   AvatarGroup,
@@ -15,6 +15,7 @@ import {
   Text,
   Textarea,
   useToast,
+  VStack,
 } from "@chakra-ui/react";
 import {
   AiFillClockCircle,
@@ -42,6 +43,8 @@ import { StatusPopover } from "./StatusPopover";
 import { DocumentPopover } from "./DocumentPopover";
 import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { TodoItemComponent } from "./TodoItemComponent";
+import { MentionsInput, Mention, MentionItem } from "react-mentions";
+
 import {
   listenOnTaskComment,
   removeTask,
@@ -49,7 +52,11 @@ import {
   writeComment,
 } from "../services/taskServices";
 import { useRef } from "react";
-import { BsTrash } from "react-icons/bs";
+import {
+  BsFillLightningFill,
+  BsLightningCharge,
+  BsTrash,
+} from "react-icons/bs";
 import { Timestamp } from "firebase/firestore";
 import { LoadingComponent } from "./LoadingComponent";
 import { EmptyState } from "./EmptyState";
@@ -58,7 +65,9 @@ import {
   sendMultipleNotification,
   sendNotification,
 } from "../services/notificationServices";
-
+import mentionStyle from "../helpers/mentionstyle";
+import { assign } from "lodash";
+import { setNotification } from "../reducers/notificationSlice";
 type TaskFormProps = {
   task: Task;
   onClose: () => void;
@@ -66,7 +75,13 @@ type TaskFormProps = {
 
 export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
   const { _highlightResult, ...restTask } = task as any;
+  const { users, auth } = useAppSelector(({ users, auth }) => ({
+    users,
+    auth,
+  }));
+  const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [taskState, setTask] = useState<Task>(restTask);
+  const [isRequestingReview, setIsRequestingReview] = useState<boolean>(false);
   const [editModeTitle, setEditModeTitle] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
   const [taskComments, setTaskComments] = useState<TaskComment[]>();
@@ -79,15 +94,35 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
   const [description, setDescription] = useState<string>(
     task?.description || "",
   );
-
+  const [chatmention, setChatMention] = useState<string>("");
+  const chatMembers = useMemo(() => {
+    return (users?.users || []).map(({ userId, displayName }) => ({
+      id: userId,
+      display: displayName || "Unknown user",
+    }));
+  }, [users]);
   const [comments, setComments] = useState<string>("");
+  const onChangeMention = (
+    e: any,
+    newValue: string,
+    newPlainTextValue: string,
+    newMentions: MentionItem[],
+  ) => {
+    setChatMention(e.target.value);
+    setComments(newPlainTextValue);
+    if (newMentions.length) {
+      setMentions((m) => [...m, ...newMentions]);
+    } else {
+      const mens = mentions.filter(
+        (men) => newPlainTextValue.indexOf(`${men.display}`) > -1,
+      );
+      setMentions(mens);
+    }
+  };
 
-  const { users, auth } = useAppSelector(({ users, auth }) => ({
-    users,
-    auth,
-  }));
   const glassEffect = useGlassEffect(true, "lg");
   const toast = useToast();
+
   useEffect(() => {
     const saveTask = async () => {
       if (myRef.current) {
@@ -187,6 +222,37 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
     setTask((task) => ({ ...task, attachments }));
   };
 
+  const requestReview = async () => {
+    try {
+      setIsRequestingReview(true);
+      const reciepients = [...(task.assignees || []), task.creatorId].filter(
+        (userId) => userId !== auth?.uid,
+      );
+      await sendMultipleNotification(reciepients, {
+        title: "Task needs review",
+        description: `${auth?.displayName || ""} is requesting the task ${
+          task.title
+        } to be reviewed`,
+        linkTo: `/dashboard/projects/${task.projectId}/${task.workplanId}`,
+        type: "tasks",
+      });
+      toast({
+        title: "Review successfully requested",
+        description:
+          "A notification has been sent to concerning parties for review",
+        status: "success",
+      });
+    } catch (error) {
+      console.log(error);
+      toast({
+        title: "Something went wrong!, please try again",
+        status: "error",
+      });
+    } finally {
+      setIsRequestingReview(false);
+    }
+  };
+
   const addComment = async () => {
     if (task.id === undefined) return;
     const userComment: TaskComment = {
@@ -195,17 +261,32 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
       timestamp: Timestamp.now(),
     };
     await writeComment(task.projectId, task.id, userComment);
-
+    // Send notification to all those assiged
     task.assignees &&
       sendMultipleNotification(task.assignees, {
         title: `Comment: (${task.projectTitle}) - ${task.title}`,
         description: `${
           auth?.displayName || "Unknown user"
         } says "${userComment}"`,
-        linkTo: `dashboard/projects/${task.projectId}/${task.workplanId}`,
+        linkTo: `/dashboard/projects/${task.projectId}/${task.workplanId}`,
         type: "tasks",
       });
+
+    // Send notification to all those mentioned
+    if (mentions.length) {
+      sendMultipleNotification(
+        mentions.map(({ id }) => id),
+        {
+          title: `Task mention `,
+          description: `You were mentioned by ${auth?.displayName}  in (${task.projectTitle} - ${task.title} ):
+           """${comments}"""`,
+          type: "tasks",
+          linkTo: `/dashboard/${task.id}`,
+        },
+      );
+    }
     setComments("");
+    setMentions([]);
   };
   // Todo list actions
 
@@ -231,6 +312,19 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
     const todo = [...(taskState.todo || [])];
     todo.splice(index, 1);
     setTask((task) => ({ ...task, todo }));
+  };
+  const markUrgent = async () => {
+    try {
+      await updateDbTask(task.projectId, task.id || "", {
+        isUrgent: !!!taskState.isUrgent,
+      });
+      setTask((task) => ({ ...task, isUrgent: !!!taskState.isUrgent }));
+    } catch (error) {
+      toast({
+        title: "Something went wrong",
+        status: "error",
+      });
+    }
   };
 
   const deleteTask = async () => {
@@ -293,6 +387,20 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
         </HStack>
       )}
 
+      {task.creatorId ? (
+        <Box mt={3}>
+          <VStack spacing={3} alignItems="start">
+            <Heading fontSize="md">🧒🏽 Created By</Heading>
+            <Avatar
+              size="md"
+              src={users?.usersMap[task.creatorId]?.photoUrl}
+              name={
+                users?.usersMap[task.creatorId]?.displayName || "Unkown user"
+              }
+            />
+          </VStack>
+        </Box>
+      ) : null}
       <Box mt={3}>
         <HStack>
           <Heading fontSize="md" my={3}>
@@ -326,18 +434,38 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
         )}
       </Box>
 
-      <Box mt={3}>
-        <Heading fontSize="md" my={3}>
-          🎯 Status
-        </Heading>
-        <StatusPopover currentStatus={taskState.status} onSelect={selectStatus}>
-          <Box alignSelf="flex-start" cursor="pointer">
-            <Badge size="lg" colorScheme={STATUS_COLORSCHEME[taskState.status]}>
-              {taskState.status}
-            </Badge>
-          </Box>
-        </StatusPopover>
-      </Box>
+      <Flex gap={5} mt={3}>
+        <Box>
+          <Heading fontSize="md" my={3}>
+            🎯 Status
+          </Heading>
+          <StatusPopover
+            currentStatus={taskState.status}
+            onSelect={selectStatus}
+          >
+            <Box alignSelf="flex-start" cursor="pointer">
+              <Badge
+                size="lg"
+                colorScheme={STATUS_COLORSCHEME[taskState.status]}
+              >
+                {taskState.status}
+              </Badge>
+            </Box>
+          </StatusPopover>
+        </Box>
+        {auth?.uid !== taskState.creatorId ? (
+          <Button
+            alignSelf="flex-end"
+            size="sm"
+            variant="outline"
+            colorScheme="brand"
+            isLoading={isRequestingReview}
+            onClick={requestReview}
+          >
+            Reques review from owner
+          </Button>
+        ) : null}
+      </Flex>
 
       <Box mt={3}>
         <HStack>
@@ -398,6 +526,12 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
               }}
             />
           </DuedatePopover>
+          {taskState.isUrgent ? (
+            <Badge colorScheme="red">
+              <Icon as={BsLightningCharge} />
+              Urgent
+            </Badge>
+          ) : null}
         </HStack>
         {taskState.dueDate ? (
           <HStack spacing={2}>
@@ -532,10 +666,21 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
       <Box mt={3}>
         <Heading fontSize="medium">💬 Comments</Heading>
         <Flex direction="column" mt={3}>
-          <Textarea
+          {/* <Textarea
             value={comments}
             onChange={(e) => setComments(e.target.value)}
-          ></Textarea>
+          ></Textarea> */}
+          <MentionsInput
+            onChange={onChangeMention}
+            value={comments}
+            style={mentionStyle}
+          >
+            <Mention
+              trigger="@"
+              data={chatMembers}
+              displayTransform={(_, display) => "@" + display}
+            />
+          </MentionsInput>
           <Button
             colorScheme="brand"
             size="sm"
@@ -568,12 +713,7 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
           <Text fontSize="xs">Saving....</Text>
         </HStack>
       ) : null}
-      <Flex
-        px={5}
-        direction="row-reverse"
-        mt={8}
-        justifyContent="space-between"
-      >
+      <Flex px={5} direction="row" mt={8} justifyContent="space-between">
         {auth?.uid === task.creatorId ? (
           <Button
             size="sm"
@@ -584,6 +724,17 @@ export const TaskForm: FC<TaskFormProps> = ({ task, onClose }) => {
             leftIcon={<Icon as={BsTrash} />}
           >
             Delete
+          </Button>
+        ) : null}
+        {auth?.uid === task.creatorId ? (
+          <Button
+            size="sm"
+            onClick={markUrgent}
+            colorScheme={taskState.isUrgent ? "blue" : "brand"}
+            variant="outline"
+            leftIcon={<Icon as={BsFillLightningFill} />}
+          >
+            {taskState.isUrgent ? "Unmark as urgent" : "Mark as Urgent"}
           </Button>
         ) : null}
       </Flex>

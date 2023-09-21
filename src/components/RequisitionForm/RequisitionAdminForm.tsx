@@ -46,6 +46,7 @@ const roleMap: Record<UserRole, string> = {
   finance: "Finance",
   master: "Master",
   user: "User",
+  driver: "Driver",
 };
 export const RequisitionField: FC<RequisitionFieldProps> = ({
   label,

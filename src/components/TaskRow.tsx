@@ -14,6 +14,7 @@ import {
   Icon,
   useToast,
   Link as Anchor,
+  Badge,
 } from "@chakra-ui/react";
 import { Timestamp } from "firebase/firestore";
 import { AiOutlineCalendar, AiOutlineFileText } from "react-icons/ai";
@@ -23,6 +24,7 @@ import { useAppSelector } from "../reducers/types";
 import { addTaskToDb } from "../services/taskServices";
 import { Project, Task, TaskStatus } from "../types/Project";
 import { Link } from "react-router-dom";
+import { BsLightningChargeFill } from "react-icons/bs";
 
 type TaskRowProps = {
   task: Task & { draft?: boolean };
@@ -126,11 +128,24 @@ export const TaskRow: FC<TaskRowProps> = ({
   return (
     <Tr bg="white">
       <Td cursor="pointer" borderLeftRadius="lg" onClick={() => openTask(task)}>
-        <Tooltip label={task?.title}>
-          <Text color="red.500" textDecor="underline" isTruncated noOfLines={1}>
-            {task?.title}
-          </Text>
-        </Tooltip>
+        <HStack spacing={3} alignItems="center">
+          <Tooltip label={task?.title}>
+            <Text
+              color="red.500"
+              textDecor="underline"
+              isTruncated
+              noOfLines={1}
+            >
+              {task?.title}
+            </Text>
+          </Tooltip>
+          {task.isUrgent ? (
+            <Badge colorScheme="brand">
+              <Icon as={BsLightningChargeFill} />
+              Urgent
+            </Badge>
+          ) : null}
+        </HStack>
       </Td>
       <Td>
         {assigneeesTorender ? (

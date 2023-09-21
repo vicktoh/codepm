@@ -57,10 +57,15 @@ export const Attendance = () => {
         alignItems="center"
         borderRadius="lg"
         mx="auto"
+        flexDirection={["column", "row"]}
+        justifyContent={["center", "flex-start"]}
       >
         <AlertIcon />
         <AlertTitle fontSize="lg">Attendance Notice</AlertTitle>
-        <AlertDescription maxWidth="lg">
+        <AlertDescription
+          maxWidth={["sm", "sm", "lg"]}
+          textAlign={["center", "left", "left"]}
+        >
           👋🏽 Hi there we noticed you have not marked your attendance for today.
           Please click the button below to register you attendnace
         </AlertDescription>

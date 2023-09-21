@@ -49,6 +49,7 @@ const roleMap: Record<UserRole, RequisitionStatus | ""> = {
   budgetHolder: RequisitionStatus.pending,
   master: "",
   user: "",
+  driver: RequisitionStatus.pending,
 };
 export const RequisitionAdminPage = () => {
   const [requisitions, setRequisitions] = useState<Requisition[]>();

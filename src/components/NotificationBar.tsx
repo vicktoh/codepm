@@ -117,7 +117,11 @@ export const NotificationBar: FC = () => {
               </Text>
             ) : notifications?.length ? (
               notifications.map((not) => (
-                <NotifcationBox key={not.id} notification={not} />
+                <NotifcationBox
+                  key={not.id}
+                  notification={not}
+                  onClose={onClose}
+                />
               ))
             ) : (
               <Flex direction="column" alignItems="center">
