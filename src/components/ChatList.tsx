@@ -4,7 +4,10 @@ import {
   Flex,
   Heading,
   HStack,
+  Icon,
   IconButton,
+  Image,
+  Link,
   Text,
   toast,
   useBreakpointValue,
@@ -16,7 +19,9 @@ import { useGlassEffect } from "../hooks/useLoadingAnimation";
 import { useAppSelector } from "../reducers/types";
 import { formatDistance } from "date-fns";
 import { EmptyState } from "./EmptyState";
-import { BsTrash } from "react-icons/bs";
+import { BsTrash, BsFile } from "react-icons/bs";
+import { BiLinkExternal } from "react-icons/bi";
+import { MdOutlineAttachFile } from "react-icons/md";
 import { removeChat, removeRequisitionChat } from "../services/chatServices";
 import { Conversation } from "../types/Conversation";
 type ChatListProps = {
@@ -92,7 +97,7 @@ const ChatBubble: FC<{
       )}
       <HStack alignItems="flex-start">
         <Avatar
-          size={isMobile ? "sm" : "md"}
+          size={isMobile ? "sm" : "sm"}
           src={sender.photoUrl}
           name={sender.displayName}
         />
@@ -104,10 +109,36 @@ const ChatBubble: FC<{
             {time} ago
           </Text>
         </VStack>
+        {chat.attachement ? (
+          <Link
+            isExternal
+            href={chat.attachement}
+            position="absolute"
+            top="5px"
+            right="5px"
+          >
+            <Icon as={BiLinkExternal} />
+          </Link>
+        ) : null}
       </HStack>
-      <Text mt={isMobile ? 1 : 2} fontSize="sm">
-        {chat.text}
-      </Text>
+      {chat.attachement && chat.attachementType ? (
+        chat.attachementType.indexOf("image") > -1 ? (
+          <Image w="full" src={chat.attachement} alt="" />
+        ) : (
+          <Icon
+            size="lg"
+            as={MdOutlineAttachFile}
+            mx="auto"
+            color="brand.300"
+            boxSize="80px"
+          />
+        )
+      ) : (
+        <Text mt={isMobile ? 1 : 2} fontSize="sm">
+          {chat.text}
+        </Text>
+      )}
+
       {chat.recipient?.length ? (
         <Flex direction="column" mt={5}>
           <HStack spacing={-3}>

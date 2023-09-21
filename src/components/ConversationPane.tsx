@@ -17,6 +17,8 @@ import {
   PopoverArrow,
   PopoverHeader,
   PopoverBody,
+  Divider,
+  Progress,
 } from "@chakra-ui/react";
 import { Timestamp } from "firebase/firestore";
 import { MentionsInput, Mention, MentionItem } from "react-mentions";
@@ -28,11 +30,13 @@ import React, {
   useMemo,
   useRef,
   useState,
+  ChangeEvent,
 } from "react";
 import {
   BsChevronLeft,
   BsFileMinus,
   BsFilePlus,
+  BsImage,
   BsPencil,
   BsPlus,
   BsSave,
@@ -57,6 +61,7 @@ import { Conversation } from "../types/Conversation";
 import { ChatList } from "./ChatList";
 import { UserListPopover } from "./UserListPopover";
 import { sendMultipleNotification } from "../services/notificationServices";
+import { uploadDocumentToFirebase } from "../services/projectServices";
 import {
   AiOutlineUsergroupAdd,
   AiOutlineUsergroupDelete,
@@ -88,7 +93,8 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
   const [mentions, setMentions] = useState<MentionItem[]>([]);
   const [loading, setLoading] = useState<boolean>();
   const [uploading, setUploading] = useState<boolean>();
-
+  const [uploadProgress, setUploadProgress] = useState<number>();
+  const [file, setFile] = useState<File>();
   const [addingMembers, setAddingMembers] = useState<boolean>();
   const [removingMembers, setRemovingMembers] = useState<boolean>();
   const [addingAdmins, setAddingAdmins] = useState<boolean>();
@@ -412,6 +418,60 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
 
     toRemove ? setAdminsToRemove(adminsCopy) : setAdmins(adminsCopy);
   };
+  const onSelectFile = (e: ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target?.files && e.target.files[0];
+    if (!file || !auth?.uid) return;
+    const type = file.type;
+    setFile(file);
+    const path = `chats/${auth?.uid}/${new Date().getTime()}`;
+    try {
+      setUploading(true);
+      uploadDocumentToFirebase(
+        path,
+        file,
+        setUploadProgress,
+        async (url) => {
+          setUploadProgress(0);
+          const newchat: Chat = {
+            text: "",
+            ...(conversation.type === "private"
+              ? { recieverId: recipientId }
+              : {}),
+            timestamp: Timestamp.now(),
+            senderId: auth?.uid || "",
+            sender: {
+              photoUrl: profile?.photoUrl || "",
+              displayName: auth?.displayName || "",
+            },
+            members,
+            conversationId: conversation.id || "",
+            attachement: url,
+            attachementType: type,
+          };
+          const newConversation = {
+            ...conversation.conversation,
+            [auth.uid]: (chats?.length || 0) + 1,
+          };
+          await sendChat(
+            conversation.id || "",
+            newchat,
+            conversation.members,
+            (chats?.length || 0) + 1,
+            newConversation,
+          );
+          setUploading(false);
+          setFile(undefined);
+        },
+        (error) => {
+          toast({
+            title: "Could not share image",
+            status: "error",
+          });
+        },
+      );
+    } catch (error) {}
+  };
+
   return (
     <Flex
       position="relative"
@@ -572,6 +632,19 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
             chats && <ChatList conversation={conversation} chats={chats} />
           )}
           <Flex ref={endRef}></Flex>
+          {uploading ? (
+            <Flex direction="column" alignItems="flex-start" w="300px" mb={10}>
+              <Heading size="sm">Uploading File..</Heading>
+              {file ? (
+                <Text size="xs" my={2}>
+                  {`${file.name} (${(file.size / 1000).toFixed(2)}MB)`}
+                </Text>
+              ) : null}
+              {uploadProgress ? (
+                <Progress w="full" value={uploadProgress} colorScheme="brand" />
+              ) : null}
+            </Flex>
+          ) : null}
         </Flex>
       </Flex>
       <Flex
@@ -618,7 +691,7 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
             >
               Send
             </Button>
-            {/* <Popover>
+            <Popover>
               <PopoverTrigger>
                 <IconButton icon={<BsThreeDots />} aria-label="add file" />
               </PopoverTrigger>
@@ -626,12 +699,45 @@ export const ConversationPane: FC<ConversationPaneProps> = ({
                 <PopoverArrow />
                 <PopoverHeader></PopoverHeader>
                 <PopoverBody>
-                  <Flex direction="column" px={5}>
-                    <Button size="sm">Add Image</Button>
+                  <Flex direction="column" alignItems="flex-start" px={5}>
+                    <Button
+                      as="label"
+                      htmlFor="image-input"
+                      leftIcon={<BsImage />}
+                      size="sm"
+                      w="full"
+                    >
+                      Share Image
+                    </Button>
+                    <Input
+                      type="file"
+                      display="none"
+                      id="image-input"
+                      accept="image/*"
+                      onChange={onSelectFile}
+                    />
+                    <Divider my={3} />
+                    <Button
+                      as="label"
+                      leftIcon={<BsFilePlus />}
+                      size="sm"
+                      w="full"
+                      htmlFor="file-input"
+                    >
+                      Share File
+                    </Button>
+                    <Input
+                      type="file"
+                      display="none"
+                      id="file-input"
+                      name="file-input"
+                      accept=".pdf, .doc, .docx, .xls, .xlsx"
+                      onChange={onSelectFile}
+                    />
                   </Flex>
                 </PopoverBody>
               </PopoverContent>
-            </Popover> */}
+            </Popover>
           </HStack>
         </HStack>
       </Flex>
