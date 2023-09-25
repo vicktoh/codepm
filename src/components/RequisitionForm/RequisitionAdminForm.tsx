@@ -354,6 +354,13 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
               });
               return;
             }
+            if (![UserRole.admin, UserRole.master].includes(auth.role)) {
+              toast({
+                title: "You are not authorized to approve this requisition",
+                status: "error",
+              });
+              return;
+            }
             const newRequisition: Requisition = {
               ...requisition,
               attachments: values.attachments || [],
@@ -486,7 +493,10 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
                   Finance Check
                 </Button>
               ) : null}
-              {requisition.status === RequisitionStatus.checked ? (
+              {requisition.status === RequisitionStatus.checked &&
+              [UserRole.admin, UserRole.master].includes(
+                auth?.role || UserRole.user,
+              ) ? (
                 <Button
                   isLoading={values.mode === "approve" && isSubmitting}
                   onClick={() => {
