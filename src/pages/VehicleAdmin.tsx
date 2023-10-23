@@ -27,6 +27,7 @@ import {
 } from "@chakra-ui/react";
 import { format } from "date-fns";
 import { request } from "http";
+import { isNumber } from "lodash";
 import React, { useEffect, useState } from "react";
 import { AiFillEye } from "react-icons/ai";
 import { BsCalendar2, BsChatFill } from "react-icons/bs";
@@ -146,14 +147,25 @@ export const VehicleAdmin = () => {
                             {usersMap[req.userId]?.displayName ||
                               "Unknown User"}
                           </Heading>
-                          <Text>{format(req.timestamp, "do MMM Y")}</Text>
+                          {!isNaN(req.timestamp) ? (
+                            <Text>{format(req.timestamp, "do MMM Y")}</Text>
+                          ) : null}
                         </VStack>
                       </HStack>
                     </Td>
-                    <Td>{`${format(req.startTime, "KK:mm aaa")} - ${format(
-                      req.endTime,
-                      "KK:mm aaa",
-                    )}`}</Td>
+                    <Td>
+                      {console.log(
+                        isNumber(req.startTime),
+                        isNumber(req.endTime),
+                        req.id,
+                      )}
+                      {!isNaN(req.startTime) && !isNaN(req.endTime)
+                        ? `${format(req.startTime, "KK:mm aaa")} - ${format(
+                            req.endTime,
+                            "KK:mm aaa",
+                          )}`
+                        : ""}
+                    </Td>
                     <Td>
                       <VStack alignItems="flex-start">
                         <HStack alignItems="center" spacing={2}>
@@ -198,7 +210,7 @@ export const VehicleAdmin = () => {
                             icon={<BsChatFill />}
                           />
                           {req.chatCount &&
-                          req.conversation &&
+                          req?.conversation &&
                           (req.chatCount - req.conversation[auth?.uid || ""] ||
                             0) > 0 ? (
                             <Badge
