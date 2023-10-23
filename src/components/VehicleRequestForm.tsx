@@ -132,8 +132,8 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
             const { startTime, endTime, ...rest } = values;
             const edit: Partial<VehicleRequest> = {
               ...rest,
-              startTime: new Date(`${values.date} ${startTime}`).getTime(),
-              endTime: new Date(`${values.date} ${endTime}`).getTime(),
+              startTime: Date.parse(`${values.date}T${startTime}`),
+              endTime: Date.parse(`${values.date}T${endTime}`),
               datetimestamp: new Date(`${values.date}`).getTime(),
             };
             await updateVehicleRquest(edit);
