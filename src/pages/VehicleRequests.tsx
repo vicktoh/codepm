@@ -203,10 +203,14 @@ export const VehicleRequests = () => {
                 myVehicleRequest.map((req) => (
                   <Tr key={`vehicle-request-${req.id}`}>
                     <Td>{format(req.timestamp, "do MMM Y")}</Td>
-                    <Td>{`${format(req.startTime, "KK:mm aaa")} - ${format(
-                      req.endTime,
-                      "KK:mm aaa",
-                    )}`}</Td>
+                    <Td>
+                      {!isNaN(req.startTime) && !isNaN(req.endTime)
+                        ? ` ${format(req.startTime, "KK:mm aaa")} - ${format(
+                            req.endTime,
+                            "KK:mm aaa",
+                          )}`
+                        : ""}
+                    </Td>
                     <Td>
                       <VStack alignItems="flex-start">
                         <HStack alignItems="center" spacing={2}>
