@@ -16,6 +16,7 @@ import { format, intervalToDuration } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import React, { FC, useEffect, useMemo, useState } from "react";
 import { BiCheckDouble } from "react-icons/bi";
+import { classicNameResolver } from "typescript";
 import { BASE_URL } from "../constants";
 import { useAppSelector } from "../reducers/types";
 import { sendNotification } from "../services/notificationServices";
@@ -48,6 +49,7 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
   const [checking, setChecking] = useState<boolean>();
   const [clash, setClash] = useState<VehicleRequest>();
   const duraction = useMemo(() => {
+    if (isNaN(request.startTime) || isNaN(request.endTime)) return;
     return intervalToDuration({
       start: request.startTime,
       end: request.endTime,
@@ -231,21 +233,29 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
           <FormLabel fontSize="sm" fontWeight="bold">
             Start Time
           </FormLabel>
-          <Text>{format(request.startTime, "KK:mm aaa")}</Text>
+          <Text>
+            {!isNaN(request.startTime)
+              ? format(request.startTime, "KK:mm aaa")
+              : ""}
+          </Text>
         </FormControl>
         <FormControl mb={4}>
           <FormLabel fontSize="sm" fontWeight="bold">
             End Time
           </FormLabel>
-          <Text>{format(request.endTime, "KK:mm aaa")}</Text>
+          <Text>
+            {!isNaN(request.endTime)
+              ? format(request.endTime, "KK:mm aaa")
+              : ""}
+          </Text>
         </FormControl>
       </SimpleGrid>
       <FormControl mb={4}>
         <FormLabel fontSize="sm" fontWeight="bold">
           Duration
         </FormLabel>
-        <Text>{`${duraction.hours}H ${
-          duraction.minutes ? `${duraction.minutes} m` : ""
+        <Text>{`${duraction?.hours}H ${
+          duraction?.minutes ? `${duraction.minutes} m` : ""
         } `}</Text>
       </FormControl>
       <Flex direction="column">
@@ -273,10 +283,13 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
                 <Text fontWeight="bold">
                   {usersMap[clash.userId]?.displayName || "Unknown user"}
                 </Text>
-                <Text>{`${format(clash.startTime, "KK:mm aaa")} - ${format(
-                  clash.endTime,
-                  "KK:mm aaa",
-                )}`}</Text>
+                <Text>{`${
+                  !isNaN(clash.startTime)
+                    ? format(clash.startTime, "KK:mm aaa")
+                    : ""
+                } - ${
+                  isNaN(clash.endTime) ? "" : format(clash.endTime, "KK:mm aaa")
+                }`}</Text>
               </VStack>
             </HStack>
             <Text my={3}>{clash.purpose}</Text>
