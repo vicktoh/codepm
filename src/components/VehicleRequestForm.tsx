@@ -121,8 +121,8 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
               userId: auth?.uid || "",
               status: "pending",
               id: "",
-              startTime: new Date(`${values.date} ${startTime}`).getTime(),
-              endTime: new Date(`${values.date} ${endTime}`).getTime(),
+              startTime: Date.parse(`${values.date}T${startTime}`),
+              endTime: Date.parse(`${values.date}T${endTime}`),
               datetimestamp: new Date(`${values.date}`).getTime(),
             };
             newId = await sendVehicleRequest(vehRequest);

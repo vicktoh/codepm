@@ -10,6 +10,7 @@ import {
   updateDoc,
   where,
   orderBy,
+  Timestamp,
 } from "firebase/firestore";
 import { request } from "http";
 import { isBetween } from "../helpers";
@@ -89,8 +90,10 @@ export const listenOnVehicleAdmin = (
     snapshot.forEach((snap) => {
       const vehReq = snap.data() as VehicleRequest;
       vehReq.id = snap.id;
+      // console.log(vehReq, snap.id);
       requests.push(vehReq);
     });
+    // console.log({ requests });
     callback(requests);
   });
 };
