@@ -188,7 +188,10 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
         <GridItem colSpan={1}>
           <RequisitionField
             label="Total"
-            value={`${currency} ${total.toLocaleString()}`}
+            value={`${total.toLocaleString("en-NG", {
+              currency: requisition.currency,
+              style: "currency",
+            })}`}
           />
         </GridItem>
         <GridItem colSpan={[1, 3]}>

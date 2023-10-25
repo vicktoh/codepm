@@ -92,10 +92,17 @@ export const RequisitionItemTable: FC<RequisitionItemTableProps> = ({
                 <Tr key={`requisition-item-${i}`}>
                   <Td>{item.title}</Td>
                   <Td>{item.budget || ""}</Td>
-                  <Td>{item.amount.toLocaleString()}</Td>
                   <Td>
-                    {findDifference(item.budget || "")?.toLocaleString() ||
-                      "N/A"}
+                    {item.amount.toLocaleString("en-NG", {
+                      currency: "NGN",
+                      style: "currency",
+                    })}
+                  </Td>
+                  <Td>
+                    {findDifference(item.budget || "")?.toLocaleString(
+                      "en-NG",
+                      { currency: "NGN", style: "currency" },
+                    ) || "N/A"}
                   </Td>
                   <Td>
                     {findBudgetItem(

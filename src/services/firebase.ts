@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "@firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { doc, getDoc, getFirestore } from "firebase/firestore";
 import { APP_ENV } from "../constants";
 const firebaseConfig = {
   apiKey: "AIzaSyCNEr5XdMDlaGQg8nYjwaK4kljNWKVQmxo",
@@ -33,3 +33,9 @@ export const firebaseApp = initializeApp(credentials);
 // console.log(credentials, process.env.REACT_APP_APP_ENV);
 export const db = getFirestore(firebaseApp);
 export const firebaseAuth = getAuth(firebaseApp);
+
+export async function getFirestorDoc<T>(path: string) {
+  const docRef = doc(db, path);
+  const data = await getDoc(docRef);
+  return data.data() as T;
+}

@@ -117,7 +117,7 @@ export const RequisitionChat: FC<RequisitionChatProps> = ({ requisition }) => {
         title: `Requisition Chat`,
         type: "requisition",
         description: `There is a new message in your requisition titled ${requisition.title}`,
-        linkTo: "/requisition",
+        linkTo: "/requisitions",
         reciepientId: requisition.creatorId,
         timestamp: Timestamp.now(),
       };

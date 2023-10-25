@@ -164,7 +164,10 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
           <Text mt={3}>{requisition.title}</Text>
           <Flex direction="row" justifyContent="space-between" mt={3}>
             <Heading fontSize="lg">
-              {`${requisition.currency} ${requisition.total.toLocaleString()}`}
+              {`${requisition.total.toLocaleString("en-NG", {
+                currency: requisition.currency,
+                style: "currency",
+              })}`}
             </Heading>
             {getStatus(requisition.status)}
           </Flex>
@@ -253,7 +256,10 @@ export const RequisitionAdminComponent: FC<RequisitionAdminComponentProps> = ({
           <Td>{getStatus(requisition.status)}</Td>
           <Td>
             <Heading fontSize="lg">
-              {`${requisition.currency} ${requisition.total.toLocaleString()}`}
+              {`${requisition.total.toLocaleString("en-NG", {
+                currency: requisition.currency,
+                style: "currency",
+              })}`}
             </Heading>
           </Td>
           <Td>
