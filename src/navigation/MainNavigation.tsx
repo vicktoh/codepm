@@ -30,6 +30,8 @@ import { VehicleAdmin } from "../pages/VehicleAdmin";
 import { useAppSelector } from "../reducers/types";
 import { UserAttendancePage } from "../pages/UserAttendancePage";
 import { Attendance } from "../components/Attendance";
+import { VehicleRequestsView } from "../components/VehicleRequestsView";
+import { VehicleReview } from "../pages/VehicleReview";
 
 export const MainNavigation = () => {
   return (
@@ -66,7 +68,7 @@ export const MainNavigation = () => {
         </Route>
         <Route path="vehicle">
           <Route index element={<VehicleAdmin />} />
-          <Route path="vehicle/:requestId" element={<VehicleAdmin />} />
+          <Route path=":requestId" element={<VehicleReview />} />
         </Route>
         <Route path="requisitions" element={<RequisitionLayout />}>
           <Route index element={<RequisitionPage />} />

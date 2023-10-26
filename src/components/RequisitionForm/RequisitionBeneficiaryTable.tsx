@@ -39,7 +39,12 @@ export const RequisitionBeneficiaryTable: FC<
                   <Td>{name}</Td>
                   <Td>{accountNumber}</Td>
                   <Td>{bank}</Td>
-                  <Td>{Number(amount).toLocaleString()}</Td>
+                  <Td>
+                    {Number(amount).toLocaleString("en-NG", {
+                      currency: "NGN",
+                      style: "currency",
+                    })}
+                  </Td>
                 </Tr>
               ))
             ) : (

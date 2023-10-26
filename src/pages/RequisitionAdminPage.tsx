@@ -3,8 +3,11 @@ import {
   AlertDescription,
   AlertIcon,
   AlertTitle,
+  Badge,
   Flex,
   Heading,
+  HStack,
+  Input,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -25,7 +28,7 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { isAfter, isBefore, isEqual } from "date-fns";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
 import { LoadingComponent } from "../components/LoadingComponent";
@@ -54,11 +57,9 @@ const roleMap: Record<UserRole, RequisitionStatus | ""> = {
 export const RequisitionAdminPage = () => {
   const [requisitions, setRequisitions] = useState<Requisition[]>();
   const [selectedRequisition, setSelectedRequisition] = useState<Requisition>();
-  const { requisitionId } = useParams<{ requisitionId?: string }>();
-  const { profile } = useAppSelector(({ profile, auth }) => ({
-    profile,
-    auth,
-  }));
+  const [orderValue, setOrderValue] = useState<"timestamp" | "lastUpdated">(
+    "timestamp",
+  );
   const [requisitionFilter, setRequisitionFilter] =
     useState<RequisitionFilterType>({
       type: "",
@@ -66,6 +67,54 @@ export const RequisitionAdminPage = () => {
       startDate: "",
       status: "",
     });
+  const [search, setSearch] = useState("");
+  const { requisitionId } = useParams<{ requisitionId?: string }>();
+  const { profile } = useAppSelector(({ profile, auth }) => ({
+    profile,
+    auth,
+  }));
+  const onFilter = useCallback(
+    (requisition: Requisition, i: number) => {
+      if (!requisitionFilter) return true;
+      const isStartDate = requisitionFilter.startDate
+        ? isAfter(
+            requisition.timestamp,
+            new Date(requisitionFilter.startDate),
+          ) ||
+          isEqual(requisition.timestamp, new Date(requisitionFilter.startDate))
+        : true;
+      const isEndDate = requisitionFilter.endDate
+        ? isBefore(
+            requisition.timestamp,
+            new Date(requisitionFilter.endDate),
+          ) ||
+          isEqual(requisition.timestamp, new Date(requisitionFilter.endDate))
+        : true;
+      const isStatus = requisitionFilter.status
+        ? requisitionFilter.status === requisition.status
+        : true;
+      const isType = requisitionFilter.type
+        ? requisitionFilter.type === requisition.type
+        : true;
+
+      return isStartDate && isEndDate && isStatus && isType;
+    },
+    [requisitionFilter],
+  );
+
+  const requisitionToRender = useMemo(() => {
+    if (!search) return (requisitions || []).filter(onFilter);
+    const searchValue = search.toLowerCase();
+    return (requisitions || [])
+      .filter(onFilter)
+      .filter(
+        (requisition) =>
+          requisition.total.toString().indexOf(searchValue) > -1 ||
+          requisition.title.toLowerCase().indexOf(searchValue) > -1 ||
+          requisition.creator.displayName.toLowerCase().indexOf(searchValue) >
+            -1,
+      );
+  }, [search, requisitions, onFilter]);
   const [loading, setLoading] = useState<boolean>(true);
   const {
     onOpen: onOpenRequisitionModal,
@@ -112,9 +161,10 @@ export const RequisitionAdminPage = () => {
           status: "error",
           description: err.message,
         }),
+      orderValue,
     );
     return unsubscribe;
-  }, [toast]);
+  }, [toast, orderValue]);
   useEffect(() => {
     if (!requisitionId || !requisitions?.length) return;
     const requisition = requisitions.find(({ id }) => id === requisitionId);
@@ -125,25 +175,6 @@ export const RequisitionAdminPage = () => {
   }, [requisitionId, requisitions, onOpenRequisitionModal]);
   const onFilterRequisition = (requisitionFilter: RequisitionFilterType) => {
     setRequisitionFilter(requisitionFilter);
-  };
-  const onFilter = (requisition: Requisition, i: number) => {
-    if (!requisitionFilter) return true;
-    const isStartDate = requisitionFilter.startDate
-      ? isAfter(requisition.timestamp, new Date(requisitionFilter.startDate)) ||
-        isEqual(requisition.timestamp, new Date(requisitionFilter.startDate))
-      : true;
-    const isEndDate = requisitionFilter.endDate
-      ? isBefore(requisition.timestamp, new Date(requisitionFilter.endDate)) ||
-        isEqual(requisition.timestamp, new Date(requisitionFilter.endDate))
-      : true;
-    const isStatus = requisitionFilter.status
-      ? requisitionFilter.status === requisition.status
-      : true;
-    const isType = requisitionFilter.type
-      ? requisitionFilter.type === requisition.type
-      : true;
-
-    return isStartDate && isEndDate && isStatus && isType;
   };
   return (
     <Flex px={5} direction="column" pt={5}>
@@ -170,9 +201,42 @@ export const RequisitionAdminPage = () => {
           filter={requisitionFilter}
         />
       </SimpleGrid>
-      <Heading fontSize="lg" my={5}>
-        Requisition List
-      </Heading>
+      <Flex
+        my={5}
+        direction={isMobile ? "column" : "row"}
+        justifyContent="space-between"
+      >
+        <Heading fontSize="lg" my={5}>
+          Requisition List
+        </Heading>
+        <HStack flexWrap="wrap" gap={5}>
+          <Badge
+            cursor="pointer"
+            onClick={() => setOrderValue("timestamp")}
+            size="xl"
+            borderRadius="md"
+            bg={orderValue === "timestamp" ? "brand.300" : "transparent"}
+          >
+            Order By Date Created
+          </Badge>
+          <Badge
+            cursor="pointer"
+            onClick={() => setOrderValue("lastUpdated")}
+            size="xl"
+            borderRadius="md"
+            bg={orderValue === "lastUpdated" ? "brand.300" : "transparent"}
+          >
+            Order By Latest Activity
+          </Badge>
+          <Input
+            bg="white"
+            placeholder="Search Anything"
+            onChange={(e) => setSearch(e.target.value)}
+            size="sm"
+            maxWidth={isMobile ? undefined : 40}
+          />
+        </HStack>
+      </Flex>
       {isMobile ? (
         <Flex direction="column">
           {loading ? (
@@ -226,19 +290,17 @@ export const RequisitionAdminPage = () => {
             </Thead>
             {loading ? (
               <LoadingComponent title="Fetching requisitions" />
-            ) : requisitions?.filter(onFilter)?.length ? (
+            ) : requisitionToRender?.length ? (
               <Tbody>
-                {requisitions
-                  .filter(onFilter)
-                  .map((requisition, i) => (
-                    <RequisitionAdminComponent
-                      key={`requisition-${i}`}
-                      requisition={requisition}
-                      onOpenRetirement={() => openRetirementModal(requisition)}
-                      onViewRequisition={() => onViewRequisition(requisition)}
-                      onOpenChat={() => onOpenConversation(requisition)}
-                    />
-                  )) || (
+                {requisitionToRender.map((requisition, i) => (
+                  <RequisitionAdminComponent
+                    key={`requisition-${i}`}
+                    requisition={requisition}
+                    onOpenRetirement={() => openRetirementModal(requisition)}
+                    onViewRequisition={() => onViewRequisition(requisition)}
+                    onOpenChat={() => onOpenConversation(requisition)}
+                  />
+                )) || (
                   <Tr>
                     <Td colSpan={5}>
                       <EmptyState

@@ -70,14 +70,14 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
         reciepientId: request.userId,
         timestamp: Timestamp.now(),
         type: "request",
-        linkTo: "/requests/vehicle",
+        linkTo: `/vehicle/${request.id}`,
       };
       sendNotification(notification);
       if (status === "approved") {
         const email: EmailPayLoad = {
           to: usersMap[request.userId]?.email || "",
           data: {
-            action: `${BASE_URL}/requests/vehicle`,
+            action: `${BASE_URL}/vehicle/${request.id}`,
             date: format(new Date(), "do MMM Y"),
             message: `This is to certify that the vehicle request for ${
               usersMap[request.userId]?.displayName || "Unknown"
@@ -118,7 +118,7 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
         reciepientId: request.userId,
         timestamp: Timestamp.now(),
         type: "request",
-        linkTo: "/requests/vehicle",
+        linkTo: `/vehicle/${request.id}`,
       };
       const approverNotification: Notification = {
         title: `Vehicle Request Attention`,
@@ -131,7 +131,7 @@ export const VehicleRequestsView: FC<VehicleRequestsViewProps> = ({
         reciepientId: request.approverId,
         timestamp: Timestamp.now(),
         type: "request",
-        linkTo: "/requests-admin/vehicle",
+        linkTo: `/vehicle/${request.id}`,
       };
       sendNotification(notification);
       sendNotification(approverNotification);

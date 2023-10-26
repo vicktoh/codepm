@@ -145,8 +145,9 @@ export const listenOnRequisitionStats = (
 export const listenOnRequisitionAdmin = (
   callback: (requisitions: Requisition[]) => void,
   errorCallback: (error: FirebaseError) => void,
+  order: "timestamp" | "lastUpdated" = "timestamp",
 ) => {
-  const q = query(collection(db, "requisitions"), orderBy("timestamp", "desc"));
+  const q = query(collection(db, "requisitions"), orderBy(order, "desc"));
   const unsub = onSnapshot(
     q,
     (snapshot) => {

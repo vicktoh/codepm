@@ -154,8 +154,8 @@ export const VehicleRequestForm: FC<VehicleRequestFormProps> = ({
             reciepientId: values.reviewerId,
             linkTo:
               newId || request?.id
-                ? `requests-admin/vehicle/${newId || request?.id}`
-                : "/requests-admin/vehicle",
+                ? `vehicle/${newId || request?.id}`
+                : "vehicle",
             type: "request",
           };
           sendNotification(notification);
