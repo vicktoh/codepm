@@ -34,23 +34,36 @@ type ProjectListProps = {
 const ProjectList: FC<ProjectListProps> = ({ project }) => {
   return (
     <AccordionItem my={1}>
-      <AccordionButton bg="white" _hover={{ bg: "white" }} borderRadius="lg">
+      <AccordionButton
+        bg="white"
+        _hover={{ bg: "white" }}
+        borderRadius="lg"
+        flexDirection="column"
+        gap={2}
+      >
         <Flex
-          direction="row"
+          direction={["column", "row"]}
           width="100%"
           bg="white"
-          alignItems="center"
+          alignItems={["flex-start", "center"]}
           borderRadius="lg"
           py={1}
         >
           <Tooltip label={project.title}>
-            <Text fontWeight="bold" color="tetiary.500" isTruncated>
+            <Text
+              maxW="100%"
+              fontSize={["sm", "lg"]}
+              fontWeight="bold"
+              color="tetiary.500"
+              isTruncated
+            >
               {project.title}
             </Text>
           </Tooltip>
           <Button
             ml="auto"
             mr={5}
+            display={["none", "flex"]}
             size="xs"
             colorScheme="brand"
             variant="outline"
@@ -65,6 +78,7 @@ const ProjectList: FC<ProjectListProps> = ({ project }) => {
               bg="brand.300"
               color="white"
               rounded="lg"
+              display={["none", "block"]}
               alignItems="center"
               justifyContent="center"
             >
@@ -72,6 +86,18 @@ const ProjectList: FC<ProjectListProps> = ({ project }) => {
             </Badge>
           </Tooltip>
         </Flex>
+        <Button
+          display={["flex", "none"]}
+          size="xs"
+          alignSelf={"flex-end"}
+          colorScheme="brand"
+          variant="outline"
+          as={Link}
+          to={`projects/${project.id}`}
+          rightIcon={<BsChevronRight />}
+        >
+          View Project
+        </Button>
       </AccordionButton>
       <AccordionPanel>
         {project.workplans?.length ? (

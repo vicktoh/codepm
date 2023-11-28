@@ -16,6 +16,7 @@ import {
   listenOnRequisitionChat,
   markRequisitionChatAsRead,
   sendRequisitionChat,
+  updateRequisition,
 } from "../../services/requisitionServices";
 import { Chat } from "../../types/Chat";
 import { Notification, NotificationPayload } from "../../types/Notification";
@@ -121,6 +122,11 @@ export const RequisitionChat: FC<RequisitionChatProps> = ({ requisition }) => {
         reciepientId: requisition.creatorId,
         timestamp: Timestamp.now(),
       };
+      if (requisition.id) {
+        await updateRequisition(requisition.creatorId, requisition.id, {
+          lastUpdated: new Date().getTime(),
+        });
+      }
       const notificationRecipents = [
         requisition.bugetHolderAttentionId,
         requisition.adminAttentionId,

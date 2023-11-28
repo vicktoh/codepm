@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState } from "react";
+import React, { FC, useCallback, useMemo, useState } from "react";
 import {
   Avatar,
   Drawer,
@@ -9,31 +9,19 @@ import {
   Flex,
   Heading,
   IconButton,
-  VStack,
   HStack,
   useDisclosure,
-  Icon,
   Text,
   Button,
-  useBreakpointValue,
-  Box,
   Badge,
   useToast,
 } from "@chakra-ui/react";
-import { AiOutlineMenu } from "react-icons/ai";
 import { useAppSelector } from "../reducers/types";
-import { AiOutlineCheckSquare, AiOutlineDashboard } from "react-icons/ai";
-import { BsChat, BsCurrencyDollar, BsPower } from "react-icons/bs";
-import { Link, useMatch } from "react-router-dom";
-import { useLogout } from "../hooks/useLoadingAnimation";
-import { UserRole } from "../types/Profile";
-import { FaUsersCog } from "react-icons/fa";
-import { GiTakeMyMoney } from "react-icons/gi";
-import { MembersOnline } from "./MembersOnline";
-import { BiBell } from "react-icons/bi";
+
+import { BiBell, BiTrash } from "react-icons/bi";
 import { NotifcationBox } from "./Notifications";
 import { markAllNotificationsAsRead } from "../services/notificationServices";
-
+import { deleteNotifications } from "../services/userServices";
 export const NotificationBar: FC = () => {
   const { notifications, auth } = useAppSelector(({ notifications, auth }) => ({
     notifications,
@@ -43,6 +31,7 @@ export const NotificationBar: FC = () => {
     return notifications?.filter((not) => !not.read).length || 0;
   }, [notifications]);
   const [marking, setMarking] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const toast = useToast();
   const { isOpen, onClose, onToggle } = useDisclosure();
 
@@ -62,6 +51,22 @@ export const NotificationBar: FC = () => {
       setMarking(false);
     }
   };
+  const emptyNotifications = useCallback(async () => {
+    try {
+      setDeleting(true);
+      const res = await deleteNotifications();
+    } catch (error) {
+      const err: any = error;
+      console.log(error);
+      toast({
+        title: "Could not read all notifications",
+        description: err?.message || "Something went wrong please try again",
+        status: "error",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }, [toast]);
   return (
     <>
       <Flex>
@@ -90,13 +95,13 @@ export const NotificationBar: FC = () => {
         <DrawerOverlay />
         <DrawerContent sx={{ width: "300px" }}>
           <DrawerHeader>
+            <Heading fontSize="md">Notifications</Heading>
             <Flex
               alignItems="center"
               direction="row"
-              justifyContent="space-between"
+              justifyContent="flex-end"
+              gap={3}
             >
-              <Heading fontSize="md">Notifications</Heading>
-
               {notifications?.length && unreadNotifications ? (
                 <Button
                   size="sm"
@@ -106,6 +111,18 @@ export const NotificationBar: FC = () => {
                   onClick={readAllNotification}
                 >
                   Mark all as read
+                </Button>
+              ) : null}
+              {notifications?.length ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  color="red.300"
+                  isLoading={deleting}
+                  onClick={emptyNotifications}
+                  leftIcon={<BiTrash />}
+                >
+                  Empty
                 </Button>
               ) : null}
             </Flex>

@@ -56,7 +56,7 @@ export const MobileNav: FC = () => {
           aria-label="Menu Button"
         />
         <Heading fontSize="md" mx="auto">
-          {`Hello ${auth?.displayName || ""}`}
+          CODEPM
         </Heading>
         <Avatar
           as={Link}

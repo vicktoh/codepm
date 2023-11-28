@@ -15,6 +15,10 @@ export const sendEmailNotification = httpsCallable<
   EmailPayLoad,
   { status: "success" | "failed"; message?: string }
 >(functions, "sendEmailNotification");
+export const deleteNotifications = httpsCallable<
+  void,
+  { status: "success" | "failed"; message?: string }
+>(functions, "deleteNotifications");
 export const sendNotificationToGroup = httpsCallable<
   { group: UserRole; data: Notification },
   { status: "success" | "failed"; message?: string }

@@ -58,7 +58,7 @@ export const RequisitionAdminPage = () => {
   const [requisitions, setRequisitions] = useState<Requisition[]>();
   const [selectedRequisition, setSelectedRequisition] = useState<Requisition>();
   const [orderValue, setOrderValue] = useState<"timestamp" | "lastUpdated">(
-    "timestamp",
+    "lastUpdated",
   );
   const [requisitionFilter, setRequisitionFilter] =
     useState<RequisitionFilterType>({
