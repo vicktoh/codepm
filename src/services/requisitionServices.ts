@@ -222,7 +222,7 @@ export const addNewRequisition = async (
 export const updateRequisition = (
   userId: string,
   requisitionId: string,
-  requisition: Requisition,
+  requisition: Partial<Requisition>,
 ) => {
   const requisitionRef = doc(db, `requisitions/${requisitionId}`);
   const userRequisitionRef = doc(
