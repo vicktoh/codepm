@@ -44,6 +44,7 @@ export const ProjectForm: FC<ProjectFormType> = ({
       .required("This field is required")
       .max(1500, "Cannot be above 1500 characters"),
     funder: yup.string().required("This field is required"),
+    objectives: yup.string().required("Objectives is required"),
   });
   const initialValues: Omit<Project, "id" | "dateAdded"> = {
     title: project?.title || "",
@@ -156,7 +157,7 @@ export const ProjectForm: FC<ProjectFormType> = ({
             >
               <FormLabel>Goals and Objectives</FormLabel>
               <Textarea
-                name="objecttives"
+                name="objectives"
                 value={values.objectives}
                 onChange={handleChange}
                 onBlur={handleBlur}

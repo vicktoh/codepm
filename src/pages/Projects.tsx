@@ -281,7 +281,7 @@ export const Projects: FC = () => {
   };
 
   const addProjectCache = (project: Project) => {
-    setData([...(projects || []), project]);
+    setData([project, ...(projects || [])]);
   };
 
   const deletePrompt = (project: Project) => {
@@ -300,7 +300,7 @@ export const Projects: FC = () => {
     );
     if (index < 0) return;
     const newData = [...(projects || [])];
-    newData.splice(index);
+    newData.splice(index, 1);
     setData(newData);
     onCloseDeleteModal();
   };
