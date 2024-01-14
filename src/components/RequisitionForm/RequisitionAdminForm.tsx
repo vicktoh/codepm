@@ -177,7 +177,7 @@ export const RequisitionAdminForm: FC<RequisitionAdminFormProps> = ({
           <RequisitionField
             label="Project Title"
             value={
-              projectsMap[requisition.projectId].title || projectTitle || "N/A"
+              projectsMap[requisition.projectId]?.title || projectTitle || "N/A"
             }
           />
         </GridItem>
